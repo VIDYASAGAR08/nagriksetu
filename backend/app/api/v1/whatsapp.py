@@ -13,7 +13,7 @@ router = APIRouter(prefix="/whatsapp", tags=["WhatsApp Bot & Services"])
 
 WHATSAPP_BOT_NUMBER = "+1 555 019 2834"
 WHATSAPP_CLEAN_NUMBER = "15550192834"
-WHATSAPP_PREFILL_TEXT = "Hi CivicAdmin! I want to access municipal services or register."
+WHATSAPP_PREFILL_TEXT = "Hi NagrikSetu! I want to access citizen services or register."
 
 
 class WhatsAppSimulateRequest(BaseModel):
@@ -57,12 +57,12 @@ def get_whatsapp_info(request: Request):
     - Direct wa.me deep-link
     - Scannable vector SVG QR Code
     """
-    encoded_text = "Hi%20CivicAdmin!%20I%20want%20to%20access%20municipal%20services%20or%20register."
+    encoded_text = "Hi%20NagrikSetu!%20I%20want%20to%20access%20citizen%20services%20or%20register."
     wa_me_url = f"https://wa.me/{WHATSAPP_CLEAN_NUMBER}?text={encoded_text}"
     qr_svg = generate_qr_svg(wa_me_url)
 
     return {
-        "bot_name": "CivicAdmin WhatsApp Official Bot",
+        "bot_name": "NagrikSetu WhatsApp Official Bot",
         "phone_number": WHATSAPP_BOT_NUMBER,
         "clean_number": WHATSAPP_CLEAN_NUMBER,
         "prefill_text": WHATSAPP_PREFILL_TEXT,

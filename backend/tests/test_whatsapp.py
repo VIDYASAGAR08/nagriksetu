@@ -18,7 +18,7 @@ def test_whatsapp_citizen_registration_flow(client, db_session):
     # 1. Unregistered user sends "Hello"
     res1 = client.post("/api/v1/whatsapp/simulate", json={"phone_number": phone, "message": "Hello"})
     assert res1.status_code == 200
-    assert "Welcome to CivicAdmin" in res1.json()["reply"]
+    assert "Welcome to NagrikSetu" in res1.json()["reply"]
     assert res1.json()["is_registered"] is False
 
     # 2. User starts registration

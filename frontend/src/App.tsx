@@ -103,16 +103,50 @@ export const App: React.FC = () => {
             </Routes>
           </main>
 
-          {/* Accessible Footer */}
-          <footer className="bg-white border-t border-slate-200 py-6 px-4 text-center text-xs text-slate-500">
-            <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
-              <p>© 2026 CivicAdmin Administrative Service Microservice. All rights reserved.</p>
-              <div className="flex items-center gap-4 text-slate-600">
-                <span>Phase 1 Demonstration</span>
-                <span>•</span>
-                <span>WCAG 2.2 AA Accessible</span>
-                <span>•</span>
-                <span>PostgreSQL 16 & FastAPI</span>
+          {/* Official Government Footer */}
+          <footer className="bg-slate-900 text-slate-300 border-t-4 border-t-saffron-500 pt-8 pb-6 px-4 sm:px-6 lg:px-8 text-xs">
+            <div className="max-w-7xl mx-auto space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-6 pb-6 border-b border-slate-800">
+                <div className="md:col-span-2 space-y-2">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-full bg-primary-800 border border-saffron-500 flex items-center justify-center font-black text-white text-xs">
+                      NS
+                    </div>
+                    <div>
+                      <span className="font-bold text-white text-base block leading-tight">NagrikSetu | नागरिक सेतु</span>
+                      <span className="text-[11px] text-slate-400">National Citizen & Administrative Governance Portal</span>
+                    </div>
+                  </div>
+                  <p className="text-slate-400 text-xs leading-relaxed max-w-md pt-1">
+                    An official digital public infrastructure initiative designed for transparent citizen registration, household administration, and accessible public services.
+                  </p>
+                </div>
+                <div>
+                  <h4 className="font-bold text-white uppercase tracking-wider text-[11px] mb-2.5">Accessibility & Standards</h4>
+                  <ul className="space-y-1.5 text-slate-400">
+                    <li>• WCAG 2.2 Level AA Compliant</li>
+                    <li>• GIGW Government Guidelines</li>
+                    <li>• Bilingual Interface Support</li>
+                    <li>• Screen Reader Accessible</li>
+                  </ul>
+                </div>
+                <div>
+                  <h4 className="font-bold text-white uppercase tracking-wider text-[11px] mb-2.5">Official Assistance</h4>
+                  <ul className="space-y-1.5 text-slate-400">
+                    <li>• Citizen Toll-Free Helpline: 1800-11-2026</li>
+                    <li>• Support: support@nagriksetu.gov.in</li>
+                    <li>• WhatsApp Bot Services Enabled</li>
+                  </ul>
+                </div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-slate-400 text-[11px]">
+                <p>© 2026 NagrikSetu (नागरिक सेतु). Content Owned and Maintained by Department of Administrative & Citizen Affairs.</p>
+                <div className="flex items-center gap-3">
+                  <span className="text-emerald-400 font-semibold">● Portal Operational</span>
+                  <span>•</span>
+                  <span>PostgreSQL 16 & FastAPI</span>
+                </div>
               </div>
             </div>
           </footer>

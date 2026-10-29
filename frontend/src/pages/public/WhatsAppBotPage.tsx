@@ -184,10 +184,10 @@ export const WhatsAppBotPage: React.FC = () => {
                   </div>
                   <div>
                     <h2 className="font-bold text-xs leading-tight flex items-center gap-1">
-                      <span>CivicAdmin Bot</span>
+                      <span>NagrikSetu Bot</span>
                       <CheckCircle2 className="w-3 h-3 text-emerald-300" />
                     </h2>
-                    <span className="text-[10px] text-emerald-100">Powered by Landbot</span>
+                    <span className="text-[10px] text-emerald-100">नागरिक सेतु Official Channel</span>
                   </div>
                 </div>
                 <div className="flex items-center gap-2 text-white/80">
@@ -206,7 +206,7 @@ export const WhatsAppBotPage: React.FC = () => {
 
               {/* Status Banner */}
               <div className="bg-emerald-700 text-white text-[11px] font-medium px-3 py-1 flex items-center justify-between">
-                <span>🟢 Live Municipal Landbot Connected</span>
+                <span>🟢 Live NagrikSetu Citizen Bot Connected</span>
                 <ShieldCheck className="w-3.5 h-3.5 text-emerald-200" />
               </div>
 
@@ -215,7 +215,7 @@ export const WhatsAppBotPage: React.FC = () => {
                 <iframe
                   key={iframeKey}
                   src="/landbot.html"
-                  title="CivicAdmin Landbot Assistant"
+                  title="NagrikSetu Landbot Assistant"
                   className="w-full h-full border-0 absolute inset-0"
                   allow="microphone; camera"
                 />

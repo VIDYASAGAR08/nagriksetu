@@ -4,7 +4,7 @@ from typing import List
 
 
 class Settings(BaseSettings):
-    PROJECT_NAME: str = "CivicAdmin Citizen Services Platform"
+    PROJECT_NAME: str = "NagrikSetu Citizen Services Platform"
     API_V1_STR: str = "/api/v1"
     
     # Security

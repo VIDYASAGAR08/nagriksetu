@@ -4,7 +4,7 @@
 
 @layer base {
   :root {
-    --focus-ring: 2px solid #0270c7;
+    --focus-ring: 2px solid #0f3862;
     --focus-offset: 2px;
   }
 

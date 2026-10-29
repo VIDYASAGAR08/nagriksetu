@@ -61,8 +61,8 @@ def process_whatsapp_message(
             "started_at": datetime.now(timezone.utc).isoformat(),
         }
         reply = (
-            "🏛️ *CivicAdmin Municipal WhatsApp Registration*\n\n"
-            "Welcome! I will help you register as a citizen in our official municipal registry.\n\n"
+            "🏛️ *NagrikSetu Citizen WhatsApp Registration*\n\n"
+            "Welcome! I will help you register as a citizen in our official citizen registry.\n\n"
             "Please reply with your *Full Legal Name* (as shown on official government ID):"
         )
         return {
@@ -74,11 +74,11 @@ def process_whatsapp_message(
 
     # Default greeting for unregistered user
     reply = (
-        "🏛️ *Welcome to CivicAdmin Municipal WhatsApp Services!*\n\n"
+        "🏛️ *Welcome to NagrikSetu Citizen WhatsApp Services!*\n\n"
         "Your phone number is not yet registered in the citizen registry.\n\n"
         "You can register directly here without visiting the website!\n\n"
         "👉 Reply *REGISTER* (or *1*) to start citizen registration.\n"
-        "👉 Reply *HELP* to learn about available municipal services."
+        "👉 Reply *HELP* to learn about available citizen services."
     )
     return {
         "reply": reply,
@@ -130,7 +130,7 @@ def _handle_registration_steps(
         existing_user = db.query(User).filter(User.email == email).first()
         if existing_user:
             return {
-                "reply": "⚠️ An account with this email already exists in CivicAdmin. Please provide a different email address:",
+                "reply": "⚠️ An account with this email already exists in NagrikSetu. Please provide a different email address:",
                 "state": "AWAITING_EMAIL",
                 "is_registered": False
             }
@@ -205,7 +205,7 @@ def _handle_registration_steps(
         )
 
         reply = (
-            f"🎉 *Registration Successful on CivicAdmin!*\n\n"
+            f"🎉 *Registration Successful on NagrikSetu!*\n\n"
             f"Your citizen record has been successfully registered directly from WhatsApp:\n\n"
             f"• *Citizen Code:* `{citizen_code}`\n"
             f"• *Full Name:* {full_name}\n"
@@ -319,7 +319,7 @@ def _handle_registered_citizen(
     reply = (
         f"👋 *Hello {citizen.full_name}!*\n"
         f"Citizen Code: `{citizen.citizen_code}`\n\n"
-        f"Welcome to *CivicAdmin Municipal WhatsApp Bot*.\n"
+        f"Welcome to *NagrikSetu Citizen WhatsApp Bot*.\n"
         f"Reply with a number or keyword:\n\n"
         f"*1* 📋 View My Profile\n"
         f"*2* 🏠 Check Household Details\n"

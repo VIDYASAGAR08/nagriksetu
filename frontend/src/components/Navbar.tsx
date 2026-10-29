@@ -29,49 +29,61 @@ export const Navbar: React.FC = () => {
   const isActive = (path: string) => location.pathname === path;
 
   return (
-    <header className="bg-white border-b border-slate-200 sticky top-0 z-40">
-      {/* Accessibility Utility Bar */}
-      <div className="bg-slate-900 text-slate-100 text-xs py-1.5 px-4 sm:px-8 flex justify-between items-center border-b border-slate-800">
+    <header className="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-xs">
+      {/* National Flag Tricolor Ribbon */}
+      <div className="h-1.5 w-full bg-gradient-to-r from-[#FF9933] via-[#FFFFFF] to-[#138808]"></div>
+
+      {/* Official Government Utility Bar */}
+      <div className="bg-[#081c33] text-slate-100 text-xs py-1.5 px-4 sm:px-8 flex justify-between items-center border-b border-slate-800">
         <div className="flex items-center gap-2">
-          <span className="font-semibold text-primary-400">Official Administrative Service</span>
-          <span className="hidden sm:inline text-slate-400">|</span>
-          <span className="hidden sm:inline text-slate-400">Government of Public Administration</span>
+          <span className="font-bold text-saffron-400">भारत सरकार</span>
+          <span className="text-slate-500">|</span>
+          <span className="font-semibold text-slate-200">Government of India</span>
+          <span className="hidden sm:inline text-slate-500">|</span>
+          <span className="hidden sm:inline text-slate-300">राष्ट्रीय नागरिक सेवा पोर्टल (National Citizen Portal)</span>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5">
           <button
             onClick={toggleHighContrast}
             type="button"
             aria-pressed={highContrast}
-            className="flex items-center gap-1 hover:text-white px-2 py-0.5 rounded border border-slate-700 hover:border-slate-500 focus:outline-none focus:ring-1 focus:ring-primary-400"
+            className="flex items-center gap-1 text-slate-200 hover:text-white px-2 py-0.5 rounded border border-slate-700 hover:border-slate-500 focus:outline-none focus:ring-1 focus:ring-saffron-400 text-[11px]"
           >
-            <Sliders className="w-3.5 h-3.5" aria-hidden="true" />
-            <span>{highContrast ? 'Standard Contrast' : 'High Contrast'}</span>
+            <Sliders className="w-3 h-3 text-saffron-400" aria-hidden="true" />
+            <span>{highContrast ? 'Standard' : 'Contrast'}</span>
           </button>
           <button
             onClick={toggleLargeText}
             type="button"
             aria-pressed={largeText}
-            className="flex items-center gap-1 hover:text-white px-2 py-0.5 rounded border border-slate-700 hover:border-slate-500 focus:outline-none focus:ring-1 focus:ring-primary-400"
+            className="flex items-center gap-1 text-slate-200 hover:text-white px-2 py-0.5 rounded border border-slate-700 hover:border-slate-500 focus:outline-none focus:ring-1 focus:ring-saffron-400 text-[11px]"
           >
-            <Type className="w-3.5 h-3.5" aria-hidden="true" />
-            <span>{largeText ? 'Default Text' : 'Enlarge Text'}</span>
+            <Type className="w-3 h-3 text-saffron-400" aria-hidden="true" />
+            <span>{largeText ? '100%' : 'A+'}</span>
           </button>
         </div>
       </div>
 
       {/* Main Navigation Bar */}
-      <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-16" aria-label="Main Navigation">
-        {/* Brand */}
+      <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-20" aria-label="Main Navigation">
+        {/* Brand with Official Government Motif */}
         <Link
           to="/"
-          className="flex items-center gap-2.5 font-bold text-lg sm:text-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary-500 rounded-md p-1"
+          className="flex items-center gap-3 font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary-500 rounded-md p-1 group"
         >
-          <div className="w-9 h-9 rounded-lg bg-primary-700 text-white flex items-center justify-center font-black shadow-sm">
-            CA
+          {/* Emblem Motif */}
+          <div className="w-11 h-11 rounded-full bg-primary-800 border-2 border-saffron-500 text-white flex flex-col items-center justify-center shadow-sm flex-shrink-0 group-hover:scale-105 transition-transform">
+            <span className="text-[10px] font-black tracking-widest text-saffron-300">NS</span>
+            <div className="w-3 h-0.5 bg-govgreen-400 rounded-full mt-0.5"></div>
           </div>
           <div className="flex flex-col">
-            <span className="leading-tight">CivicAdmin</span>
-            <span className="text-[10px] font-normal text-slate-500 uppercase tracking-wider">Citizen Services</span>
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-xl font-extrabold text-primary-900 tracking-tight">NagrikSetu</span>
+              <span className="text-xs font-bold text-saffron-700 bg-saffron-50 px-1.5 py-0.5 rounded border border-saffron-200">नागरिक सेतु</span>
+            </div>
+            <span className="text-[10px] font-medium text-slate-600 tracking-wide uppercase">
+              National Citizen & Administrative Governance Portal
+            </span>
           </div>
         </Link>
 
@@ -196,21 +208,21 @@ export const Navbar: React.FC = () => {
               </Link>
               <Link
                 to="/login"
-                className="px-3 py-2 rounded-md text-sm font-medium text-slate-700 hover:bg-slate-100"
+                className="px-3 py-2 rounded-md text-sm font-semibold text-primary-900 hover:bg-primary-50"
               >
                 Citizen Sign In
               </Link>
               <Link
                 to="/register"
-                className="px-3 py-2 rounded-md text-sm font-medium text-primary-700 hover:bg-primary-50 font-semibold"
+                className="px-3.5 py-2 rounded-lg text-sm font-bold text-white bg-saffron-600 hover:bg-saffron-700 shadow-xs transition-colors"
               >
                 Citizen Registration
               </Link>
               <Link
                 to="/admin/login"
-                className="px-3 py-2 rounded-md text-sm font-medium text-slate-600 hover:text-slate-900 border border-slate-300 ml-2 hover:bg-slate-50 flex items-center gap-1"
+                className="px-3 py-2 rounded-lg text-sm font-semibold text-slate-100 bg-[#081c33] hover:bg-[#0f3862] border border-slate-700 ml-1.5 flex items-center gap-1.5 transition-colors shadow-xs"
               >
-                <ShieldCheck className="w-4 h-4 text-primary-700" />
+                <ShieldCheck className="w-4 h-4 text-saffron-400" />
                 <span>Admin Portal</span>
               </Link>
             </>

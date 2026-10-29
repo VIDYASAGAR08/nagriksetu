@@ -36,7 +36,7 @@ def handle_chat_message(
     if any(greet in raw_text for greet in ["hi", "hello", "hey", "good morning", "good evening", "namaste"]):
         reply = (
             f"Hello {profile.full_name}! 👋\n\n"
-            f"I am your CivicAdmin Assistant. I can help you review your citizen profile, "
+            f"I am your NagrikSetu Assistant. I can help you review your citizen profile, "
             f"check your household registration, or explain available administrative services. "
             f"What would you like assistance with today?"
         )
