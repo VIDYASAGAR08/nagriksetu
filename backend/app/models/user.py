@@ -1,0 +1,44 @@
+import enum
+from datetime import datetime, timezone
+from sqlalchemy import Column, Integer, String, DateTime, Enum, CheckConstraint
+from sqlalchemy.orm import relationship
+from app.database import Base
+
+
+class UserRole(str, enum.Enum):
+    CITIZEN = "citizen"
+    ADMIN = "admin"
+
+
+class UserStatus(str, enum.Enum):
+    ACTIVE = "active"
+    SUSPENDED = "suspended"
+    PENDING = "pending"
+
+
+def utc_now():
+    return datetime.now(timezone.utc)
+
+
+class User(Base):
+    __tablename__ = "users"
+
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    email = Column(String(255), unique=True, index=True, nullable=False)
+    password_hash = Column(String(255), nullable=False)
+    role = Column(String(50), default=UserRole.CITIZEN.value, nullable=False)
+    account_status = Column(String(50), default=UserStatus.ACTIVE.value, nullable=False)
+    created_at = Column(DateTime(timezone=True), default=utc_now, nullable=False)
+    updated_at = Column(DateTime(timezone=True), default=utc_now, onupdate=utc_now, nullable=False)
+
+    # Relationships
+    citizen_profile = relationship("CitizenProfile", back_populates="user", uselist=False, cascade="all, delete-orphan")
+    audit_logs = relationship("AuditLog", back_populates="actor", foreign_keys="AuditLog.actor_id")
+
+    __table_args__ = (
+        CheckConstraint("role IN ('citizen', 'admin')", name="check_valid_user_role"),
+        CheckConstraint("account_status IN ('active', 'suspended', 'pending')", name="check_valid_user_status"),
+    )
+
+    def __repr__(self):
+        return f"<User id={self.id} email={self.email} role={self.role}>"
