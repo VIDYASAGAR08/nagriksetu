@@ -13,5 +13,13 @@
     </a>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    <!-- Official Landbot Widget -->
+    <script type="module" src="https://cdn.landbot.io/landbot-3/landbot-3.0.0.mjs"></script>
+    <script type="module">
+      var myLandbot = new Landbot.Livechat({
+        configUrl: 'https://storage.googleapis.com/landbot.online/v3/H-3545256-0IBIKE56OD5MMZ4W/index.json',
+      });
+      window.myLandbot = myLandbot;
+    </script>
   </body>
 </html>

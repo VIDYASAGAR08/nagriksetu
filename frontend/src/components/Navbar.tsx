@@ -4,7 +4,6 @@ import { useAuth } from '../context/AuthContext';
 import {
   ShieldCheck,
   User as UserIcon,
-  MessageSquare,
   LogOut,
   Sliders,
   Type,
@@ -111,17 +110,6 @@ export const Navbar: React.FC = () => {
                     }`}
                   >
                     My Household
-                  </Link>
-                  <Link
-                    to="/citizen/chat"
-                    className={`px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-1.5 ${
-                      isActive('/citizen/chat')
-                        ? 'bg-primary-50 text-primary-700 font-semibold'
-                        : 'text-slate-700 hover:bg-slate-100'
-                    }`}
-                  >
-                    <MessageSquare className="w-4 h-4 text-emerald-600" aria-hidden="true" />
-                    <span>Citizen Assistant</span>
                   </Link>
                   <Link
                     to="/whatsapp"
@@ -300,11 +288,11 @@ export const Navbar: React.FC = () => {
                     My Household
                   </Link>
                   <Link
-                    to="/citizen/chat"
+                    to="/whatsapp"
                     onClick={() => setMobileMenuOpen(false)}
                     className="block px-3 py-2 rounded-md text-base font-medium text-emerald-700 hover:bg-emerald-50"
                   >
-                    Citizen Assistant
+                    WhatsApp Bot
                   </Link>
                 </>
               )}

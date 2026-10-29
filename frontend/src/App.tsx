@@ -15,7 +15,6 @@ import { WhatsAppBotPage } from './pages/public/WhatsAppBotPage';
 import { CitizenDashboard } from './pages/citizen/CitizenDashboard';
 import { CitizenProfilePage } from './pages/citizen/CitizenProfilePage';
 import { CitizenHouseholdPage } from './pages/citizen/CitizenHouseholdPage';
-import { CitizenChatPage } from './pages/citizen/CitizenChatPage';
 
 // Admin Pages
 import { AdminDashboard } from './pages/admin/AdminDashboard';
@@ -63,14 +62,7 @@ export const App: React.FC = () => {
                   </ProtectedRoute>
                 }
               />
-              <Route
-                path="/citizen/chat"
-                element={
-                  <ProtectedRoute allowedRole="citizen">
-                    <CitizenChatPage />
-                  </ProtectedRoute>
-                }
-              />
+
 
               {/* Admin Protected Routes */}
               <Route

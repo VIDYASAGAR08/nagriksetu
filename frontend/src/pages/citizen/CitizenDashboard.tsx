@@ -7,7 +7,7 @@ import { Badge } from '../../components/Badge';
 import {
   User,
   Home,
-  MessageSquare,
+  QrCode,
   ShieldCheck,
   Calendar,
   Phone,
@@ -146,25 +146,24 @@ export const CitizenDashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* Quick Assistant Access Widget (1 col) */}
+        {/* WhatsApp & Municipal Bot Access Widget (1 col) */}
         <div className="bg-gradient-to-br from-emerald-800 to-teal-950 text-white rounded-2xl p-6 shadow-md flex flex-col justify-between">
           <div>
             <div className="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center mb-4">
-              <MessageSquare className="w-6 h-6 text-emerald-300" />
+              <QrCode className="w-6 h-6 text-emerald-300" />
             </div>
-            <h2 className="text-xl font-bold mb-2">Need Guidance?</h2>
+            <h2 className="text-xl font-bold mb-2">Municipal WhatsApp Bot</h2>
             <p className="text-sm text-emerald-100 leading-relaxed">
-              Use our WhatsApp-inspired conversational assistant to quickly look up your household members, check
-              verification status, or learn about administrative procedures.
+              Access municipal records, look up household details, and verify profile review status directly via our automated bot.
             </p>
           </div>
 
           <div className="mt-6 pt-4 border-t border-white/10">
             <Link
-              to="/citizen/chat"
+              to="/whatsapp"
               className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-sm shadow transition-all focus:outline-none focus:ring-2 focus:ring-emerald-300"
             >
-              <span>Launch Citizen Assistant</span>
+              <span>Open WhatsApp Bot</span>
               <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
