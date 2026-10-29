@@ -9,6 +9,7 @@ import {
   CheckCircle2,
   ArrowRight,
   Accessibility,
+  QrCode,
 } from 'lucide-react';
 
 export const LandingPage: React.FC = () => {
@@ -25,16 +26,23 @@ export const LandingPage: React.FC = () => {
         </h1>
         <p className="mt-4 text-base sm:text-lg text-slate-600 leading-relaxed">
           Welcome to the CivicAdmin public portal. Manage your citizen profile, review registered household
-          associations, and interact with the administrative assistant through a secure, accessible platform.
+          associations, or interact directly via WhatsApp with our scan-and-register bot.
         </p>
 
         {/* Primary Call to Actions */}
         <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
           <Link
+            to="/whatsapp"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl text-base font-bold text-slate-950 bg-[#25D366] hover:bg-[#20bd5a] shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#25D366] transition-all min-h-[48px]"
+          >
+            <QrCode className="w-5 h-5 text-slate-950" />
+            <span>Scan WhatsApp QR & Register</span>
+          </Link>
+          <Link
             to="/register"
             className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl text-base font-semibold text-white bg-primary-700 hover:bg-primary-800 shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-600 transition-all min-h-[48px]"
           >
-            <span>Register as Citizen</span>
+            <span>Register Online</span>
             <ArrowRight className="w-4 h-4" />
           </Link>
           <Link

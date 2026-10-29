@@ -9,6 +9,7 @@ import { LandingPage } from './pages/public/LandingPage';
 import { LoginPage } from './pages/public/LoginPage';
 import { RegisterPage } from './pages/public/RegisterPage';
 import { AdminLoginPage } from './pages/public/AdminLoginPage';
+import { WhatsAppBotPage } from './pages/public/WhatsAppBotPage';
 
 // Citizen Pages
 import { CitizenDashboard } from './pages/citizen/CitizenDashboard';
@@ -35,6 +36,7 @@ export const App: React.FC = () => {
               <Route path="/login" element={<LoginPage />} />
               <Route path="/register" element={<RegisterPage />} />
               <Route path="/admin/login" element={<AdminLoginPage />} />
+              <Route path="/whatsapp" element={<WhatsAppBotPage />} />
 
               {/* Citizen Protected Routes */}
               <Route

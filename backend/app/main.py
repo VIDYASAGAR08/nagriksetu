@@ -6,7 +6,7 @@ from app.config import settings
 from app.database import engine, Base, SessionLocal
 from app.models.user import User, UserRole, UserStatus
 from app.core.security import hash_password
-from app.api.v1 import auth, citizens, households, admin, chat, health
+from app.api.v1 import auth, citizens, households, admin, chat, health, whatsapp
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("civicadmin")
@@ -81,6 +81,7 @@ app.include_router(citizens.router, prefix=settings.API_V1_STR)
 app.include_router(households.router, prefix=settings.API_V1_STR)
 app.include_router(admin.router, prefix=settings.API_V1_STR)
 app.include_router(chat.router, prefix=settings.API_V1_STR)
+app.include_router(whatsapp.router, prefix=settings.API_V1_STR)
 
 
 @app.get("/")

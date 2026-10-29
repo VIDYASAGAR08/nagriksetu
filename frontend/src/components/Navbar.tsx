@@ -13,6 +13,7 @@ import {
   Users,
   Building,
   FileText,
+  QrCode,
 } from 'lucide-react';
 
 export const Navbar: React.FC = () => {
@@ -122,6 +123,17 @@ export const Navbar: React.FC = () => {
                     <MessageSquare className="w-4 h-4 text-emerald-600" aria-hidden="true" />
                     <span>Citizen Assistant</span>
                   </Link>
+                  <Link
+                    to="/whatsapp"
+                    className={`px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-1.5 ${
+                      isActive('/whatsapp')
+                        ? 'bg-emerald-50 text-emerald-800 font-semibold'
+                        : 'text-emerald-700 hover:bg-emerald-50'
+                    }`}
+                  >
+                    <QrCode className="w-4 h-4 text-emerald-600" aria-hidden="true" />
+                    <span>WhatsApp Bot</span>
+                  </Link>
                 </>
               )}
 
@@ -182,6 +194,17 @@ export const Navbar: React.FC = () => {
                 }`}
               >
                 Home
+              </Link>
+              <Link
+                to="/whatsapp"
+                className={`px-3 py-2 rounded-md text-sm font-semibold transition-colors flex items-center gap-1.5 ${
+                  isActive('/whatsapp')
+                    ? 'bg-emerald-50 text-emerald-800'
+                    : 'text-emerald-700 hover:bg-emerald-50'
+                }`}
+              >
+                <QrCode className="w-4 h-4 text-emerald-600" />
+                <span>WhatsApp Bot & QR</span>
               </Link>
               <Link
                 to="/login"

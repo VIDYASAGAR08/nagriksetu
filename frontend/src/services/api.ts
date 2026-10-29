@@ -178,4 +178,29 @@ export const api = {
         method: 'POST',
       }),
   },
+
+  // WhatsApp Municipal Bot Services
+  whatsapp: {
+    getInfo: () =>
+      request<{
+        bot_name: string;
+        phone_number: string;
+        clean_number: string;
+        prefill_text: string;
+        wa_me_url: string;
+        qr_code_svg: string;
+        capabilities: string[];
+      }>('/whatsapp/info'),
+    simulate: (phoneNumber: string, message: string) =>
+      request<{
+        reply: string;
+        state: string;
+        is_registered: boolean;
+        citizen_code?: string;
+        options: string[];
+      }>('/whatsapp/simulate', {
+        method: 'POST',
+        body: JSON.stringify({ phone_number: phoneNumber, message }),
+      }),
+  },
 };
