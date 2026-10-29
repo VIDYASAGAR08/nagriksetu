@@ -14,6 +14,8 @@ import {
   Globe,
   ArrowRight,
   Info,
+  CheckCircle2,
+  Layers,
 } from 'lucide-react';
 
 export const CitizenDashboard: React.FC = () => {
@@ -91,6 +93,36 @@ export const CitizenDashboard: React.FC = () => {
             </Link>
           </div>
 
+          {/* Profile Completeness Indicator (FR-ADM-013) */}
+          <div className="mb-6 p-4 rounded-xl bg-slate-50 border border-slate-200">
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                <span>Profile Completeness Score (FR-ADM-013)</span>
+              </span>
+              <span className="font-mono text-xs font-bold text-slate-900">
+                {citizenProfile?.completeness_score ?? 100}%
+              </span>
+            </div>
+            <div className="w-full bg-slate-200 rounded-full h-2.5 overflow-hidden">
+              <div
+                className={`h-2.5 rounded-full transition-all duration-500 ${
+                  (citizenProfile?.completeness_score ?? 100) === 100
+                    ? 'bg-emerald-600'
+                    : (citizenProfile?.completeness_score ?? 100) >= 60
+                    ? 'bg-amber-500'
+                    : 'bg-rose-500'
+                }`}
+                style={{ width: `${citizenProfile?.completeness_score ?? 100}%` }}
+              />
+            </div>
+            {citizenProfile?.missing_fields && citizenProfile.missing_fields.length > 0 && (
+              <p className="text-[11px] text-amber-800 mt-2">
+                <strong>Missing for complete civic benefits:</strong> {citizenProfile.missing_fields.join(', ')}.
+              </p>
+            )}
+          </div>
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
             <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-100">
               <span className="text-xs text-slate-500 font-medium block">Full Legal Name</span>
@@ -135,6 +167,16 @@ export const CitizenDashboard: React.FC = () => {
             </div>
 
             <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-100">
+              <span className="text-xs text-slate-500 font-medium block flex items-center gap-1">
+                <Layers className="w-3.5 h-3.5 text-emerald-600" />
+                <span>Jurisdiction Area</span>
+              </span>
+              <span className="text-base font-semibold text-slate-900">
+                {citizenProfile?.administrative_unit_name || 'National / General'}
+              </span>
+            </div>
+
+            <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-100 sm:col-span-2">
               <span className="text-xs text-slate-500 font-medium block flex items-center gap-1">
                 <ShieldCheck className="w-3.5 h-3.5" />
                 <span>Household Role</span>

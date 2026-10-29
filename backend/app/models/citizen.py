@@ -31,12 +31,16 @@ class CitizenProfile(Base):
     household_id = Column(Integer, ForeignKey("households.id", ondelete="SET NULL"), nullable=True, index=True)
     household_relationship = Column(String(100), nullable=True)
 
+    # Administrative Unit / Area Mapping (FR-ADM-021)
+    administrative_unit_id = Column(Integer, ForeignKey("administrative_units.id", ondelete="SET NULL"), nullable=True, index=True)
+
     created_at = Column(DateTime(timezone=True), default=utc_now, nullable=False)
     updated_at = Column(DateTime(timezone=True), default=utc_now, onupdate=utc_now, nullable=False)
 
     # Relationships
     user = relationship("User", back_populates="citizen_profile")
     household = relationship("Household", back_populates="members")
+    administrative_unit = relationship("AdministrativeUnit", back_populates="citizens")
 
     __table_args__ = (
         CheckConstraint("profile_status IN ('pending_review', 'active', 'archived')", name="check_valid_profile_status"),

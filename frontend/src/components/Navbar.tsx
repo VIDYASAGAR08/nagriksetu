@@ -13,6 +13,7 @@ import {
   Building,
   FileText,
   QrCode,
+  Layers,
 } from 'lucide-react';
 
 export const Navbar: React.FC = () => {
@@ -170,6 +171,17 @@ export const Navbar: React.FC = () => {
                   >
                     <Building className="w-4 h-4" />
                     <span>Households</span>
+                  </Link>
+                  <Link
+                    to="/admin/hierarchy"
+                    className={`px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-1 ${
+                      isActive('/admin/hierarchy')
+                        ? 'bg-primary-50 text-primary-700'
+                        : 'text-slate-700 hover:bg-slate-100'
+                    }`}
+                  >
+                    <Layers className="w-4 h-4" />
+                    <span>Hierarchy & Scope</span>
                   </Link>
                   <Link
                     to="/admin/audit"
@@ -331,6 +343,13 @@ export const Navbar: React.FC = () => {
                     className="block px-3 py-2 rounded-md text-base font-medium text-slate-700 hover:bg-slate-100"
                   >
                     Household Management
+                  </Link>
+                  <Link
+                    to="/admin/hierarchy"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="block px-3 py-2 rounded-md text-base font-medium text-slate-700 hover:bg-slate-100"
+                  >
+                    Hierarchy & Area Scope
                   </Link>
                   <Link
                     to="/admin/audit"

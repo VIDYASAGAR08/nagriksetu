@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../../services/api';
-import { CitizenProfile, Household } from '../../types';
+import { CitizenProfile, Household, AdministrativeUnit } from '../../types';
 import { Badge } from '../../components/Badge';
 import { Alert } from '../../components/Alert';
 import { ConfirmModal } from '../../components/ConfirmModal';
@@ -12,11 +12,13 @@ import {
   Edit2,
   Trash2,
   X,
+  Layers,
 } from 'lucide-react';
 
 export const CitizenManagementPage: React.FC = () => {
   const [citizens, setCitizens] = useState<CitizenProfile[]>([]);
   const [households, setHouseholds] = useState<Household[]>([]);
+  const [units, setUnits] = useState<AdministrativeUnit[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
@@ -38,6 +40,7 @@ export const CitizenManagementPage: React.FC = () => {
     profile_status: 'pending_review',
     household_id: '',
     household_relationship: '',
+    administrative_unit_id: '',
   });
 
   const [editForm, setEditForm] = useState({
@@ -48,17 +51,20 @@ export const CitizenManagementPage: React.FC = () => {
     date_of_birth: '',
     household_id: '',
     household_relationship: '',
+    administrative_unit_id: '',
   });
 
   const loadData = async () => {
     setLoading(true);
     try {
-      const [citizensData, householdsData] = await Promise.all([
+      const [citizensData, householdsData, unitsData] = await Promise.all([
         api.admin.listCitizens(searchQuery || undefined, statusFilter || undefined),
         api.admin.listHouseholds(),
+        api.hierarchy.list({ page_size: 100 }),
       ]);
       setCitizens(citizensData);
       setHouseholds(householdsData);
+      setUnits(unitsData.items);
     } catch (err: any) {
       setAlert({ type: 'error', message: err.message || 'Failed to load citizens.' });
     } finally {
@@ -82,6 +88,7 @@ export const CitizenManagementPage: React.FC = () => {
         ...newCitizen,
         email: newCitizen.email.trim() || undefined,
         household_id: newCitizen.household_id ? parseInt(newCitizen.household_id) : undefined,
+        administrative_unit_id: newCitizen.administrative_unit_id ? parseInt(newCitizen.administrative_unit_id) : undefined,
       });
       setCreateModalOpen(false);
       setNewCitizen({
@@ -93,6 +100,7 @@ export const CitizenManagementPage: React.FC = () => {
         profile_status: 'pending_review',
         household_id: '',
         household_relationship: '',
+        administrative_unit_id: '',
       });
       setAlert({ type: 'success', message: 'Citizen profile created successfully.' });
       loadData();
@@ -111,6 +119,7 @@ export const CitizenManagementPage: React.FC = () => {
       date_of_birth: citizen.date_of_birth || '',
       household_id: citizen.household_id ? String(citizen.household_id) : '',
       household_relationship: citizen.household_relationship || '',
+      administrative_unit_id: citizen.administrative_unit_id ? String(citizen.administrative_unit_id) : '',
     });
     setEditModalOpen(true);
   };
@@ -128,6 +137,7 @@ export const CitizenManagementPage: React.FC = () => {
         date_of_birth: editForm.date_of_birth || undefined,
         household_id: editForm.household_id ? parseInt(editForm.household_id) : null,
         household_relationship: editForm.household_relationship || null,
+        administrative_unit_id: editForm.administrative_unit_id ? parseInt(editForm.administrative_unit_id) : null,
       });
       setEditModalOpen(false);
       setAlert({ type: 'success', message: 'Citizen profile updated successfully.' });
@@ -238,8 +248,9 @@ export const CitizenManagementPage: React.FC = () => {
                   <th scope="col" className="p-3.5">Citizen Code</th>
                   <th scope="col" className="p-3.5">Full Legal Name</th>
                   <th scope="col" className="p-3.5">Status</th>
+                  <th scope="col" className="p-3.5">Completeness (FR-ADM-013)</th>
+                  <th scope="col" className="p-3.5">Jurisdiction Area</th>
                   <th scope="col" className="p-3.5">Contact Phone</th>
-                  <th scope="col" className="p-3.5">Language</th>
                   <th scope="col" className="p-3.5 text-right">Actions</th>
                 </tr>
               </thead>
@@ -255,11 +266,42 @@ export const CitizenManagementPage: React.FC = () => {
                     <td className="p-3.5">
                       <Badge status={citizen.profile_status} />
                     </td>
+                    <td className="p-3.5">
+                      <div className="flex items-center gap-2">
+                        <div className="w-16 bg-slate-200 rounded-full h-2 overflow-hidden">
+                          <div
+                            className={`h-2 rounded-full ${
+                              (citizen.completeness_score ?? 100) === 100
+                                ? 'bg-emerald-600'
+                                : (citizen.completeness_score ?? 100) >= 60
+                                ? 'bg-amber-500'
+                                : 'bg-rose-500'
+                            }`}
+                            style={{ width: `${citizen.completeness_score ?? 100}%` }}
+                          />
+                        </div>
+                        <span className="text-xs font-bold text-slate-700 font-mono">
+                          {citizen.completeness_score ?? 100}%
+                        </span>
+                      </div>
+                      {citizen.missing_fields && citizen.missing_fields.length > 0 && (
+                        <span className="text-[10px] text-slate-400 block truncate max-w-xs" title={`Missing: ${citizen.missing_fields.join(', ')}`}>
+                          Missing: {citizen.missing_fields.join(', ')}
+                        </span>
+                      )}
+                    </td>
+                    <td className="p-3.5 text-xs text-slate-600">
+                      {citizen.administrative_unit_name ? (
+                        <span className="inline-flex items-center gap-1 text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 font-medium">
+                          <Layers className="w-3 h-3 text-emerald-600" />
+                          {citizen.administrative_unit_name}
+                        </span>
+                      ) : (
+                        <span className="text-slate-400 italic">Unassigned</span>
+                      )}
+                    </td>
                     <td className="p-3.5 text-slate-600 font-mono text-xs">
                       {citizen.phone_number || '—'}
-                    </td>
-                    <td className="p-3.5 uppercase text-xs font-semibold text-slate-600">
-                      {citizen.preferred_language}
                     </td>
                     <td className="p-3.5 text-right space-x-2">
                       <button
@@ -403,6 +445,24 @@ export const CitizenManagementPage: React.FC = () => {
                 </select>
               </div>
 
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Jurisdiction Area (Administrative Unit Mapping)
+                </label>
+                <select
+                  value={newCitizen.administrative_unit_id}
+                  onChange={(e) => setNewCitizen({ ...newCitizen, administrative_unit_id: e.target.value })}
+                  className="w-full p-2.5 rounded-lg border border-slate-300 text-sm bg-white focus:ring-2 focus:ring-primary-500 focus:outline-none"
+                >
+                  <option value="">None / Unassigned</option>
+                  {units.map((u) => (
+                    <option key={u.id} value={u.id}>
+                      {u.name} ({u.identifier} - {u.unit_type})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
               <div className="pt-4 border-t border-slate-100 flex items-center justify-end gap-3">
                 <button
                   type="button"
@@ -534,6 +594,24 @@ export const CitizenManagementPage: React.FC = () => {
                   {households.map((hh) => (
                     <option key={hh.id} value={hh.id}>
                       {hh.household_code} - {hh.address_line}, {hh.city}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Jurisdiction Area (Administrative Unit Mapping)
+                </label>
+                <select
+                  value={editForm.administrative_unit_id}
+                  onChange={(e) => setEditForm({ ...editForm, administrative_unit_id: e.target.value })}
+                  className="w-full p-2.5 rounded-lg border border-slate-300 text-sm bg-white focus:ring-2 focus:ring-primary-500 focus:outline-none"
+                >
+                  <option value="">None / Unassigned</option>
+                  {units.map((u) => (
+                    <option key={u.id} value={u.id}>
+                      {u.name} ({u.identifier} - {u.unit_type})
                     </option>
                   ))}
                 </select>

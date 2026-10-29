@@ -20,6 +20,7 @@ import { CitizenHouseholdPage } from './pages/citizen/CitizenHouseholdPage';
 import { AdminDashboard } from './pages/admin/AdminDashboard';
 import { CitizenManagementPage } from './pages/admin/CitizenManagementPage';
 import { HouseholdManagementPage } from './pages/admin/HouseholdManagementPage';
+import { HierarchyManagementPage } from './pages/admin/HierarchyManagementPage';
 import { AuditLogPage } from './pages/admin/AuditLogPage';
 
 export const App: React.FC = () => {
@@ -86,6 +87,14 @@ export const App: React.FC = () => {
                 element={
                   <ProtectedRoute allowedRole="admin">
                     <HouseholdManagementPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/hierarchy"
+                element={
+                  <ProtectedRoute allowedRole="admin">
+                    <HierarchyManagementPage />
                   </ProtectedRoute>
                 }
               />

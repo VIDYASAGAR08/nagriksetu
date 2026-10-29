@@ -3,7 +3,7 @@ import { useAuth } from '../../context/AuthContext';
 import { api } from '../../services/api';
 import { Alert } from '../../components/Alert';
 import { Badge } from '../../components/Badge';
-import { User, Phone, Globe, Calendar, Lock, Save } from 'lucide-react';
+import { User, Phone, Globe, Calendar, Lock, Save, Layers, CheckCircle2 } from 'lucide-react';
 
 export const CitizenProfilePage: React.FC = () => {
   const { citizenProfile, user, refreshUser } = useAuth();
@@ -125,6 +125,37 @@ export const CitizenProfilePage: React.FC = () => {
               <span className="font-bold text-slate-800">
                 {citizenProfile?.household_relationship || 'None Assigned'}
               </span>
+            </div>
+
+            <div className="p-2.5 bg-white rounded-lg border border-slate-200">
+              <span className="text-slate-400 block font-medium flex items-center gap-1">
+                <Layers className="w-3.5 h-3.5 text-emerald-600" />
+                <span>Jurisdiction Area</span>
+              </span>
+              <span className="font-bold text-slate-800">
+                {citizenProfile?.administrative_unit_name || 'National (All Areas)'}
+              </span>
+            </div>
+
+            <div className="p-2.5 bg-emerald-50 rounded-lg border border-emerald-200">
+              <span className="text-emerald-800 block font-semibold flex items-center gap-1 mb-1">
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                <span>Profile Completeness (FR-ADM-013)</span>
+              </span>
+              <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden mb-1">
+                <div
+                  className="bg-emerald-600 h-2 rounded-full"
+                  style={{ width: `${citizenProfile?.completeness_score ?? 100}%` }}
+                />
+              </div>
+              <span className="font-mono font-bold text-xs text-emerald-900">
+                {citizenProfile?.completeness_score ?? 100}% Complete
+              </span>
+              {citizenProfile?.missing_fields && citizenProfile.missing_fields.length > 0 && (
+                <p className="text-[10px] text-slate-600 mt-1">
+                  Missing: {citizenProfile.missing_fields.join(', ')}
+                </p>
+              )}
             </div>
           </div>
         </div>

@@ -9,7 +9,16 @@ class AdminDashboardMetrics(BaseModel):
     active_citizens: int
     pending_citizens: int
     total_households: int
+    total_administrative_units: int = 0
+    active_units: int = 0
+    admin_scope: str = "National (All Areas)"
+    admin_scope_unit_id: Optional[int] = None
     recent_registrations: List[CitizenProfileResponse] = []
+
+
+class AdminScopeAssignRequest(BaseModel):
+    user_id: int
+    administrative_unit_id: Optional[int] = None
 
 
 class AuditLogResponse(BaseModel):

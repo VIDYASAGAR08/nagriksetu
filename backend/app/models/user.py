@@ -1,6 +1,6 @@
 import enum
 from datetime import datetime, timezone
-from sqlalchemy import Column, Integer, String, DateTime, Enum, CheckConstraint
+from sqlalchemy import Column, Integer, String, DateTime, Enum, CheckConstraint, ForeignKey
 from sqlalchemy.orm import relationship
 from app.database import Base
 
@@ -28,12 +28,16 @@ class User(Base):
     password_hash = Column(String(255), nullable=False)
     role = Column(String(50), default=UserRole.CITIZEN.value, nullable=False)
     account_status = Column(String(50), default=UserStatus.ACTIVE.value, nullable=False)
+    # Administrative Scope assignment (FR-ADM-021)
+    # If null, admin has national / unrestricted scope.
+    administrative_unit_id = Column(Integer, ForeignKey("administrative_units.id", ondelete="SET NULL"), nullable=True, index=True)
     created_at = Column(DateTime(timezone=True), default=utc_now, nullable=False)
     updated_at = Column(DateTime(timezone=True), default=utc_now, onupdate=utc_now, nullable=False)
 
     # Relationships
     citizen_profile = relationship("CitizenProfile", back_populates="user", uselist=False, cascade="all, delete-orphan")
     audit_logs = relationship("AuditLog", back_populates="actor", foreign_keys="AuditLog.actor_id")
+    administrative_unit = relationship("AdministrativeUnit", back_populates="scoped_admins")
 
     __table_args__ = (
         CheckConstraint("role IN ('citizen', 'admin')", name="check_valid_user_role"),

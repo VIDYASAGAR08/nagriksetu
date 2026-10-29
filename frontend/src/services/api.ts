@@ -4,6 +4,10 @@ import {
   Household,
   AdminDashboardMetrics,
   AuditLog,
+  AdministrativeUnit,
+  AdministrativeUnitListResponse,
+  HouseholdMembership,
+  OutboxEventListResponse,
 } from '../types';
 
 export const API_BASE_URL = import.meta.env.VITE_API_URL || '/api/v1';
@@ -113,11 +117,66 @@ export const api = {
       }),
   },
 
-  // Administrator Portal Operations
+  // Administrative Hierarchy (FR-ADM-001 to FR-ADM-005)
+  hierarchy: {
+    list: (params?: {
+      search?: string;
+      unit_type?: string;
+      parent_id?: number;
+      status?: string;
+      page?: number;
+      page_size?: number;
+    }) => {
+      const q = new URLSearchParams();
+      if (params?.search) q.append('search', params.search);
+      if (params?.unit_type) q.append('unit_type', params.unit_type);
+      if (params?.parent_id !== undefined && params?.parent_id !== null) q.append('parent_id', String(params.parent_id));
+      if (params?.status) q.append('status', params.status);
+      if (params?.page) q.append('page', String(params.page));
+      if (params?.page_size) q.append('page_size', String(params.page_size));
+      const queryString = q.toString();
+      return request<AdministrativeUnitListResponse>(`/hierarchy${queryString ? `?${queryString}` : ''}`);
+    },
+    get: (id: number) => request<AdministrativeUnit>(`/hierarchy/${id}`),
+    create: (payload: {
+      identifier: string;
+      name: string;
+      unit_type: string;
+      parent_id?: number | null;
+      status?: string;
+    }) =>
+      request<AdministrativeUnit>('/hierarchy', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      }),
+    update: (
+      id: number,
+      payload: {
+        name?: string;
+        parent_id?: number | null;
+        status?: string;
+      }
+    ) =>
+      request<AdministrativeUnit>(`/hierarchy/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify(payload),
+      }),
+  },
+
+  // Administrator Portal Operations (FR-ADM-006 to FR-ADM-024)
   admin: {
     getDashboard: () => request<AdminDashboardMetrics>('/admin/dashboard'),
     getAuditLogs: (skip = 0, limit = 50) =>
       request<AuditLog[]>(`/admin/audit-logs?skip=${skip}&limit=${limit}`),
+    listAdmins: () => request<User[]>('/admin/admins'),
+    assignScope: (userId: number, administrativeUnitId?: number | null) =>
+      request<{ message: string; user_id: number; administrative_unit_id: number | null; administrative_unit_name?: string }>(
+        '/admin/scope/assign',
+        {
+          method: 'POST',
+          body: JSON.stringify({ user_id: userId, administrative_unit_id: administrativeUnitId }),
+        }
+      ),
 
     // Citizen management
     listCitizens: (search?: string, status?: string) => {
@@ -177,6 +236,26 @@ export const api = {
       request<Household>(`/households/${householdId}/unassign/${citizenId}`, {
         method: 'POST',
       }),
+    getHouseholdMemberships: (householdId: number) =>
+      request<HouseholdMembership[]>(`/households/${householdId}/memberships`),
+    endMembership: (householdId: number, citizenId: number, notes?: string) =>
+      request<Household>(`/households/${householdId}/end-membership/${citizenId}`, {
+        method: 'POST',
+        body: JSON.stringify({ notes }),
+      }),
+  },
+
+  // Service Integration & Domain Events (FR-ADM-025)
+  events: {
+    list: (params?: { event_type?: string; aggregate_type?: string; page?: number; page_size?: number }) => {
+      const q = new URLSearchParams();
+      if (params?.event_type) q.append('event_type', params.event_type);
+      if (params?.aggregate_type) q.append('aggregate_type', params.aggregate_type);
+      if (params?.page) q.append('page', String(params.page));
+      if (params?.page_size) q.append('page_size', String(params.page_size));
+      const queryString = q.toString();
+      return request<OutboxEventListResponse>(`/events${queryString ? `?${queryString}` : ''}`);
+    },
   },
 
   // WhatsApp Municipal Bot Services

@@ -11,7 +11,7 @@ import {
   ArrowRight,
   ShieldCheck,
   FileText,
-  PlusCircle,
+  Layers,
 } from 'lucide-react';
 
 export const AdminDashboard: React.FC = () => {
@@ -56,22 +56,45 @@ export const AdminDashboard: React.FC = () => {
             Administrative Dashboard
           </h1>
           <p className="text-sm text-slate-600 mt-0.5">
-            Real-time municipal record indicators derived directly from PostgreSQL.
+            Real-time municipal record indicators derived directly from PostgreSQL administration database.
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Admin Scope Badge (FR-ADM-022, FR-ADM-023) */}
+          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 border border-emerald-300 text-emerald-900 text-xs font-semibold">
+            <Layers className="w-4 h-4 text-emerald-700" />
+            <span>Scope: {metrics?.admin_scope || 'National (All Areas)'}</span>
+          </div>
           <Link
-            to="/admin/citizens"
+            to="/admin/hierarchy"
             className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-slate-900 hover:bg-black text-white text-sm font-semibold shadow-sm transition-colors"
           >
-            <PlusCircle className="w-4 h-4 text-amber-400" />
-            <span>Manage Records</span>
+            <Layers className="w-4 h-4 text-emerald-400" />
+            <span>Hierarchy & Scope</span>
           </Link>
         </div>
       </div>
 
-      {/* Metrics Counter Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+      {/* Metrics Counter Cards (FR-ADM-023) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+        {/* Total Administrative Units */}
+        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+          <div>
+            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+              Admin Units
+            </span>
+            <div className="text-3xl font-black text-slate-900 mt-1 font-mono">
+              {metrics?.total_administrative_units ?? 0}
+            </div>
+            <span className="text-xs text-emerald-600 font-medium mt-1 block">
+              {metrics?.active_units ?? 0} active units
+            </span>
+          </div>
+          <div className="w-12 h-12 rounded-xl bg-teal-50 text-teal-700 flex items-center justify-center">
+            <Layers className="w-6 h-6" />
+          </div>
+        </div>
+
         {/* Total Citizens */}
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
           <div>
@@ -81,7 +104,7 @@ export const AdminDashboard: React.FC = () => {
             <div className="text-3xl font-black text-slate-900 mt-1 font-mono">
               {metrics?.total_citizens ?? 0}
             </div>
-            <span className="text-xs text-slate-500 mt-1 block">Registered in registry</span>
+            <span className="text-xs text-slate-500 mt-1 block">In assigned scope</span>
           </div>
           <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center">
             <Users className="w-6 h-6" />
@@ -129,7 +152,7 @@ export const AdminDashboard: React.FC = () => {
             <div className="text-3xl font-black text-slate-900 mt-1 font-mono">
               {metrics?.total_households ?? 0}
             </div>
-            <span className="text-xs text-slate-500 mt-1 block">Registered dwellings</span>
+            <span className="text-xs text-slate-500 mt-1 block">In assigned scope</span>
           </div>
           <div className="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-700 flex items-center justify-center">
             <Building className="w-6 h-6" />
@@ -226,6 +249,17 @@ export const AdminDashboard: React.FC = () => {
                 <div className="flex items-center gap-2.5">
                   <Building className="w-4 h-4 text-emerald-400" />
                   <span>Household Registry</span>
+                </div>
+                <ArrowRight className="w-4 h-4 text-slate-400" />
+              </Link>
+
+              <Link
+                to="/admin/hierarchy"
+                className="w-full flex items-center justify-between px-4 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-sm font-semibold transition-colors"
+              >
+                <div className="flex items-center gap-2.5">
+                  <Layers className="w-4 h-4 text-teal-400" />
+                  <span>Hierarchy & Area Scope</span>
                 </div>
                 <ArrowRight className="w-4 h-4 text-slate-400" />
               </Link>

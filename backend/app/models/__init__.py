@@ -1,8 +1,10 @@
 from app.database import Base
 from app.models.user import User, UserRole, UserStatus
-from app.models.household import Household
+from app.models.household import Household, HouseholdMembership, MembershipStatus
 from app.models.citizen import CitizenProfile, ProfileStatus
 from app.models.audit import AuditLog
+from app.models.hierarchy import AdministrativeUnit, AdministrativeUnitType, AdministrativeUnitStatus
+from app.models.event import OutboxEvent
 
 __all__ = [
     "Base",
@@ -10,7 +12,13 @@ __all__ = [
     "UserRole",
     "UserStatus",
     "Household",
+    "HouseholdMembership",
+    "MembershipStatus",
     "CitizenProfile",
     "ProfileStatus",
     "AuditLog",
+    "AdministrativeUnit",
+    "AdministrativeUnitType",
+    "AdministrativeUnitStatus",
+    "OutboxEvent",
 ]

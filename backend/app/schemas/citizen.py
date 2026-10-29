@@ -1,5 +1,5 @@
 from datetime import date, datetime
-from typing import Optional, Any
+from typing import Optional, Any, List
 from pydantic import BaseModel, Field, EmailStr, ConfigDict, field_validator
 
 
@@ -23,6 +23,10 @@ class CitizenProfileResponse(CitizenProfileBase):
     profile_status: str
     household_id: Optional[int] = None
     household_relationship: Optional[str] = None
+    administrative_unit_id: Optional[int] = None
+    administrative_unit_name: Optional[str] = None
+    completeness_score: int = 100
+    missing_fields: List[str] = []
     user_id: Optional[int] = None
     created_at: datetime
     updated_at: datetime
@@ -40,6 +44,7 @@ class CitizenProfileUpdateRequest(BaseModel):
     phone_number: Optional[str] = Field(None, max_length=30)
     preferred_language: Optional[str] = Field(None, max_length=10)
     date_of_birth: Optional[date] = None
+    administrative_unit_id: Optional[int] = None
 
     @field_validator("date_of_birth", mode="before")
     @classmethod
@@ -63,6 +68,7 @@ class AdminCitizenCreateRequest(CitizenProfileBase):
     profile_status: str = Field(default="pending_review")
     household_id: Optional[int] = None
     household_relationship: Optional[str] = None
+    administrative_unit_id: Optional[int] = None
 
     @field_validator("email", mode="before")
     @classmethod
@@ -87,6 +93,7 @@ class AdminCitizenUpdateRequest(BaseModel):
     profile_status: Optional[str] = None
     household_id: Optional[int] = None
     household_relationship: Optional[str] = None
+    administrative_unit_id: Optional[int] = None
 
     @field_validator("date_of_birth", mode="before")
     @classmethod
