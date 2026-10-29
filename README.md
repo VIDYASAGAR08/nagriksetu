@@ -2,9 +2,10 @@
 
 CivicAdmin is a microservice built with **FastAPI**, **PostgreSQL**, **SQLAlchemy 2.x**, **Pydantic 2.x**, **React 18**, **TypeScript**, and **Tailwind CSS**. It serves as the official Administrative Service within a modular citizen-services architecture.
 
-CivicAdmin provides two strictly separated, accessible experiences:
-1. **Citizen Portal**: Self-service registration, profile management, household privacy-scoped viewing, and a WhatsApp-inspired conversational assistant.
-2. **Administrator Portal**: Real-time database metrics, citizen registry CRUD, household management, administrative review workflows, and immutable audit logging.
+CivicAdmin provides three integrated, accessible experiences:
+1. **Citizen Portal**: Self-service registration, profile management, household privacy-scoped viewing, and a conversational assistant.
+2. **WhatsApp Bot & Scannable QR Code**: Scan a QR code to interact or register directly over WhatsApp without needing to browse the website. Features an interactive mobile WhatsApp phone simulator on screen.
+3. **Administrator Portal**: Real-time database metrics, citizen registry CRUD, household management, administrative review workflows, and immutable audit logging.
 
 Targeted for **WCAG 2.2 AA Accessibility** and designed for seamless integration behind an **API Gateway**.
 
