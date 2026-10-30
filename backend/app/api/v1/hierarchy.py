@@ -47,6 +47,8 @@ def _to_unit_response(unit: AdministrativeUnit, db: Session) -> AdministrativeUn
     )
 
 
+@router.post("", response_model=AdministrativeUnitResponse, status_code=status.HTTP_201_CREATED)
+@router.post("/", response_model=AdministrativeUnitResponse, status_code=status.HTTP_201_CREATED)
 @router.post("/units", response_model=AdministrativeUnitResponse, status_code=status.HTTP_201_CREATED)
 def create_administrative_unit(
     payload: AdministrativeUnitCreate,
@@ -125,6 +127,8 @@ def create_administrative_unit(
     return _to_unit_response(unit, db)
 
 
+@router.get("", response_model=AdministrativeUnitListResponse)
+@router.get("/", response_model=AdministrativeUnitListResponse)
 @router.get("/units", response_model=AdministrativeUnitListResponse)
 def list_administrative_units(
     search: Optional[str] = Query(None, description="Search by name or identifier"),
@@ -168,6 +172,7 @@ def list_administrative_units(
     return AdministrativeUnitListResponse(total=total, page=page, page_size=page_size, items=items)
 
 
+@router.get("/{unit_id}", response_model=AdministrativeUnitResponse)
 @router.get("/units/{unit_id}", response_model=AdministrativeUnitResponse)
 def get_administrative_unit(
     unit_id: int,
@@ -185,6 +190,7 @@ def get_administrative_unit(
     return _to_unit_response(unit, db)
 
 
+@router.patch("/{unit_id}", response_model=AdministrativeUnitResponse)
 @router.patch("/units/{unit_id}", response_model=AdministrativeUnitResponse)
 def update_or_deactivate_administrative_unit(
     unit_id: int,

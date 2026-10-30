@@ -42,6 +42,11 @@ export const AdminLoginPage: React.FC = () => {
     setPassword('AdminPass123!@#');
   };
 
+  const fillScopedAdmin = () => {
+    setEmail('admin.bengaluru@nagriksetu.gov.in');
+    setPassword('AdminPass123!@#');
+  };
+
   return (
     <div id="main-content" className="min-h-[75vh] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-slate-900/5">
       <div className="max-w-md w-full bg-white p-8 rounded-2xl border-2 border-slate-800 shadow-2xl">
@@ -134,17 +139,28 @@ export const AdminLoginPage: React.FC = () => {
           </button>
         </form>
 
-        <div className="mt-5 pt-4 border-t border-slate-100 flex items-center justify-between text-xs">
-          <button
-            type="button"
-            onClick={fillDemoAdmin}
-            className="text-amber-700 hover:text-amber-900 font-semibold underline focus:outline-none"
-          >
-            Fill Dev Admin Credentials
-          </button>
-          <Link to="/login" className="text-slate-500 hover:text-slate-800">
-            Citizen Login &rarr;
-          </Link>
+        <div className="mt-5 pt-4 border-t border-slate-100 flex flex-col gap-2 text-xs">
+          <div className="flex items-center justify-between">
+            <button
+              type="button"
+              onClick={fillDemoAdmin}
+              className="text-amber-700 hover:text-amber-900 font-semibold underline focus:outline-none"
+            >
+              Fill National Admin (All Areas)
+            </button>
+            <button
+              type="button"
+              onClick={fillScopedAdmin}
+              className="text-emerald-700 hover:text-emerald-900 font-semibold underline focus:outline-none"
+            >
+              Fill Scoped Admin (Bengaluru)
+            </button>
+          </div>
+          <div className="text-right pt-1">
+            <Link to="/login" className="text-slate-500 hover:text-slate-800">
+              Citizen Login &rarr;
+            </Link>
+          </div>
         </div>
       </div>
     </div>

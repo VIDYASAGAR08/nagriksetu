@@ -443,6 +443,7 @@ def assign_member_to_household(
 
 
 @router.post("/{household_id}/members/{citizen_id}/end", response_model=AdminHouseholdResponse)
+@router.post("/{household_id}/end-membership/{citizen_id}", response_model=AdminHouseholdResponse)
 def end_household_membership(
     household_id: int,
     citizen_id: int,
@@ -516,6 +517,7 @@ def end_household_membership(
 
 
 @router.get("/{household_id}/history", response_model=List[HouseholdMembershipResponse])
+@router.get("/{household_id}/memberships", response_model=List[HouseholdMembershipResponse])
 def get_household_membership_history(
     household_id: int,
     current_admin: User = Depends(get_current_admin),
