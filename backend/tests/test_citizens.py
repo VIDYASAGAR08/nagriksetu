@@ -14,6 +14,30 @@ def test_citizen_update_own_profile(client, citizen_token, citizen_user):
         "phone_number": "+91 99999 88888",
         "preferred_language": "hi"
     }
+
+    # 1. Update without OTP must be blocked (FR-ADM-008 & Privacy Policy)
+    blocked_res = client.patch("/api/v1/citizens/me", json=payload, headers=headers)
+    assert blocked_res.status_code == 403
+    assert "OTP verification is mandatory" in blocked_res.json()["detail"]
+
+    # 2. Generate OTP
+    otp_gen = client.post("/api/v1/auth/otp/generate", json={"purpose": "CITIZEN_PROFILE_UPDATE"}, headers=headers)
+    assert otp_gen.status_code == 200
+    otp_data = otp_gen.json()
+    ref_id = otp_data["reference_id"]
+    demo_code = otp_data["demo_hint"]
+
+    # 3. Verify OTP
+    otp_ver = client.post("/api/v1/auth/otp/verify", json={
+        "reference_id": ref_id,
+        "otp_code": demo_code,
+        "purpose": "CITIZEN_PROFILE_UPDATE"
+    })
+    assert otp_ver.status_code == 200
+    assert otp_ver.json()["verified"] is True
+
+    # 4. Perform update with verified OTP reference token
+    payload["otp_reference_id"] = ref_id
     res = client.patch("/api/v1/citizens/me", json=payload, headers=headers)
     assert res.status_code == 200
     data = res.json()

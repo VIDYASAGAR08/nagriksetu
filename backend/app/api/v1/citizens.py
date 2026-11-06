@@ -9,12 +9,21 @@ from app.models.citizen import CitizenProfile, ProfileStatus
 from app.models.household import Household
 from app.models.hierarchy import AdministrativeUnit
 from app.models.event import OutboxEvent
+from app.models.otp import OTPVerification
+from app.models.records import MedicalRecord, EducationRecord
 from app.schemas.citizen import (
     CitizenProfileResponse,
     CitizenProfileUpdateRequest,
+    FamilyMemberUpdateRequest,
     AdminCitizenCreateRequest,
     AdminCitizenUpdateRequest,
     AdminStatusUpdateRequest,
+)
+from app.schemas.records import (
+    MedicalRecordResponse,
+    MedicalRecordUpdateRequest,
+    EducationRecordResponse,
+    EducationRecordUpdateRequest,
 )
 from app.api.deps import (
     get_current_user,
@@ -49,6 +58,7 @@ def _to_citizen_response(p: CitizenProfile) -> CitizenProfileResponse:
         phone_number=p.phone_number,
         preferred_language=p.preferred_language,
         profile_status=p.profile_status,
+        face_photo=p.face_photo,
         household_id=p.household_id,
         household_relationship=p.household_relationship,
         administrative_unit_id=p.administrative_unit_id,
@@ -87,6 +97,34 @@ def update_my_profile(
     FR-ADM-012: Records changed fields with actor and timestamp.
     """
     update_data = payload.model_dump(exclude_unset=True)
+    otp_ref = update_data.pop("otp_reference_id", None)
+
+    # Privacy enforcement: Require verified OTP for citizen profile changes
+    if not otp_ref:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Two-Step OTP verification is mandatory for citizen profile modifications to ensure identity privacy. Please request and verify an OTP."
+        )
+
+    otp_record = db.query(OTPVerification).filter(
+        OTPVerification.reference_id == otp_ref,
+        OTPVerification.purpose == "CITIZEN_PROFILE_UPDATE"
+    ).first()
+
+    if not otp_record or not otp_record.is_verified:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Invalid or unverified OTP token. Please complete the OTP challenge before saving changes."
+        )
+
+    if otp_record.is_expired():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="The verified OTP session has expired. Please re-verify."
+        )
+
+    # Consume the OTP token so it cannot be replayed
+    otp_record.is_verified = False
 
     # Validate administrative unit if provided
     if "administrative_unit_id" in update_data and update_data["administrative_unit_id"] is not None:
@@ -106,10 +144,10 @@ def update_my_profile(
         record_audit_log(
             db=db,
             actor=profile.user,
-            action="CITIZEN_SELF_UPDATE",
+            action="CITIZEN_SELF_UPDATE_OTP_VERIFIED",
             resource_type="citizen",
             resource_id=profile.citizen_code,
-            details={"changes": diffs}
+            details={"changes": diffs, "otp_ref": otp_ref}
         )
 
         # Domain event (FR-ADM-025)
@@ -124,6 +162,280 @@ def update_my_profile(
         db.refresh(profile)
 
     return _to_citizen_response(profile)
+
+
+@router.patch("/{citizen_id}/family-update", response_model=CitizenProfileResponse)
+def update_family_member_profile(
+    citizen_id: int,
+    payload: FamilyMemberUpdateRequest,
+    caller_profile: CitizenProfile = Depends(get_current_citizen_profile),
+    db: Session = Depends(get_db)
+):
+    """
+    Allow family members within the SAME household dwelling to update permitted secondary details
+    (e.g., phone number, preferred language).
+    Strict Privacy Enforcement:
+    - Non-household members (unknown people) are strictly forbidden (403 Forbidden).
+    - Core identity (legal full name, citizen code, date of birth) CANNOT be altered by family members.
+    - Requires 2-Step OTP clearance.
+    """
+    target = db.query(CitizenProfile).filter(CitizenProfile.id == citizen_id).first()
+    if not target:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Citizen profile not found.")
+
+    # 1. Household Association Check (Strict Privacy Wall)
+    if not caller_profile.household_id or caller_profile.household_id != target.household_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access Denied: You can only view and update records for members of your own household dwelling. Unrelated individuals cannot edit this profile."
+        )
+
+    # 2. OTP Verification Check
+    if not payload.otp_reference_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Two-Step OTP verification is mandatory for family member profile updates. Please request and verify an OTP."
+        )
+
+    otp_record = db.query(OTPVerification).filter(
+        OTPVerification.reference_id == payload.otp_reference_id,
+        OTPVerification.purpose == "CITIZEN_PROFILE_UPDATE"
+    ).first()
+
+    if not otp_record or not otp_record.is_verified:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Invalid or unverified OTP token. Please complete the OTP challenge before saving."
+        )
+
+    if otp_record.is_expired():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="The verified OTP session has expired. Please re-verify."
+        )
+
+    # Consume token
+    otp_record.is_verified = False
+
+    diffs = {}
+    if payload.phone_number is not None and payload.phone_number != target.phone_number:
+        diffs["phone_number"] = {"old": target.phone_number, "new": payload.phone_number}
+        target.phone_number = payload.phone_number
+
+    if payload.preferred_language is not None and payload.preferred_language != target.preferred_language:
+        diffs["preferred_language"] = {"old": target.preferred_language, "new": payload.preferred_language}
+        target.preferred_language = payload.preferred_language
+
+    if diffs:
+        record_audit_log(
+            db=db,
+            actor=caller_profile.user,
+            action="HOUSEHOLD_MEMBER_PARTIAL_UPDATE_OTP_VERIFIED",
+            resource_type="citizen",
+            resource_id=target.citizen_code,
+            details={"changes": diffs, "updated_by_relative": caller_profile.citizen_code}
+        )
+        db.commit()
+        db.refresh(target)
+
+    return _to_citizen_response(target)
+
+
+# ==========================================
+# CONFIDENTIAL MEDICAL & EDUCATION RECORD ENDPOINTS
+# ==========================================
+
+@router.get("/{citizen_id}/medical", response_model=MedicalRecordResponse)
+def get_citizen_medical_record(
+    citizen_id: int,
+    caller_profile: CitizenProfile = Depends(get_current_citizen_profile),
+    db: Session = Depends(get_db)
+):
+    """
+    Confidential medical profile retrieval.
+    Permitted strictly for the citizen themselves or verified family members in the same household.
+    """
+    target = db.query(CitizenProfile).filter(CitizenProfile.id == citizen_id).first()
+    if not target:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Citizen profile not found.")
+
+    if caller_profile.id != target.id:
+        if not caller_profile.household_id or caller_profile.household_id != target.household_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Confidential Medical Dossier: Access restricted to the citizen and verified household family members."
+            )
+
+    med = db.query(MedicalRecord).filter(MedicalRecord.citizen_id == target.id).first()
+    if not med:
+        # Create default empty medical record if not present
+        med = MedicalRecord(citizen_id=target.id)
+        db.add(med)
+        db.commit()
+        db.refresh(med)
+
+    return med
+
+
+@router.put("/{citizen_id}/medical", response_model=MedicalRecordResponse)
+def update_citizen_medical_record(
+    citizen_id: int,
+    payload: MedicalRecordUpdateRequest,
+    caller_profile: CitizenProfile = Depends(get_current_citizen_profile),
+    db: Session = Depends(get_db)
+):
+    """
+    Update confidential medical details (e.g. blood group, allergies, emergency contacts).
+    Requires 2-Step OTP clearance and household membership or self ownership.
+    """
+    target = db.query(CitizenProfile).filter(CitizenProfile.id == citizen_id).first()
+    if not target:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Citizen profile not found.")
+
+    if caller_profile.id != target.id:
+        if not caller_profile.household_id or caller_profile.household_id != target.household_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Access Denied: Medical record updates are restricted to the citizen and verified household members."
+            )
+
+    # OTP verification
+    if not payload.otp_reference_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Two-Step OTP verification is mandatory for updating confidential health data."
+        )
+
+    otp_record = db.query(OTPVerification).filter(
+        OTPVerification.reference_id == payload.otp_reference_id,
+        OTPVerification.purpose == "CITIZEN_PROFILE_UPDATE"
+    ).first()
+
+    if not otp_record or not otp_record.is_verified or otp_record.is_expired():
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Invalid or expired OTP token. Please complete the OTP challenge."
+        )
+
+    otp_record.is_verified = False
+
+    med = db.query(MedicalRecord).filter(MedicalRecord.citizen_id == target.id).first()
+    if not med:
+        med = MedicalRecord(citizen_id=target.id)
+        db.add(med)
+
+    update_dict = payload.model_dump(exclude_unset=True, exclude={"otp_reference_id"})
+    for k, v in update_dict.items():
+        if v is not None:
+            setattr(med, k, v)
+
+    record_audit_log(
+        db=db,
+        actor=caller_profile.user,
+        action="MEDICAL_RECORD_UPDATED_OTP_VERIFIED",
+        resource_type="medical_record",
+        resource_id=f"MED-{target.citizen_code}",
+        details={"updated_fields": list(update_dict.keys())}
+    )
+
+    db.commit()
+    db.refresh(med)
+    return med
+
+
+@router.get("/{citizen_id}/education", response_model=EducationRecordResponse)
+def get_citizen_education_record(
+    citizen_id: int,
+    caller_profile: CitizenProfile = Depends(get_current_citizen_profile),
+    db: Session = Depends(get_db)
+):
+    """
+    Retrieve academic qualifications and educational records of citizen.
+    Permitted for the citizen themselves or verified family members in the same household.
+    """
+    target = db.query(CitizenProfile).filter(CitizenProfile.id == citizen_id).first()
+    if not target:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Citizen profile not found.")
+
+    if caller_profile.id != target.id:
+        if not caller_profile.household_id or caller_profile.household_id != target.household_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Access restricted to the citizen and verified household family members."
+            )
+
+    edu = db.query(EducationRecord).filter(EducationRecord.citizen_id == target.id).first()
+    if not edu:
+        edu = EducationRecord(citizen_id=target.id)
+        db.add(edu)
+        db.commit()
+        db.refresh(edu)
+
+    return edu
+
+
+@router.put("/{citizen_id}/education", response_model=EducationRecordResponse)
+def update_citizen_education_record(
+    citizen_id: int,
+    payload: EducationRecordUpdateRequest,
+    caller_profile: CitizenProfile = Depends(get_current_citizen_profile),
+    db: Session = Depends(get_db)
+):
+    """
+    Update educational qualifications and certificates with OTP clearance.
+    """
+    target = db.query(CitizenProfile).filter(CitizenProfile.id == citizen_id).first()
+    if not target:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Citizen profile not found.")
+
+    if caller_profile.id != target.id:
+        if not caller_profile.household_id or caller_profile.household_id != target.household_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Access Denied: Educational records can only be updated by the citizen or verified household members."
+            )
+
+    if not payload.otp_reference_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Two-Step OTP verification is mandatory for updating academic records."
+        )
+
+    otp_record = db.query(OTPVerification).filter(
+        OTPVerification.reference_id == payload.otp_reference_id,
+        OTPVerification.purpose == "CITIZEN_PROFILE_UPDATE"
+    ).first()
+
+    if not otp_record or not otp_record.is_verified or otp_record.is_expired():
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Invalid or expired OTP token. Please complete the OTP challenge."
+        )
+
+    otp_record.is_verified = False
+
+    edu = db.query(EducationRecord).filter(EducationRecord.citizen_id == target.id).first()
+    if not edu:
+        edu = EducationRecord(citizen_id=target.id)
+        db.add(edu)
+
+    update_dict = payload.model_dump(exclude_unset=True, exclude={"otp_reference_id"})
+    for k, v in update_dict.items():
+        if v is not None:
+            setattr(edu, k, v)
+
+    record_audit_log(
+        db=db,
+        actor=caller_profile.user,
+        action="EDUCATION_RECORD_UPDATED_OTP_VERIFIED",
+        resource_type="education_record",
+        resource_id=f"EDU-{target.citizen_code}",
+        details={"updated_fields": list(update_dict.keys())}
+    )
+
+    db.commit()
+    db.refresh(edu)
+    return edu
 
 
 # ==========================================

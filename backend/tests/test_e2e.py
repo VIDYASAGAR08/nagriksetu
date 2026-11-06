@@ -38,15 +38,31 @@ def test_complete_end_to_end_demonstration_workflow(client, admin_user):
     citizen_token = login_res.json()["access_token"]
     c_headers = {"Authorization": f"Bearer {citizen_token}"}
 
-    # 3. View & Update Own Profile
+    # 3. View & Update Own Profile (with 2-Step OTP Privacy Challenge)
     prof_res = client.get("/api/v1/citizens/me", headers=c_headers)
     assert prof_res.status_code == 200
     assert prof_res.json()["full_name"] == "Divya Krishnan"
     citizen_code = prof_res.json()["citizen_code"]
 
+    # Generate OTP
+    otp_res = client.post("/api/v1/auth/otp/generate", json={"purpose": "CITIZEN_PROFILE_UPDATE"}, headers=c_headers)
+    assert otp_res.status_code == 200
+    ref_id = otp_res.json()["reference_id"]
+    demo_code = otp_res.json()["demo_hint"]
+
+    # Verify OTP
+    ver_res = client.post("/api/v1/auth/otp/verify", json={
+        "reference_id": ref_id,
+        "otp_code": demo_code,
+        "purpose": "CITIZEN_PROFILE_UPDATE"
+    })
+    assert ver_res.status_code == 200
+    assert ver_res.json()["verified"] is True
+
     update_res = client.patch("/api/v1/citizens/me", json={
         "phone_number": "+91 94444 55555",
-        "preferred_language": "en"
+        "preferred_language": "en",
+        "otp_reference_id": ref_id
     }, headers=c_headers)
     assert update_res.status_code == 200
     assert update_res.json()["phone_number"] == "+91 94444 55555"

@@ -8,6 +8,13 @@ import {
   AdministrativeUnitListResponse,
   HouseholdMembership,
   OutboxEventListResponse,
+  OTPGenerateResponse,
+  OTPVerifyResponse,
+  MedicalRecord,
+  EducationRecord,
+  LandRecord,
+  HouseholdDossier,
+  HouseholdLinkRequest,
 } from '../types';
 
 export const API_BASE_URL = import.meta.env.VITE_API_URL || '/api/v1';
@@ -80,14 +87,93 @@ export const api = {
       }),
     me: () =>
       request<{ user: User; citizen_profile?: CitizenProfile }>('/auth/me'),
+    generateOTP: (payload?: { purpose?: string; recipient?: string }) =>
+      request<OTPGenerateResponse>('/auth/otp/generate', {
+        method: 'POST',
+        body: JSON.stringify(payload || { purpose: 'CITIZEN_PROFILE_UPDATE' }),
+      }),
+    verifyOTP: (payload: { reference_id: string; otp_code: string; purpose?: string }) =>
+      request<OTPVerifyResponse>('/auth/otp/verify', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      }),
+    requestLoginOTP: (identifier: string) =>
+      request<OTPGenerateResponse>('/auth/login-otp/request', {
+        method: 'POST',
+        body: JSON.stringify({ identifier }),
+      }),
+    verifyLoginOTP: (payload: { identifier: string; reference_id: string; otp_code: string }) =>
+      request<{ access_token: string; user: User; match_score?: number; message?: string }>('/auth/login-otp/verify', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      }),
+    getBiometricChallenge: () =>
+      request<{ challenge: string; rp_name: string; rp_id: string }>('/auth/biometrics/challenge'),
+    registerBiometrics: (payload: { credential_id: string; public_key?: string; biometric_type?: string }) =>
+      request<{ success: boolean; message: string; biometric_enabled: boolean }>('/auth/biometrics/register', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      }),
+    biometricLogin: (payload: {
+      email?: string;
+      phone?: string;
+      phone_number?: string;
+      credential_id?: string;
+      face_data?: string;
+      biometric_type?: string;
+      client_data_hash?: string;
+      require_otp?: boolean;
+    }) =>
+      request<{
+        access_token: string;
+        user?: User;
+        match_score?: number;
+        message?: string;
+        requires_otp?: boolean;
+        reference_id?: string;
+        recipient?: string;
+        demo_hint?: string;
+        identifier?: string;
+      }>('/auth/biometrics/login', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      }),
   },
 
-  // Citizen Self-Service
+  // Citizen Self-Service & Confidential Records
   citizen: {
     getMyProfile: () => request<CitizenProfile>('/citizens/me'),
-    updateMyProfile: (data: Partial<CitizenProfile>) =>
+    updateMyProfile: (data: Partial<CitizenProfile> & { otp_reference_id?: string }) =>
       request<CitizenProfile>('/citizens/me', {
         method: 'PATCH',
+        body: JSON.stringify(data),
+      }),
+    updateFamilyMemberProfile: (
+      citizenId: number,
+      data: { phone_number?: string; preferred_language?: string; otp_reference_id?: string }
+    ) =>
+      request<CitizenProfile>(`/citizens/${citizenId}/family-update`, {
+        method: 'PATCH',
+        body: JSON.stringify(data),
+      }),
+    getMedicalRecord: (citizenId: number) =>
+      request<MedicalRecord>(`/citizens/${citizenId}/medical`),
+    updateMedicalRecord: (
+      citizenId: number,
+      data: Partial<MedicalRecord> & { otp_reference_id?: string }
+    ) =>
+      request<MedicalRecord>(`/citizens/${citizenId}/medical`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      }),
+    getEducationRecord: (citizenId: number) =>
+      request<EducationRecord>(`/citizens/${citizenId}/education`),
+    updateEducationRecord: (
+      citizenId: number,
+      data: Partial<EducationRecord> & { otp_reference_id?: string }
+    ) =>
+      request<EducationRecord>(`/citizens/${citizenId}/education`, {
+        method: 'PUT',
         body: JSON.stringify(data),
       }),
     getMyHousehold: async () => {
@@ -100,6 +186,28 @@ export const api = {
         throw err;
       }
     },
+  },
+
+  // Household Dwelling & Asset Dossier
+  household: {
+    getMyDossier: () => request<HouseholdDossier>('/households/me/dossier'),
+    addLandRecord: (data: Partial<LandRecord>) =>
+      request<LandRecord>('/households/me/land', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
+    submitMemberLinkRequest: (payload: {
+      target_citizen_code: string;
+      relationship: string;
+      household_role?: string;
+      assigned_tasks?: string[];
+    }) =>
+      request<HouseholdLinkRequest>('/households/me/link-requests', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      }),
+    getMyHouseholdLinkRequests: () =>
+      request<HouseholdLinkRequest[]>('/households/me/link-requests'),
   },
 
   // Citizen Chat Assistant
@@ -242,6 +350,15 @@ export const api = {
       request<Household>(`/households/${householdId}/end-membership/${citizenId}`, {
         method: 'POST',
         body: JSON.stringify({ notes }),
+      }),
+    listHouseholdLinkRequests: (statusFilter?: string) => {
+      const q = statusFilter ? `?status_filter=${statusFilter}` : '';
+      return request<HouseholdLinkRequest[]>(`/households/link-requests${q}`);
+    },
+    reviewHouseholdLinkRequest: (requestId: number, action: 'approve' | 'reject', adminNotes?: string) =>
+      request<HouseholdLinkRequest>(`/households/link-requests/${requestId}/action`, {
+        method: 'POST',
+        body: JSON.stringify({ action, admin_notes: adminNotes }),
       }),
   },
 

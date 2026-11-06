@@ -2,10 +2,11 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { Alert } from '../../components/Alert';
-import { ShieldCheck, Mail, Lock, Eye, EyeOff, KeyRound } from 'lucide-react';
+import { BiometricAuthModal } from '../../components/BiometricAuthModal';
+import { ShieldCheck, Mail, Lock, Eye, EyeOff, KeyRound, Fingerprint } from 'lucide-react';
 
 export const AdminLoginPage: React.FC = () => {
-  const { login } = useAuth();
+  const { login, loginWithSession } = useAuth();
   const navigate = useNavigate();
 
   const [email, setEmail] = useState('');
@@ -13,6 +14,7 @@ export const AdminLoginPage: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isBiometricOpen, setIsBiometricOpen] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -137,7 +139,43 @@ export const AdminLoginPage: React.FC = () => {
               </>
             )}
           </button>
+
+          {/* Biometric Clearance Option */}
+          <div className="relative my-2">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-slate-200" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-white px-2 text-slate-400 font-medium">High Security Clearance</span>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => {
+              if (!email.trim()) {
+                setEmail('admin@civicportal.gov');
+              }
+              setIsBiometricOpen(true);
+            }}
+            className="w-full py-2.5 px-4 rounded-xl font-bold border-2 border-slate-900 bg-slate-50 hover:bg-slate-100 text-slate-900 transition flex items-center justify-center gap-2 text-sm shadow-xs"
+          >
+            <Fingerprint className="w-4 h-4 text-amber-500" />
+            <span>Biometric Administrator Clearance (Touch ID / Face ID)</span>
+          </button>
         </form>
+
+        <BiometricAuthModal
+          isOpen={isBiometricOpen}
+          onClose={() => setIsBiometricOpen(false)}
+          email={email || 'admin@civicportal.gov'}
+          title="Administrative Biometric Clearance"
+          roleHint="admin"
+          onSuccess={async (res) => {
+            await loginWithSession(res.access_token, res.user);
+            navigate('/admin/dashboard');
+          }}
+        />
 
         <div className="mt-5 pt-4 border-t border-slate-100 flex flex-col gap-2 text-xs">
           <div className="flex items-center justify-between">

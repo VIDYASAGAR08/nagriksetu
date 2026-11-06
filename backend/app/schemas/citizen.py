@@ -21,6 +21,7 @@ class CitizenProfileResponse(CitizenProfileBase):
     citizen_code: str
     date_of_birth: Optional[date] = None
     profile_status: str
+    face_photo: Optional[str] = None
     household_id: Optional[int] = None
     household_relationship: Optional[str] = None
     administrative_unit_id: Optional[int] = None
@@ -44,7 +45,9 @@ class CitizenProfileUpdateRequest(BaseModel):
     phone_number: Optional[str] = Field(None, max_length=30)
     preferred_language: Optional[str] = Field(None, max_length=10)
     date_of_birth: Optional[date] = None
+    face_photo: Optional[str] = None
     administrative_unit_id: Optional[int] = None
+    otp_reference_id: Optional[str] = Field(None, description="Verified OTP Reference token required for privacy approval")
 
     @field_validator("date_of_birth", mode="before")
     @classmethod
@@ -52,6 +55,23 @@ class CitizenProfileUpdateRequest(BaseModel):
         if isinstance(v, str) and not v.strip():
             return None
         return v
+
+    @field_validator("phone_number", mode="before")
+    @classmethod
+    def clean_phone(cls, v: Any) -> Optional[str]:
+        if isinstance(v, str) and not v.strip():
+            return None
+        return v
+
+
+class FamilyMemberUpdateRequest(BaseModel):
+    """
+    Fields that a family member in the same household is permitted to edit.
+    Strictly excludes legal name, date of birth, citizen code, and core identity.
+    """
+    phone_number: Optional[str] = Field(None, max_length=30)
+    preferred_language: Optional[str] = Field(None, max_length=10)
+    otp_reference_id: Optional[str] = Field(None, description="Verified OTP Reference token required for privacy approval")
 
     @field_validator("phone_number", mode="before")
     @classmethod

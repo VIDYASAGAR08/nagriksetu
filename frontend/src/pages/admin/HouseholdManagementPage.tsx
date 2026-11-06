@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../../services/api';
-import { Household, CitizenProfile, AdministrativeUnit, HouseholdMembership } from '../../types';
+import { Household, CitizenProfile, AdministrativeUnit, HouseholdMembership, HouseholdLinkRequest } from '../../types';
 import { Alert } from '../../components/Alert';
 import { ConfirmModal } from '../../components/ConfirmModal';
 import {
@@ -17,13 +17,21 @@ import {
   AlertTriangle,
   Layers,
   History,
+  CheckCircle2,
+  XCircle,
+  Clock,
+  ShieldCheck,
 } from 'lucide-react';
 
 export const HouseholdManagementPage: React.FC = () => {
+  const [activeTab, setActiveTab] = useState<'households' | 'link_requests'>('households');
   const [households, setHouseholds] = useState<Household[]>([]);
   const [citizens, setCitizens] = useState<CitizenProfile[]>([]);
   const [units, setUnits] = useState<AdministrativeUnit[]>([]);
+  const [linkRequests, setLinkRequests] = useState<HouseholdLinkRequest[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingRequests, setLoadingRequests] = useState(false);
+  const [reviewingId, setReviewingId] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [alert, setAlert] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
@@ -64,6 +72,37 @@ export const HouseholdManagementPage: React.FC = () => {
     household_relationship: 'Member',
   });
 
+  const loadLinkRequests = async () => {
+    setLoadingRequests(true);
+    try {
+      const data = await api.admin.listHouseholdLinkRequests();
+      setLinkRequests(data);
+    } catch (err: any) {
+      console.error('Failed to load link requests:', err);
+    } finally {
+      setLoadingRequests(false);
+    }
+  };
+
+  const handleReviewRequest = async (requestId: number, action: 'approve' | 'reject') => {
+    setReviewingId(requestId);
+    try {
+      await api.admin.reviewHouseholdLinkRequest(requestId, action, action === 'approve' ? 'Approved by admin' : 'Rejected by admin');
+      setAlert({
+        type: 'success',
+        message: action === 'approve'
+          ? 'Linkage request approved! Citizen has been linked to the household with user-specified relationship.'
+          : 'Linkage request rejected.',
+      });
+      loadLinkRequests();
+      loadData();
+    } catch (err: any) {
+      setAlert({ type: 'error', message: err.message || `Failed to ${action} linkage request.` });
+    } finally {
+      setReviewingId(null);
+    }
+  };
+
   const loadData = async () => {
     setLoading(true);
     try {
@@ -75,6 +114,7 @@ export const HouseholdManagementPage: React.FC = () => {
       setHouseholds(hhs);
       setCitizens(cits);
       setUnits(unitsData.items);
+      loadLinkRequests();
     } catch (err: any) {
       setAlert({ type: 'error', message: err.message || 'Failed to load household records.' });
     } finally {
@@ -235,28 +275,65 @@ export const HouseholdManagementPage: React.FC = () => {
         />
       )}
 
-      {/* Search Bar */}
-      <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center gap-2">
-        <form onSubmit={handleSearchSubmit} className="flex-1 flex items-center gap-2">
-          <div className="relative flex-1">
-            <Search className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search by household code, address, locality, or city..."
-              aria-label="Search household records"
-              className="w-full pl-9 pr-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-            />
-          </div>
-          <button
-            type="submit"
-            className="px-4 py-2 bg-slate-900 hover:bg-black text-white text-sm font-semibold rounded-lg"
-          >
-            Search
-          </button>
-        </form>
+      {/* Primary View Switcher: Dwellings vs Member Linkage Requests */}
+      <div className="flex items-center gap-2 border-b border-slate-200 pb-2">
+        <button
+          type="button"
+          onClick={() => setActiveTab('households')}
+          className={`py-2 px-4 rounded-xl text-xs font-bold transition flex items-center gap-2 ${
+            activeTab === 'households'
+              ? 'bg-slate-900 text-white shadow-sm'
+              : 'bg-white text-slate-600 hover:text-slate-900 border border-slate-200'
+          }`}
+        >
+          <Building className="w-4 h-4" />
+          <span>Registered Dwellings ({households.length})</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab('link_requests')}
+          className={`py-2 px-4 rounded-xl text-xs font-bold transition flex items-center gap-2 ${
+            activeTab === 'link_requests'
+              ? 'bg-slate-900 text-white shadow-sm'
+              : 'bg-white text-slate-600 hover:text-slate-900 border border-slate-200'
+          }`}
+        >
+          <Users className="w-4 h-4 text-saffron-500" />
+          <span>Member Linkage Requests</span>
+          {linkRequests.filter((r) => r.status === 'pending_admin_approval').length > 0 && (
+            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500 text-white animate-pulse">
+              {linkRequests.filter((r) => r.status === 'pending_admin_approval').length} Pending
+            </span>
+          )}
+        </button>
       </div>
+
+      {/* VIEW 1: HOUSEHOLDS */}
+      {activeTab === 'households' && (
+        <>
+          {/* Search Bar */}
+          <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center gap-2">
+            <form onSubmit={handleSearchSubmit} className="flex-1 flex items-center gap-2">
+              <div className="relative flex-1">
+                <Search className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search by household code, address, locality, or city..."
+                  aria-label="Search household records"
+                  className="w-full pl-9 pr-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                />
+              </div>
+              <button
+                type="submit"
+                className="px-4 py-2 bg-slate-900 hover:bg-black text-white text-sm font-semibold rounded-lg"
+              >
+                Search
+              </button>
+            </form>
+          </div>
 
       {/* Household Cards Grid */}
       {loading ? (
@@ -412,6 +489,150 @@ export const HouseholdManagementPage: React.FC = () => {
               </div>
             </div>
           ))}
+        </div>
+      )}
+      </>
+      )}
+
+      {/* VIEW 2: MEMBER LINKAGE REQUESTS (ADMIN ACCEPT/REJECT GATE) */}
+      {activeTab === 'link_requests' && (
+        <div className="space-y-6">
+          {/* Strict Governance Notice */}
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200/80 rounded-2xl p-4 flex items-start gap-3.5 shadow-xs">
+            <div className="p-2 rounded-xl bg-blue-100 text-blue-800 shrink-0 mt-0.5">
+              <ShieldCheck className="w-5 h-5" />
+            </div>
+            <div>
+              <h2 className="text-sm font-bold text-blue-950">
+                Civic Governance Policy: Administrative Approval Gate (FR-ADM-019)
+              </h2>
+              <p className="text-xs text-blue-900/90 mt-1 leading-relaxed">
+                Under NagrikSetu administrative rules, family relationships and roles are <strong>strictly specified by the citizen</strong> and never automatically generated. The administrator acts solely as an activation gate with the authority to <strong>Accept (Approve)</strong> or <strong>Reject</strong>. The administrator does NOT select, mutate, or reassign roles.
+              </p>
+            </div>
+          </div>
+
+          {loadingRequests ? (
+            <div className="p-12 text-center text-sm text-slate-500">Loading linkage requests...</div>
+          ) : linkRequests.length === 0 ? (
+            <div className="bg-white rounded-2xl border border-dashed border-slate-300 p-12 text-center">
+              <Users className="w-10 h-10 text-slate-300 mx-auto mb-2" />
+              <p className="text-sm font-bold text-slate-700">No member linkage requests</p>
+              <p className="text-xs text-slate-500 mt-1">When citizens request to link family members to their dwelling, they will appear here for verification.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {linkRequests.map((req) => (
+                <div
+                  key={req.id}
+                  className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between"
+                >
+                  <div className="space-y-3">
+                    <div className="flex items-start justify-between gap-2 border-b border-slate-100 pb-3">
+                      <div>
+                        <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400 block">Household Code</span>
+                        <span className="font-mono text-xs font-bold text-navy-950 bg-slate-100 px-2 py-0.5 rounded">
+                          {req.household_code}
+                        </span>
+                      </div>
+                      <span
+                        className={`text-[11px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1 ${
+                          req.status === 'pending_admin_approval'
+                            ? 'bg-amber-100 text-amber-900 border border-amber-300'
+                            : req.status === 'approved'
+                            ? 'bg-emerald-100 text-emerald-900 border border-emerald-300'
+                            : 'bg-rose-100 text-rose-900 border border-rose-300'
+                        }`}
+                      >
+                        {req.status === 'pending_admin_approval' && <Clock className="w-3 h-3 text-amber-600" />}
+                        {req.status === 'approved' && <CheckCircle2 className="w-3 h-3 text-emerald-600" />}
+                        {req.status === 'rejected' && <XCircle className="w-3 h-3 text-rose-600" />}
+                        <span>
+                          {req.status === 'pending_admin_approval' ? 'Pending Approval' : req.status === 'approved' ? 'Approved & Linked' : 'Rejected'}
+                        </span>
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3 text-xs">
+                      <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-100">
+                        <span className="text-[10px] font-bold uppercase text-slate-400 block">Target Citizen (To Link)</span>
+                        <span className="font-bold text-slate-900 text-sm block mt-0.5">{req.target_citizen_name}</span>
+                        <span className="font-mono text-[11px] text-slate-500">{req.target_citizen_code}</span>
+                      </div>
+
+                      <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-100">
+                        <span className="text-[10px] font-bold uppercase text-slate-400 block">Requester (Household Head)</span>
+                        <span className="font-bold text-slate-900 text-sm block mt-0.5">{req.requester_name}</span>
+                        <span className="text-[11px] text-slate-500">Citizen ID #{req.requester_citizen_id}</span>
+                      </div>
+                    </div>
+
+                    <div className="p-3 bg-amber-50/60 rounded-xl border border-amber-200/60 space-y-1.5 text-xs">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[11px] font-semibold text-amber-900">User-Specified Relationship:</span>
+                        <span className="font-bold text-amber-950 bg-white border border-amber-300 px-2.5 py-0.5 rounded-md">
+                          {req.relationship}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <span className="text-[11px] font-semibold text-amber-900">User-Defined Household Role:</span>
+                        <span className="font-bold text-navy-900 bg-white border border-slate-300 px-2 py-0.5 rounded-md">
+                          {req.household_role === 'HEAD' ? 'Head of Household' : req.household_role === 'DEPUTY' ? 'Deputy Custodian' : req.household_role === 'DEPENDENT' ? 'Dependent / Minor' : 'Adult Member'}
+                        </span>
+                      </div>
+
+                      <div>
+                        <span className="text-[10px] font-bold uppercase text-amber-800 block mt-1">Delegated Tasks / Jobs:</span>
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {req.assigned_tasks && req.assigned_tasks.length > 0 ? (
+                            req.assigned_tasks.map((task) => (
+                              <span key={task} className="text-[10px] font-bold bg-white text-slate-800 border border-amber-300/80 px-2 py-0.5 rounded-md">
+                                {task === 'can_manage_assets' ? '📜 Land Assets' : task === 'can_manage_medical' ? '🏥 Medical ABHA' : task === 'can_manage_education' ? '🎓 Education' : task === 'can_manage_members' ? '👨‍👩‍👦 Member Linking' : task === 'can_pay_taxes' ? '💳 Civic Taxes' : task}
+                              </span>
+                            ))
+                          ) : (
+                            <span className="text-[11px] text-slate-500 italic">None (Standard Member)</span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {req.admin_notes && (
+                      <p className="text-[11px] text-slate-500 italic bg-slate-50 p-2 rounded-lg border border-slate-100">
+                        <strong>Admin Note:</strong> {req.admin_notes}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Strictly 2 Actions: Accept or Reject */}
+                  {req.status === 'pending_admin_approval' && (
+                    <div className="pt-4 mt-3 border-t border-slate-100 flex items-center gap-2">
+                      <button
+                        type="button"
+                        disabled={reviewingId === req.id}
+                        onClick={() => handleReviewRequest(req.id, 'reject')}
+                        className="w-1/2 py-2 px-3 rounded-xl border border-rose-300 text-rose-700 hover:bg-rose-50 font-bold text-xs transition flex items-center justify-center gap-1.5 disabled:opacity-50"
+                      >
+                        <XCircle className="w-3.5 h-3.5" />
+                        <span>Reject Request</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        disabled={reviewingId === req.id}
+                        onClick={() => handleReviewRequest(req.id, 'approve')}
+                        className="w-1/2 py-2 px-3 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs shadow-sm transition flex items-center justify-center gap-1.5 disabled:opacity-50"
+                      >
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                        <span>Approve & Activate</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 

@@ -9,7 +9,11 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isAdmin: boolean;
   isCitizen: boolean;
-  login: (email: string, password: string) => Promise<User>;
+  login: (
+    identifierOrPayload: string | { email?: string; phone_number?: string; password?: string },
+    password?: string
+  ) => Promise<User>;
+  loginWithSession: (accessToken: string, user: User) => Promise<User>;
   register: (payload: any) => Promise<User>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
@@ -89,13 +93,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     initAuth();
   }, []);
 
-  const login = async (email: string, password: string): Promise<User> => {
-    const res = await api.auth.login({ email, password });
+  const login = async (
+    identifierOrPayload: string | { email?: string; phone_number?: string; password?: string },
+    password?: string
+  ): Promise<User> => {
+    let payload: any;
+    if (typeof identifierOrPayload === 'string') {
+      payload = { email: identifierOrPayload, password };
+    } else {
+      payload = identifierOrPayload;
+    }
+    const res = await api.auth.login(payload);
     setAuthToken(res.access_token);
     setUser(res.user);
     // Fetch profile details
     await refreshUser();
     return res.user;
+  };
+
+  const loginWithSession = async (accessToken: string, userObj: User): Promise<User> => {
+    setAuthToken(accessToken);
+    setUser(userObj);
+    await refreshUser();
+    return userObj;
   };
 
   const register = async (payload: any): Promise<User> => {
@@ -127,6 +147,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isAdmin: user?.role === 'admin',
         isCitizen: user?.role === 'citizen',
         login,
+        loginWithSession,
         register,
         logout,
         refreshUser,
