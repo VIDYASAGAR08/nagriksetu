@@ -4,25 +4,16 @@ Use this script during your university project presentation to display
 the database structure, entity relationships, and live data to your teacher.
 
 Usage:
-    python backend/inspect_db.py            # Overview of all 7 tables with records & links
-    python backend/inspect_db.py --schema   # Show table schemas and foreign key constraints
-    python backend/inspect_db.py --joins    # Show linked relationships (Citizens + Households + Area)
+    docker compose exec backend python inspect_db.py          # Complete live demonstration
+    docker compose exec backend python inspect_db.py --joins  # Show multi-table foreign key joins
+    docker compose exec backend python inspect_db.py --family # Show family tree & role delegation
 """
 
-import sqlite3
 import sys
 import os
-
-DB_PATH = os.path.join(os.path.dirname(__file__), "civic_admin.db")
-
-
-def get_connection():
-    if not os.path.exists(DB_PATH):
-        print(f"❌ Database file not found at: {DB_PATH}")
-        sys.exit(1)
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    return conn
+from sqlalchemy import text
+from app.database import engine
+from app.config import settings
 
 
 def print_header(title):
@@ -31,70 +22,46 @@ def print_header(title):
     print("=" * 80)
 
 
-def print_table_data(title, query, params=()):
-    conn = get_connection()
-    cursor = conn.cursor()
-    cursor.execute(query, params)
-    rows = cursor.fetchall()
-    
+def print_table_data(title, query, params={}):
     print_header(title)
-    if not rows:
-        print("  (No records found)")
-        return
+    try:
+        with engine.connect() as conn:
+            result = conn.execute(text(query), params)
+            rows = result.mappings().all()
+            if not rows:
+                print("  (No records found)")
+                return
 
-    cols = [d[0] for d in cursor.description]
-    # Compute column widths
-    col_widths = {c: len(c) for c in cols}
-    for r in rows:
-        for c in cols:
-            val_str = str(r[c]) if r[c] is not None else "NULL"
-            if len(val_str) > col_widths[c]:
-                col_widths[c] = min(len(val_str), 35)
+            cols = list(rows[0].keys())
 
-    header_line = " | ".join(c.ljust(col_widths[c]) for c in cols)
-    sep_line = "-+-".join("-" * col_widths[c] for c in cols)
-    print(f"  {header_line}")
-    print(f"  {sep_line}")
+            col_widths = {c: len(c) for c in cols}
+            for r in rows:
+                for c in cols:
+                    val_str = str(r[c]) if r[c] is not None else "NULL"
+                    if len(val_str) > col_widths[c]:
+                        col_widths[c] = min(len(val_str), 35)
 
-    for r in rows:
-        row_str = []
-        for c in cols:
-            val = r[c]
-            val_str = str(val) if val is not None else "NULL"
-            if len(val_str) > 35:
-                val_str = val_str[:32] + "..."
-            row_str.append(val_str.ljust(col_widths[c]))
-        print(f"  {' | '.join(row_str)}")
-    print(f"  Total Rows: {len(rows)}")
+            header_line = " | ".join(c.ljust(col_widths[c]) for c in cols)
+            sep_line = "-+-".join("-" * col_widths[c] for c in cols)
+            print(f"  {header_line}")
+            print(f"  {sep_line}")
 
-
-def show_schema():
-    conn = get_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name != 'alembic_version' ORDER BY name;")
-    tables = [r[0] for r in cursor.fetchall()]
-
-    print_header("NagrikSetu Database Schema & Foreign Key Constraints")
-    for t in tables:
-        print(f"\n📂 TABLE: {t}")
-        print("-" * 60)
-        cursor.execute(f"PRAGMA table_info({t});")
-        cols = cursor.fetchall()
-        for col in cols:
-            pk = " [PRIMARY KEY]" if col["pk"] else ""
-            notnull = " NOT NULL" if col["notnull"] else ""
-            print(f"   • {col['name'].ljust(25)} {col['type'].ljust(15)}{notnull}{pk}")
-
-        cursor.execute(f"PRAGMA foreign_key_list({t});")
-        fks = cursor.fetchall()
-        if fks:
-            print("   🔗 Foreign Key Constraints:")
-            for fk in fks:
-                print(f"      └── {fk['from']} ──▶ {fk['table']}({fk['to']})")
+            for r in rows:
+                row_str = []
+                for c in cols:
+                    val = r[c]
+                    val_str = str(val) if val is not None else "NULL"
+                    if len(val_str) > 35:
+                        val_str = val_str[:32] + "..."
+                    row_str.append(val_str.ljust(col_widths[c]))
+                print(f"  {' | '.join(row_str)}")
+            print(f"  Total Rows: {len(rows)}")
+    except Exception as e:
+        print(f"  ❌ Query execution error: {e}")
 
 
 def show_joins():
-    print_header("Relational Joins Demonstration: Citizens + Households + Administrative Area")
+    print_header("Relational Joins Demonstration: Citizens ⋈ Households ⋈ Administrative Area")
     query = """
     SELECT 
         c.citizen_code,
@@ -114,11 +81,30 @@ def show_joins():
     print_table_data("Linked Citizen Records (Joining citizen_profiles ⋈ households ⋈ administrative_units)", query)
 
 
+def show_family_hierarchy():
+    print_header("Family Tree Hierarchy & Permission Delegation (Teacher Feedback Feature)")
+    query = """
+    SELECT 
+        h.household_code,
+        c.full_name AS member_name,
+        m.relationship_type AS user_specified_role,
+        m.status AS membership_status,
+        m.start_date,
+        m.notes AS audit_remark
+    FROM household_memberships m
+    JOIN households h ON m.household_id = h.id
+    JOIN citizen_profiles c ON m.citizen_id = c.id
+    ORDER BY h.household_code, m.id ASC;
+    """
+    print_table_data("Family Memberships & User-Defined Hierarchy (Admin Verification Only)", query)
+
+
 def show_overview():
+    db_engine_name = engine.dialect.name.upper()
     print("=" * 80)
     print("     NAGRIKSETU (नागरिक सेतु) — DATABASE ARCHITECTURE & LIVE RECORDS")
-    print("     Database Engine: SQLite (standalone demo) / PostgreSQL 16 (production)")
-    print(f"     Database Location: {DB_PATH}")
+    print(f"     Active Engine: {db_engine_name} (Production-Grade Containerized)")
+    print(f"     Target Database: {settings.POSTGRES_DB if hasattr(settings, 'POSTGRES_DB') else 'civicadmin_db'}")
     print("=" * 80)
 
     # 1. Administrative Units
@@ -151,7 +137,7 @@ def show_overview():
         "SELECT id, household_id, citizen_id, relationship_type, start_date, end_date, status, notes FROM household_memberships ORDER BY id DESC LIMIT 6;"
     )
 
-    # 6. Audit Logs (FR-ADM-024)
+    # 6. Audit Logs (FR-ADM-024 Mutation Trail)
     print_table_data(
         "6. audit_logs (Complete Mutation Trail - FR-ADM-024)",
         "SELECT id, actor_email, action, resource_type, resource_id, created_at FROM audit_logs ORDER BY id DESC LIMIT 5;"
@@ -165,9 +151,9 @@ def show_overview():
 
 
 if __name__ == "__main__":
-    if "--schema" in sys.argv:
-        show_schema()
-    elif "--joins" in sys.argv:
+    if "--joins" in sys.argv:
         show_joins()
+    elif "--family" in sys.argv:
+        show_family_hierarchy()
     else:
         show_overview()
