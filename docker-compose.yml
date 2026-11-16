@@ -1,9 +1,7 @@
-version: '3.8'
-
 services:
   db:
     image: postgres:16-alpine
-    container_name: civicadmin_postgres
+    container_name: nagriksetu_postgres
     restart: always
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
@@ -23,20 +21,31 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: civicadmin_backend
+    container_name: nagriksetu_backend
     restart: always
     depends_on:
       db:
         condition: service_healthy
     environment:
       - ENVIRONMENT=production
-      - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-civicadmin_db}
+      - DATABASE_URL=postgresql+psycopg2://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-civicadmin_db}
       - SECRET_KEY=${SECRET_KEY:-super-secret-development-key-change-in-production-min32chars}
       - INITIAL_ADMIN_EMAIL=${INITIAL_ADMIN_EMAIL:-admin@civicportal.gov}
       - INITIAL_ADMIN_PASSWORD=${INITIAL_ADMIN_PASSWORD:-AdminPass123!@#}
     ports:
       - "8000:8000"
 
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: nagriksetu_frontend
+    restart: always
+    depends_on:
+      - backend
+    ports:
+      - "5173:80"
+
 volumes:
   postgres_data:
-    name: civicadmin_postgres_data
+    name: nagriksetu_postgres_data
