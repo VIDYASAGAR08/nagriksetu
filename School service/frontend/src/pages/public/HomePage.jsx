@@ -70,28 +70,48 @@ export default function HomePage() {
         background: `linear-gradient(90deg, rgba(16, 43, 70, 0.94) 0%, rgba(16, 43, 70, 0.82) 48%, rgba(16, 43, 70, 0.42) 100%), url(${vidhanaSoudhaImg}) center right / cover no-repeat`,
         color: '#FFFFFF',
         padding: '3.5rem 1.5rem',
-        borderBottom: '4px solid #155EEF'
+        borderBottom: '4px solid #FF9933'
       }}>
         <div className="container" style={{ maxWidth: '1180px', margin: '0 auto', width: '100%' }}>
           <div style={{ maxWidth: '820px' }}>
-            {/* Government Sub-Badge */}
-            <div style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              background: 'rgba(255, 255, 255, 0.12)',
-              backdropFilter: 'blur(6px)',
-              border: '1px solid rgba(255, 255, 255, 0.25)',
-              borderRadius: '20px',
-              padding: '0.35rem 0.85rem',
-              fontSize: '0.8rem',
-              fontWeight: 700,
-              color: '#F1F6FC',
-              marginBottom: '1.25rem',
-              letterSpacing: '0.04em'
-            }}>
-              <span>🏛️</span>
-              <span>KARNATAKA STATE EDUCATION DISCOVERY PORTAL</span>
+            {/* Government Sub-Badge & Central Portal Link */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '1.25rem' }}>
+              <div style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                background: 'rgba(255, 153, 51, 0.18)',
+                backdropFilter: 'blur(6px)',
+                border: '1px solid rgba(255, 153, 51, 0.45)',
+                borderRadius: '20px',
+                padding: '0.35rem 0.85rem',
+                fontSize: '0.8rem',
+                fontWeight: 700,
+                color: '#FF9933',
+                letterSpacing: '0.04em'
+              }}>
+                <span>🇮🇳</span>
+                <span>NAGRIKSETU · EDUCATION DISCOVERY PORTAL</span>
+              </div>
+              <a
+                href="http://localhost:5173"
+                style={{
+                  background: '#081c33',
+                  color: '#FF9933',
+                  border: '1px solid #FF9933',
+                  padding: '0.35rem 0.85rem',
+                  borderRadius: '20px',
+                  fontSize: '0.78rem',
+                  fontWeight: 700,
+                  textDecoration: 'none',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.35rem',
+                  boxShadow: '0 2px 6px rgba(0,0,0,0.3)'
+                }}
+              >
+                ← Back to Central Portal (Port 5173)
+              </a>
             </div>
 
             {/* Main Headline */}
@@ -223,15 +243,15 @@ export default function HomePage() {
               <button
                 type="submit"
                 style={{
-                  background: '#155EEF',
-                  color: '#FFFFFF',
-                  border: 'none',
+                  background: '#081c33',
+                  color: '#FF9933',
+                  border: '1px solid #FF9933',
                   borderRadius: '8px',
                   padding: '0.75rem 1.35rem',
                   fontSize: '0.95rem',
-                  fontWeight: 700,
+                  fontWeight: 800,
                   cursor: 'pointer',
-                  transition: 'background 0.15s ease',
+                  transition: 'all 0.15s ease',
                   flexShrink: 0
                 }}
               >
@@ -290,7 +310,7 @@ export default function HomePage() {
       <section style={{ padding: '3.5rem 1.5rem', background: '#F8F9FC', borderBottom: '1px solid #EAECF0' }}>
         <div className="container" style={{ maxWidth: '1180px', margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
-            <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#155EEF', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+            <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#b45309', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
               CITIZEN & STAKEHOLDER PORTALS
             </span>
             <h2 style={{ fontSize: '2rem', fontWeight: 800, color: '#102B46', margin: '0.35rem 0 0.5rem 0' }}>
@@ -352,7 +372,7 @@ export default function HomePage() {
             {/* 2. Student */}
             <div style={{
               background: '#FFFFFF',
-              border: '2px solid #155EEF',
+              border: '2px solid #081c33',
               borderRadius: '12px',
               padding: '1.75rem 1.5rem',
               display: 'flex',
@@ -387,7 +407,7 @@ export default function HomePage() {
                   padding: '0.75rem 1rem',
                   fontSize: '0.875rem',
                   fontWeight: 700,
-                  background: '#155EEF',
+                  background: '#081c33',
                   color: '#FFFFFF',
                   border: 'none',
                   textDecoration: 'none'
@@ -483,7 +503,7 @@ export default function HomePage() {
                   padding: '0.75rem 1rem',
                   fontSize: '0.875rem',
                   fontWeight: 700,
-                  background: '#155EEF',
+                  background: '#081c33',
                   color: '#FFFFFF',
                   border: 'none',
                   textDecoration: 'none'
@@ -502,7 +522,7 @@ export default function HomePage() {
       <section style={{ padding: '3.5rem 1.5rem', background: '#FFFFFF', borderBottom: '1px solid #E4E7EC' }}>
         <div className="container" style={{ maxWidth: '1180px', margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
-            <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#155EEF', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+            <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#b45309', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
               STRUCTURED EDUCATION TIERS
             </span>
             <h2 style={{ fontSize: '2rem', fontWeight: 800, color: '#102B46', margin: '0.35rem 0 0.5rem 0' }}>
@@ -549,14 +569,14 @@ export default function HomePage() {
                 <h3 style={{ fontSize: '1.2rem', fontWeight: 700, color: '#102B46', margin: '0 0 0.4rem 0' }}>
                   Schools (K–10)
                 </h3>
-                <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#155EEF', marginBottom: '0.6rem' }}>
+                <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#081c33', marginBottom: '0.6rem' }}>
                   Standards 1 – 10 (Foundational to High School)
                 </div>
                 <p style={{ color: '#475467', fontSize: '0.875rem', lineHeight: 1.5, margin: 0 }}>
                   Foundational, primary, middle, and high schools under KSEAB state syllabus, CBSE, and ICSE.
                 </p>
               </div>
-              <div style={{ marginTop: '1.25rem', color: '#155EEF', fontWeight: 700, fontSize: '0.875rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+              <div style={{ marginTop: '1.25rem', color: '#081c33', fontWeight: 700, fontSize: '0.875rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
                 Browse 15 Schools →
               </div>
             </Link>
@@ -712,7 +732,7 @@ export default function HomePage() {
         <div className="container" style={{ maxWidth: '1180px', margin: '0 auto' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: '1rem', marginBottom: '2rem' }}>
             <div>
-              <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#155EEF', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+              <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#b45309', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
                 GEOGRAPHIC DISCOVERY
               </span>
               <h2 style={{ fontSize: '2rem', fontWeight: 800, color: '#102B46', margin: '0.35rem 0 0.25rem 0' }}>
@@ -722,7 +742,7 @@ export default function HomePage() {
                 Explore educational opportunities across verified regional headquarters and urban zones.
               </p>
             </div>
-            <Link to="/schools" style={{ color: '#155EEF', fontWeight: 700, textDecoration: 'none', fontSize: '0.9rem' }}>
+            <Link to="/schools" style={{ color: '#081c33', fontWeight: 700, textDecoration: 'none', fontSize: '0.9rem' }}>
               View All 30 Institutions across Karnataka →
             </Link>
           </div>
@@ -744,7 +764,7 @@ export default function HomePage() {
                   transition: 'all 0.15s ease',
                   boxShadow: '0 1px 3px rgba(16,43,70,0.04)'
                 }}
-                onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#155EEF'; e.currentTarget.style.transform = 'translateY(-2px)' }}
+                onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#FF9933'; e.currentTarget.style.transform = 'translateY(-2px)' }}
                 onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#E2E8F0'; e.currentTarget.style.transform = 'translateY(0)' }}
               >
                 <span style={{ fontSize: '1.5rem' }}>{dist.icon}</span>
@@ -769,7 +789,7 @@ export default function HomePage() {
         <div className="container" style={{ maxWidth: '1180px', margin: '0 auto' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: '1rem', marginBottom: '2rem' }}>
             <div>
-              <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#155EEF', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+              <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#b45309', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
                 FEATURED RECORD CATALOG
               </span>
               <h2 style={{ fontSize: '2rem', fontWeight: 800, color: '#102B46', margin: '0.35rem 0 0.25rem 0' }}>
@@ -779,7 +799,7 @@ export default function HomePage() {
                 Institutions featuring complete institutional profiles, verified achievements, and transparent data.
               </p>
             </div>
-            <Link to="/schools" style={{ color: '#155EEF', fontWeight: 700, textDecoration: 'none', fontSize: '0.9rem' }}>
+            <Link to="/schools" style={{ color: '#081c33', fontWeight: 700, textDecoration: 'none', fontSize: '0.9rem' }}>
               Explore Full Directory →
             </Link>
           </div>
@@ -805,7 +825,7 @@ export default function HomePage() {
                   height: '140px',
                   background: inst.cover_image_url
                     ? `linear-gradient(rgba(16, 43, 70, 0.4), rgba(16, 43, 70, 0.7)), url("${inst.cover_image_url}") center/cover no-repeat`
-                    : 'linear-gradient(135deg, #102B46 0%, #155EEF 100%)',
+                    : 'linear-gradient(135deg, #102B46 0%, #081c33 100%)',
                   padding: '1rem',
                   display: 'flex',
                   flexDirection: 'column',
@@ -825,7 +845,7 @@ export default function HomePage() {
                     <span style={{
                       fontSize: '0.72rem',
                       fontWeight: 700,
-                      background: '#155EEF',
+                      background: '#081c33',
                       color: '#FFFFFF',
                       padding: '0.2rem 0.5rem',
                       borderRadius: '4px'
@@ -867,7 +887,7 @@ export default function HomePage() {
                       style={{
                         fontSize: '0.85rem',
                         fontWeight: 700,
-                        color: '#155EEF',
+                        color: '#081c33',
                         textDecoration: 'none',
                         display: 'flex',
                         alignItems: 'center',
@@ -914,7 +934,7 @@ export default function HomePage() {
                       <Link
                         to="/login"
                         style={{
-                          background: '#155EEF',
+                          background: '#081c33',
                           color: '#FFFFFF',
                           padding: '0.75rem 1.5rem',
                           borderRadius: '8px',
@@ -945,7 +965,7 @@ export default function HomePage() {
                     <Link
                       to={user?.role === 'parent' ? '/parent' : '/staff'}
                       style={{
-                        background: '#155EEF',
+                        background: '#081c33',
                         color: '#FFFFFF',
                         padding: '0.75rem 1.5rem',
                         borderRadius: '8px',
@@ -992,7 +1012,7 @@ export default function HomePage() {
           ======================================================== */}
       <section style={{ padding: '3.5rem 1.5rem', background: '#FFFFFF', borderBottom: '1px solid #E4E7EC' }}>
         <div className="container" style={{ maxWidth: '1180px', margin: '0 auto', textAlign: 'center' }}>
-          <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#155EEF', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+          <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#b45309', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
             PORTAL GUIDE
           </span>
           <h2 style={{ fontSize: '2rem', fontWeight: 800, color: '#102B46', margin: '0.35rem 0 2.5rem 0' }}>
@@ -1005,7 +1025,7 @@ export default function HomePage() {
                 width: '44px',
                 height: '44px',
                 borderRadius: '50%',
-                background: '#155EEF',
+                background: '#081c33',
                 color: '#FFFFFF',
                 display: 'flex',
                 alignItems: 'center',
@@ -1029,7 +1049,7 @@ export default function HomePage() {
                 width: '44px',
                 height: '44px',
                 borderRadius: '50%',
-                background: '#155EEF',
+                background: '#081c33',
                 color: '#FFFFFF',
                 display: 'flex',
                 alignItems: 'center',
@@ -1053,7 +1073,7 @@ export default function HomePage() {
                 width: '44px',
                 height: '44px',
                 borderRadius: '50%',
-                background: '#155EEF',
+                background: '#081c33',
                 color: '#FFFFFF',
                 display: 'flex',
                 alignItems: 'center',

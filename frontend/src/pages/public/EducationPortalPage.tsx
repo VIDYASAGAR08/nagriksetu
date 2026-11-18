@@ -71,8 +71,8 @@ export const EducationPortalPage: React.FC = () => {
   };
 
   useEffect(() => {
-    // Automatically redirect to the School Service on Port 5174
-    window.location.replace('http://localhost:5174/#/schools');
+    // Automatically redirect to the Education Service on Port 5174
+    window.location.replace('http://localhost:5174/');
   }, []);
 
   useEffect(() => {

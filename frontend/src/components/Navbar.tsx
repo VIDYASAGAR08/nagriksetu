@@ -126,7 +126,7 @@ export const Navbar: React.FC = () => {
                     My Household
                   </Link>
                   <a
-                    href="http://localhost:5174/#/schools"
+                    href="http://localhost:5174/"
                     className="px-3 py-2 rounded-md text-sm font-semibold transition-colors flex items-center gap-1.5 text-blue-700 hover:bg-blue-50"
                   >
                     <GraduationCap className="w-4 h-4 text-blue-600" aria-hidden="true" />
@@ -216,7 +216,7 @@ export const Navbar: React.FC = () => {
                 Home
               </Link>
               <a
-                href="http://localhost:5174/#/schools"
+                href="http://localhost:5174/"
                 className="px-3 py-2 rounded-md text-sm font-semibold transition-colors flex items-center gap-1.5 text-blue-700 hover:bg-blue-50"
               >
                 <GraduationCap className="w-4 h-4 text-blue-600" />
@@ -396,11 +396,11 @@ export const Navbar: React.FC = () => {
                 Home
               </Link>
               <a
-                href="http://localhost:5174/#/schools"
+                href="http://localhost:5174/"
                 onClick={() => setMobileMenuOpen(false)}
                 className="block px-3 py-2 rounded-md text-base font-medium text-blue-700 hover:bg-blue-50 font-semibold"
               >
-                Education Service (Schools)
+                Education Service
               </a>
               <Link
                 to="/login"

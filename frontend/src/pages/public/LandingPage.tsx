@@ -171,7 +171,7 @@ export const LandingPage: React.FC = () => {
                 key={service.id}
                 onClick={() => {
                   if (service.id === 'education') {
-                    window.location.href = 'http://localhost:5174/#/schools';
+                    window.location.href = 'http://localhost:5174/';
                   } else {
                     setSelectedService(service);
                   }
@@ -229,7 +229,7 @@ export const LandingPage: React.FC = () => {
 
                 {/* Footer Action */}
                 <div className="mt-5 pt-3.5 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-navy-900 group-hover:text-saffron-600 transition-colors">
-                  <span>{service.id === 'education' ? 'Open School Directory (Port 5174) →' : 'View Details & Scope'}</span>
+                  <span>{service.id === 'education' ? 'Launch Education Portal (Port 5174) →' : 'View Details & Scope'}</span>
                   <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
                 </div>
               </div>
@@ -418,11 +418,11 @@ export const LandingPage: React.FC = () => {
                 </button>
                 {selectedService.id === 'education' && (
                   <a
-                    href="http://localhost:5174/#/schools"
+                    href="http://localhost:5174/"
                     className="py-2 px-4 rounded-xl text-xs font-bold bg-navy-900 hover:bg-navy-800 text-white shadow-md transition inline-flex items-center gap-1.5"
                   >
                     <GraduationCap className="w-3.5 h-3.5 text-saffron-400" />
-                    <span>Launch School Directory (Port 5174) →</span>
+                    <span>Launch Education Portal (Port 5174) →</span>
                   </a>
                 )}
               </div>
