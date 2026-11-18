@@ -43,7 +43,32 @@ export const EducationPortalPage: React.FC = () => {
     portal_url: 'http://localhost:5174'
   });
 
-  const districts = ['ALL', 'Bengaluru Urban', 'Mysuru', 'Belagavi', 'Dharwad', 'Vijayapura'];
+  const districts = ['ALL', 'Bengaluru Urban', 'Mysuru', 'Belagavi', 'Dharwad', 'Vijayapura', 'Ballari'];
+
+  const getFacilitiesList = (school: SchoolItem): string[] => {
+    if (Array.isArray(school.facilities) && school.facilities.length > 0) {
+      return school.facilities;
+    }
+    if (school.facilities_json) {
+      try {
+        const parsed = typeof school.facilities_json === 'string'
+          ? JSON.parse(school.facilities_json)
+          : school.facilities_json;
+        if (Array.isArray(parsed)) {
+          return parsed.length > 0 ? parsed : ['Science Lab', 'Library', 'Sports Ground'];
+        }
+        if (parsed && Array.isArray(parsed.campus_facilities)) {
+          return parsed.campus_facilities;
+        }
+        if (parsed && typeof parsed === 'object') {
+          return ['Hostel', 'Workshops', 'Sports Arena', 'Health Center'];
+        }
+      } catch {
+        // fallback
+      }
+    }
+    return ['Science Lab', 'Library', 'Smart Classrooms', 'Sports Ground'];
+  };
 
   useEffect(() => {
     loadSchools();
@@ -259,11 +284,7 @@ export const EducationPortalPage: React.FC = () => {
         {!loading && schools.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {schools.map((school) => {
-              const facilities = Array.isArray(school.facilities)
-                ? school.facilities
-                : school.facilities_json
-                ? JSON.parse(school.facilities_json || '[]')
-                : ['Science Lab', 'Library', 'Sports Ground'];
+              const facilities = getFacilitiesList(school);
 
               return (
                 <div

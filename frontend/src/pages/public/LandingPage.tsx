@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   Users,
   Home,
@@ -85,6 +85,7 @@ const CITIZEN_SERVICES: CivicServiceItem[] = [
 ];
 
 export const LandingPage: React.FC = () => {
+  const navigate = useNavigate();
   const [selectedService, setSelectedService] = useState<CivicServiceItem | null>(null);
 
   return (
@@ -170,7 +171,13 @@ export const LandingPage: React.FC = () => {
             return (
               <div
                 key={service.id}
-                onClick={() => setSelectedService(service)}
+                onClick={() => {
+                  if (service.id === 'education') {
+                    navigate('/education');
+                  } else {
+                    setSelectedService(service);
+                  }
+                }}
                 className={`bg-white rounded-3xl border ${service.borderColor} p-6 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between group cursor-pointer hover:-translate-y-1 relative overflow-hidden`}
               >
                 {/* Accent Top Strip */}
