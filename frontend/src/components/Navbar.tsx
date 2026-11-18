@@ -125,17 +125,13 @@ export const Navbar: React.FC = () => {
                   >
                     My Household
                   </Link>
-                  <Link
-                    to="/education"
-                    className={`px-3 py-2 rounded-md text-sm font-semibold transition-colors flex items-center gap-1.5 ${
-                      isActive('/education')
-                        ? 'bg-blue-50 text-blue-800'
-                        : 'text-blue-700 hover:bg-blue-50'
-                    }`}
+                  <a
+                    href="http://localhost:5174/#/schools"
+                    className="px-3 py-2 rounded-md text-sm font-semibold transition-colors flex items-center gap-1.5 text-blue-700 hover:bg-blue-50"
                   >
                     <GraduationCap className="w-4 h-4 text-blue-600" aria-hidden="true" />
                     <span>Education Service</span>
-                  </Link>
+                  </a>
                   <Link
                     to="/whatsapp"
                     className={`px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-1.5 ${
@@ -219,17 +215,13 @@ export const Navbar: React.FC = () => {
               >
                 Home
               </Link>
-              <Link
-                to="/education"
-                className={`px-3 py-2 rounded-md text-sm font-semibold transition-colors flex items-center gap-1.5 ${
-                  isActive('/education')
-                    ? 'bg-blue-50 text-blue-800'
-                    : 'text-blue-700 hover:bg-blue-50'
-                }`}
+              <a
+                href="http://localhost:5174/#/schools"
+                className="px-3 py-2 rounded-md text-sm font-semibold transition-colors flex items-center gap-1.5 text-blue-700 hover:bg-blue-50"
               >
                 <GraduationCap className="w-4 h-4 text-blue-600" />
                 <span>Education Service</span>
-              </Link>
+              </a>
               <Link
                 to="/whatsapp"
                 className={`px-3 py-2 rounded-md text-sm font-semibold transition-colors flex items-center gap-1.5 ${
@@ -403,6 +395,13 @@ export const Navbar: React.FC = () => {
               >
                 Home
               </Link>
+              <a
+                href="http://localhost:5174/#/schools"
+                onClick={() => setMobileMenuOpen(false)}
+                className="block px-3 py-2 rounded-md text-base font-medium text-blue-700 hover:bg-blue-50 font-semibold"
+              >
+                Education Service (Schools)
+              </a>
               <Link
                 to="/login"
                 onClick={() => setMobileMenuOpen(false)}

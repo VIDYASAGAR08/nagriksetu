@@ -8,23 +8,25 @@
    ============================================================ */
 :root {
   /* Brand palette — NagrikSetu modern institutional */
-  --color-primary:        #102B46;
-  --color-primary-dark:   #0B1E32;
-  --color-primary-light:  #155EEF;
-  --color-primary-blue:   #155EEF;
-  --color-accent:         #e07b00;
-  --color-accent-light:   #f59c2a;
+  --color-primary:        #081c33;
+  --color-primary-dark:   #040e1a;
+  --color-primary-light:  #102B46;
+  --color-primary-blue:   #1d4ed8;
+  --color-accent:         #FF9933;
+  --color-accent-light:   #f59e0b;
+  --color-saffron:        #FF9933;
+  --color-govgreen:       #138808;
 
   /* Neutral palette */
-  --color-bg:             #F5F7FA;
-  --color-bg-light:       #F1F6FC;
+  --color-bg:             #f8fafc;
+  --color-bg-light:       #f1f5f9;
   --color-surface:        #FFFFFF;
-  --color-border:         #d0d5dd;
-  --color-border-light:   #e8eaed;
-  --color-text:           #15233B;
-  --color-text-secondary: #475467;
-  --color-text-muted:     #667085;
-  --color-text-light:     #98A2B3;
+  --color-border:         #e2e8f0;
+  --color-border-light:   #f1f5f9;
+  --color-text:           #0f172a;
+  --color-text-secondary: #334155;
+  --color-text-muted:     #64748b;
+  --color-text-light:     #94a3b8;
 
   /* Status colours */
   --color-success:        #12B76A;

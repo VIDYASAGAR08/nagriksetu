@@ -174,12 +174,36 @@ export default function SchoolDirectoryPage() {
           marginBottom: '2rem'
         }}>
           <div>
-            <h1 style={{ fontSize: '2.25rem', fontWeight: 800, color: '#102B46', margin: '0 0 0.4rem 0' }}>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.25rem 0.75rem', borderRadius: '20px', background: 'rgba(255, 153, 51, 0.12)', border: '1px solid rgba(255, 153, 51, 0.3)', color: '#b45309', fontSize: '0.75rem', fontWeight: 700, marginBottom: '0.6rem' }}>
+              <span>🇮🇳 Department of Higher & School Education · Government of Karnataka</span>
+            </div>
+            <h1 style={{ fontSize: '2.25rem', fontWeight: 900, color: '#081c33', margin: '0 0 0.4rem 0', letterSpacing: '-0.02em' }}>
               Educational Institutions Directory
             </h1>
             <p style={{ color: '#475467', margin: 0, fontSize: '1.05rem' }}>
               Discover authorized schools, PU colleges, degree colleges, and universities across Karnataka with live seat quotas.
             </p>
+          </div>
+          <div>
+            <a
+              href="http://localhost:5173"
+              style={{
+                background: '#081c33',
+                color: '#ffffff',
+                border: '1px solid #1e293b',
+                padding: '0.55rem 1.15rem',
+                borderRadius: '10px',
+                textDecoration: 'none',
+                fontWeight: 700,
+                fontSize: '0.85rem',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                boxShadow: '0 2px 4px rgba(8,28,51,0.1)'
+              }}
+            >
+              ← Back to Central Portal
+            </a>
           </div>
         </div>
 

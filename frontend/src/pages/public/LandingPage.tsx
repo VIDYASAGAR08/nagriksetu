@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import {
   Users,
   Home,
@@ -17,7 +17,6 @@ import {
   X,
   Building2,
   ChevronRight,
-  ExternalLink,
 } from 'lucide-react';
 
 interface CivicServiceItem {
@@ -85,7 +84,6 @@ const CITIZEN_SERVICES: CivicServiceItem[] = [
 ];
 
 export const LandingPage: React.FC = () => {
-  const navigate = useNavigate();
   const [selectedService, setSelectedService] = useState<CivicServiceItem | null>(null);
 
   return (
@@ -173,7 +171,7 @@ export const LandingPage: React.FC = () => {
                 key={service.id}
                 onClick={() => {
                   if (service.id === 'education') {
-                    navigate('/education');
+                    window.location.href = 'http://localhost:5174/#/schools';
                   } else {
                     setSelectedService(service);
                   }
@@ -231,7 +229,7 @@ export const LandingPage: React.FC = () => {
 
                 {/* Footer Action */}
                 <div className="mt-5 pt-3.5 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-navy-900 group-hover:text-saffron-600 transition-colors">
-                  <span>{service.id === 'education' ? 'Explore Schools & Portal' : 'View Details & Scope'}</span>
+                  <span>{service.id === 'education' ? 'Open School Directory (Port 5174) →' : 'View Details & Scope'}</span>
                   <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
                 </div>
               </div>
@@ -419,25 +417,13 @@ export const LandingPage: React.FC = () => {
                   Close
                 </button>
                 {selectedService.id === 'education' && (
-                  <>
-                    <Link
-                      to="/education"
-                      onClick={() => setSelectedService(null)}
-                      className="py-2 px-4 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-xs transition inline-flex items-center gap-1.5"
-                    >
-                      <GraduationCap className="w-3.5 h-3.5" />
-                      <span>Browse School Directory</span>
-                    </Link>
-                    <a
-                      href="http://localhost:5174"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="py-2 px-4 rounded-xl text-xs font-bold bg-navy-900 hover:bg-navy-800 text-white shadow-md transition inline-flex items-center gap-1.5"
-                    >
-                      <span>Launch School Portal (Port 5174)</span>
-                      <ExternalLink className="w-3.5 h-3.5 text-saffron-400" />
-                    </a>
-                  </>
+                  <a
+                    href="http://localhost:5174/#/schools"
+                    className="py-2 px-4 rounded-xl text-xs font-bold bg-navy-900 hover:bg-navy-800 text-white shadow-md transition inline-flex items-center gap-1.5"
+                  >
+                    <GraduationCap className="w-3.5 h-3.5 text-saffron-400" />
+                    <span>Launch School Directory (Port 5174) →</span>
+                  </a>
                 )}
               </div>
             </div>
