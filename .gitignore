@@ -6,7 +6,9 @@ __pycache__/
 .Python
 backend/.venv/
 .venv/
+**/.venv/
 env/
+**/venv/
 build/
 develop-eggs/
 dist/
@@ -31,11 +33,19 @@ htmlcov/
 # Database files
 *.db
 *.sqlite3
+*.db.backup*
+*.db.bak*
+*.db.pre*
+*.bak*
+*.tar.gz
 
 # Node / Frontend
-frontend/node_modules/
-frontend/dist/
-frontend/.vite/
+node_modules/
+**/node_modules/
+dist/
+**/dist/
+.vite/
+**/.vite/
 
 # Environments & OS
 .env

@@ -14,6 +14,7 @@ import {
   FileText,
   QrCode,
   Layers,
+  GraduationCap,
 } from 'lucide-react';
 
 export const Navbar: React.FC = () => {
@@ -125,6 +126,17 @@ export const Navbar: React.FC = () => {
                     My Household
                   </Link>
                   <Link
+                    to="/education"
+                    className={`px-3 py-2 rounded-md text-sm font-semibold transition-colors flex items-center gap-1.5 ${
+                      isActive('/education')
+                        ? 'bg-blue-50 text-blue-800'
+                        : 'text-blue-700 hover:bg-blue-50'
+                    }`}
+                  >
+                    <GraduationCap className="w-4 h-4 text-blue-600" aria-hidden="true" />
+                    <span>Education Service</span>
+                  </Link>
+                  <Link
                     to="/whatsapp"
                     className={`px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-1.5 ${
                       isActive('/whatsapp')
@@ -206,6 +218,17 @@ export const Navbar: React.FC = () => {
                 }`}
               >
                 Home
+              </Link>
+              <Link
+                to="/education"
+                className={`px-3 py-2 rounded-md text-sm font-semibold transition-colors flex items-center gap-1.5 ${
+                  isActive('/education')
+                    ? 'bg-blue-50 text-blue-800'
+                    : 'text-blue-700 hover:bg-blue-50'
+                }`}
+              >
+                <GraduationCap className="w-4 h-4 text-blue-600" />
+                <span>Education Service</span>
               </Link>
               <Link
                 to="/whatsapp"

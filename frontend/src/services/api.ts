@@ -399,4 +399,44 @@ export const api = {
         body: JSON.stringify({ phone_number: phoneNumber, message }),
       }),
   },
+
+  // Education & School Service Integration
+  education: {
+    getStats: () =>
+      request<{
+        status: string;
+        total_schools: number;
+        districts_covered: number;
+        portal_url: string;
+        schemes: string[];
+        integration_mode: string;
+      }>('/education/stats'),
+    getSchools: (params?: { q?: string; district?: string; state?: string; limit?: number }) => {
+      const q = new URLSearchParams();
+      if (params?.q) q.append('q', params.q);
+      if (params?.district) q.append('district', params.district);
+      if (params?.state) q.append('state', params.state);
+      if (params?.limit) q.append('limit', String(params.limit));
+      const qs = q.toString();
+      return request<{
+        total: number;
+        items: Array<{
+          school_id: string;
+          school_name: string;
+          district: string;
+          state: string;
+          school_type?: string;
+          address?: string;
+          established_year?: number;
+          description?: string;
+          public_phone?: string;
+          website?: string;
+          facilities?: string[];
+        }>;
+        source: string;
+      }>(`/education/schools${qs ? `?${qs}` : ''}`);
+    },
+    getSchoolDetail: (schoolId: string) =>
+      request<any>(`/education/schools/${schoolId}`),
+  },
 };

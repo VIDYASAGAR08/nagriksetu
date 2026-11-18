@@ -1,0 +1,727 @@
+{
+  "tables_count": 39,
+  "table_counts": {
+    "academic_programs": 140,
+    "academic_result_audits": 7,
+    "academic_results": 18,
+    "admission_applications": 82,
+    "admission_detailed_submissions": 13,
+    "admission_documents": 39,
+    "admission_status_history": 191,
+    "audit_logs": 502,
+    "collegiate_enrollments": 0,
+    "document_ocr_extractions": 2,
+    "enrollments": 30003,
+    "examinations": 38,
+    "fees": 0,
+    "guardians": 26,
+    "institution_announcements": 25,
+    "institution_divisions": 28,
+    "institution_staff_permissions": 24,
+    "invitation_tokens": 60,
+    "linking_requests": 6,
+    "notification_delivery_logs": 32,
+    "notification_preferences": 1,
+    "password_reset_tokens": 6,
+    "platform_audit_logs": 626,
+    "portal_notifications": 219,
+    "program_sections": 455,
+    "scholarships": 0,
+    "school_achievements": 21,
+    "school_change_log": 1,
+    "school_programs": 0,
+    "school_transfers": 0,
+    "schools": 30,
+    "staff_applications": 13,
+    "student_attendance": 24,
+    "student_documents": 0,
+    "student_guardians": 8,
+    "students": 30003,
+    "update_requests": 2,
+    "user_institution_roles": 49,
+    "users": 78
+  },
+  "integrity_check": [
+    "ok"
+  ],
+  "foreign_key_violations_count": 198,
+  "foreign_key_violations": [
+    [
+      "academic_result_audits",
+      1,
+      "users",
+      0
+    ],
+    [
+      "academic_result_audits",
+      2,
+      "users",
+      0
+    ],
+    [
+      "academic_result_audits",
+      3,
+      "users",
+      0
+    ],
+    [
+      "academic_result_audits",
+      4,
+      "users",
+      0
+    ],
+    [
+      "academic_result_audits",
+      5,
+      "users",
+      0
+    ],
+    [
+      "academic_result_audits",
+      6,
+      "users",
+      0
+    ],
+    [
+      "examinations",
+      1,
+      "users",
+      0
+    ],
+    [
+      "examinations",
+      2,
+      "users",
+      0
+    ],
+    [
+      "examinations",
+      3,
+      "users",
+      0
+    ],
+    [
+      "examinations",
+      4,
+      "users",
+      0
+    ]
+  ],
+  "endpoints_total": 139,
+  "endpoints": [
+    {
+      "method": "POST",
+      "path": "/auth/login"
+    },
+    {
+      "method": "POST",
+      "path": "/auth/register"
+    },
+    {
+      "method": "POST",
+      "path": "/auth/student/lookup"
+    },
+    {
+      "method": "POST",
+      "path": "/auth/student/register"
+    },
+    {
+      "method": "GET",
+      "path": "/student/profile"
+    },
+    {
+      "method": "GET",
+      "path": "/auth/me"
+    },
+    {
+      "method": "GET",
+      "path": "/"
+    },
+    {
+      "method": "GET",
+      "path": "/health"
+    },
+    {
+      "method": "GET",
+      "path": "/schools"
+    },
+    {
+      "method": "GET",
+      "path": "/schools/{school_id}"
+    },
+    {
+      "method": "GET",
+      "path": "/schools/{school_id}/courses"
+    },
+    {
+      "method": "GET",
+      "path": "/search-schools"
+    },
+    {
+      "method": "GET",
+      "path": "/schools/{school_id}/students"
+    },
+    {
+      "method": "GET",
+      "path": "/students/{student_id}"
+    },
+    {
+      "method": "GET",
+      "path": "/schools/{school_id}/programs"
+    },
+    {
+      "method": "GET",
+      "path": "/schools/{school_id}/achievements"
+    },
+    {
+      "method": "GET",
+      "path": "/schools/{school_id}/divisions"
+    },
+    {
+      "method": "GET",
+      "path": "/schools/{school_id}/academic-hierarchy"
+    },
+    {
+      "method": "GET",
+      "path": "/parent/children"
+    },
+    {
+      "method": "GET",
+      "path": "/parent/children/{permanent_student_id}/records"
+    },
+    {
+      "method": "GET",
+      "path": "/parent/linking-requests"
+    },
+    {
+      "method": "POST",
+      "path": "/parent/update-requests"
+    },
+    {
+      "method": "GET",
+      "path": "/parent/update-requests"
+    },
+    {
+      "method": "GET",
+      "path": "/school/linking-requests"
+    },
+    {
+      "method": "POST",
+      "path": "/school/linking-requests/{request_id}/review"
+    },
+    {
+      "method": "GET",
+      "path": "/school/update-requests"
+    },
+    {
+      "method": "POST",
+      "path": "/school/update-requests/{request_id}/review"
+    },
+    {
+      "method": "GET",
+      "path": "/admin/overview"
+    },
+    {
+      "method": "GET",
+      "path": "/admin/activity-feed"
+    },
+    {
+      "method": "GET",
+      "path": "/admin/audit-logs"
+    },
+    {
+      "method": "GET",
+      "path": "/admin/admissions/applications"
+    },
+    {
+      "method": "GET",
+      "path": "/admin/admissions/applications/{application_id}/history"
+    },
+    {
+      "method": "GET",
+      "path": "/admin/academic/activities"
+    },
+    {
+      "method": "GET",
+      "path": "/admin/staff/activities"
+    },
+    {
+      "method": "GET",
+      "path": "/admin/reports/analytics"
+    },
+    {
+      "method": "PUT",
+      "path": "/schools/{school_id}/capacity"
+    },
+    {
+      "method": "PUT",
+      "path": "/schools/{school_id}/profile"
+    },
+    {
+      "method": "GET",
+      "path": "/school/admin/overview"
+    },
+    {
+      "method": "GET",
+      "path": "/education/programs"
+    },
+    {
+      "method": "GET",
+      "path": "/schools/{school_id}/sections"
+    },
+    {
+      "method": "GET",
+      "path": "/schools/{school_id}/program-sections"
+    },
+    {
+      "method": "GET",
+      "path": "/education/program-sections"
+    },
+    {
+      "method": "GET",
+      "path": "/schools/{school_id}/seat-availability"
+    },
+    {
+      "method": "GET",
+      "path": "/schools/{school_id}/academic-strength"
+    },
+    {
+      "method": "POST",
+      "path": "/schools/compare"
+    },
+    {
+      "method": "GET",
+      "path": "/admissions/form-config/{institution_id}"
+    },
+    {
+      "method": "POST",
+      "path": "/admissions/apply"
+    },
+    {
+      "method": "GET",
+      "path": "/admissions/applications/{application_id}/public-confirmation"
+    },
+    {
+      "method": "GET",
+      "path": "/school/admissions/overview"
+    },
+    {
+      "method": "GET",
+      "path": "/school/admissions/applications"
+    },
+    {
+      "method": "GET",
+      "path": "/school/admissions/applications/{application_id}"
+    },
+    {
+      "method": "POST",
+      "path": "/school/admissions/{application_id}/review"
+    },
+    {
+      "method": "POST",
+      "path": "/school/admissions/{application_id}/approve"
+    },
+    {
+      "method": "POST",
+      "path": "/school/admissions/{application_id}/request-clarification"
+    },
+    {
+      "method": "POST",
+      "path": "/school/admissions/{application_id}/reject"
+    },
+    {
+      "method": "GET",
+      "path": "/school/admissions/{application_id}/history"
+    },
+    {
+      "method": "GET",
+      "path": "/parent/admissions/applications"
+    },
+    {
+      "method": "GET",
+      "path": "/parent/admissions/applications/{application_id}"
+    },
+    {
+      "method": "POST",
+      "path": "/parent/admissions/claim"
+    },
+    {
+      "method": "POST",
+      "path": "/parent/admissions/applications/{application_id}/respond-clarification"
+    },
+    {
+      "method": "GET",
+      "path": "/admissions/applications/{application_id}/stage2-eligibility"
+    },
+    {
+      "method": "POST",
+      "path": "/admissions/applications/{application_id}/stage2-submit"
+    },
+    {
+      "method": "POST",
+      "path": "/admissions/applications/{application_id}/documents"
+    },
+    {
+      "method": "GET",
+      "path": "/admissions/applications/{application_id}/documents"
+    },
+    {
+      "method": "GET",
+      "path": "/admissions/applications/{application_id}/documents/{document_id}/file"
+    },
+    {
+      "method": "POST",
+      "path": "/school/admissions/{application_id}/documents/{document_id}/verify"
+    },
+    {
+      "method": "POST",
+      "path": "/school/admissions/{application_id}/stage2-review"
+    },
+    {
+      "method": "GET",
+      "path": "/school/admissions/{application_id}/available-sections"
+    },
+    {
+      "method": "POST",
+      "path": "/school/admissions/{application_id}/final-admission-confirm"
+    },
+    {
+      "method": "POST",
+      "path": "/school/admissions/{application_id}/documents/{document_id}/ocr-analyze"
+    },
+    {
+      "method": "GET",
+      "path": "/school/admissions/{application_id}/documents/{document_id}/ocr-result"
+    },
+    {
+      "method": "POST",
+      "path": "/school/admissions/{application_id}/documents/{document_id}/ocr-override"
+    },
+    {
+      "method": "GET",
+      "path": "/notifications"
+    },
+    {
+      "method": "GET",
+      "path": "/notifications/unread-count"
+    },
+    {
+      "method": "POST",
+      "path": "/notifications/{notification_id}/read"
+    },
+    {
+      "method": "POST",
+      "path": "/notifications/read-all"
+    },
+    {
+      "method": "GET",
+      "path": "/notifications/preferences"
+    },
+    {
+      "method": "PUT",
+      "path": "/notifications/preferences"
+    },
+    {
+      "method": "GET",
+      "path": "/notifications/channels/status"
+    },
+    {
+      "method": "GET",
+      "path": "/notifications/delivery-logs"
+    },
+    {
+      "method": "POST",
+      "path": "/ai/chat"
+    },
+    {
+      "method": "POST",
+      "path": "/idp/process-document"
+    },
+    {
+      "method": "GET",
+      "path": "/admin/institution-admins/eligible-institutions"
+    },
+    {
+      "method": "GET",
+      "path": "/admin/institution-admins"
+    },
+    {
+      "method": "POST",
+      "path": "/admin/institution-admins/reset-assignments"
+    },
+    {
+      "method": "POST",
+      "path": "/admin/institution-admins/invite"
+    },
+    {
+      "method": "POST",
+      "path": "/admin/institution-admins/{user_id}/suspend"
+    },
+    {
+      "method": "POST",
+      "path": "/admin/institution-admins/{user_id}/revoke-invitation"
+    },
+    {
+      "method": "POST",
+      "path": "/auth/decline-invitation"
+    },
+    {
+      "method": "POST",
+      "path": "/admin/institution-admins/{user_id}/reactivate"
+    },
+    {
+      "method": "GET",
+      "path": "/auth/verify-invitation"
+    },
+    {
+      "method": "POST",
+      "path": "/auth/invitations/verify-identity"
+    },
+    {
+      "method": "POST",
+      "path": "/auth/accept-invitation"
+    },
+    {
+      "method": "POST",
+      "path": "/auth/select-workspace"
+    },
+    {
+      "method": "POST",
+      "path": "/school/admissions/{application_id}/recommend"
+    },
+    {
+      "method": "GET",
+      "path": "/school/admin/staff"
+    },
+    {
+      "method": "POST",
+      "path": "/school/admin/staff/invite"
+    },
+    {
+      "method": "POST",
+      "path": "/school/admin/staff/{user_id}/resend-invitation"
+    },
+    {
+      "method": "POST",
+      "path": "/school/admin/staff/{user_id}/suspend"
+    },
+    {
+      "method": "POST",
+      "path": "/school/admin/staff/{user_id}/reactivate"
+    },
+    {
+      "method": "POST",
+      "path": "/school/admin/staff/{user_id}/reset-password"
+    },
+    {
+      "method": "PUT",
+      "path": "/school/admin/staff/{user_id}/permissions"
+    },
+    {
+      "method": "GET",
+      "path": "/school/admin/staff/{user_id}/activity"
+    },
+    {
+      "method": "GET",
+      "path": "/school/staff/me/permissions"
+    },
+    {
+      "method": "POST",
+      "path": "/auth/forgot-password"
+    },
+    {
+      "method": "GET",
+      "path": "/auth/verify-reset-token"
+    },
+    {
+      "method": "POST",
+      "path": "/auth/reset-password"
+    },
+    {
+      "method": "POST",
+      "path": "/auth/change-password"
+    },
+    {
+      "method": "GET",
+      "path": "/auth/institutions/admin-statuses"
+    },
+    {
+      "method": "GET",
+      "path": "/auth/institution/{institution_id}/admin-status"
+    },
+    {
+      "method": "GET",
+      "path": "/institution/admin/overview"
+    },
+    {
+      "method": "POST",
+      "path": "/school/admin/staff-applications/invite"
+    },
+    {
+      "method": "GET",
+      "path": "/school/admin/staff-applications"
+    },
+    {
+      "method": "GET",
+      "path": "/school/admin/staff-applications/{application_id}"
+    },
+    {
+      "method": "POST",
+      "path": "/school/admin/staff-applications/{application_id}/request-correction"
+    },
+    {
+      "method": "POST",
+      "path": "/school/admin/staff-applications/{application_id}/approve"
+    },
+    {
+      "method": "POST",
+      "path": "/school/admin/staff-applications/{application_id}/decline"
+    },
+    {
+      "method": "GET",
+      "path": "/auth/staff-candidate/application"
+    },
+    {
+      "method": "POST",
+      "path": "/auth/staff-candidate/submit"
+    },
+    {
+      "method": "POST",
+      "path": "/auth/staff-candidate/activate"
+    },
+    {
+      "method": "GET",
+      "path": "/admin/staff-monitoring"
+    },
+    {
+      "method": "POST",
+      "path": "/academic/attendance/batch"
+    },
+    {
+      "method": "GET",
+      "path": "/academic/attendance"
+    },
+    {
+      "method": "GET",
+      "path": "/academic/attendance/summary/{permanent_student_id}"
+    },
+    {
+      "method": "POST",
+      "path": "/academic/examinations"
+    },
+    {
+      "method": "GET",
+      "path": "/academic/examinations"
+    },
+    {
+      "method": "POST",
+      "path": "/academic/results/batch"
+    },
+    {
+      "method": "GET",
+      "path": "/academic/results"
+    },
+    {
+      "method": "GET",
+      "path": "/academic/results/audits/{result_id}"
+    },
+    {
+      "method": "GET",
+      "path": "/academic/performance/{permanent_student_id}"
+    },
+    {
+      "method": "POST",
+      "path": "/academic/announcements"
+    },
+    {
+      "method": "GET",
+      "path": "/academic/announcements"
+    },
+    {
+      "method": "GET",
+      "path": "/institution/{institution_id}/dashboard-overview"
+    },
+    {
+      "method": "GET",
+      "path": "/institution/{institution_id}/academic-structure"
+    },
+    {
+      "method": "GET",
+      "path": "/institution/{institution_id}/students"
+    },
+    {
+      "method": "GET",
+      "path": "/institution/{institution_id}/students/{student_id}"
+    },
+    {
+      "method": "GET",
+      "path": "/institution/{institution_id}/parent-requests"
+    },
+    {
+      "method": "POST",
+      "path": "/institution/{institution_id}/parent-requests/{request_id}/review"
+    },
+    {
+      "method": "GET",
+      "path": "/institution/{institution_id}/parents"
+    }
+  ],
+  "frontend_files_total": 54,
+  "frontend_files": [
+    "App.jsx",
+    "main.jsx",
+    "components\\academic\\InstitutionAdminAcademicDesk.jsx",
+    "components\\academic\\StaffAcademicDesk.jsx",
+    "components\\admin\\InstitutionParentRequestsDesk.jsx",
+    "components\\admin\\InstitutionParentsDirectory.jsx",
+    "components\\admin\\InstitutionStudentManagementDesk.jsx",
+    "components\\admissions\\AdmissionDeskTab.jsx",
+    "components\\admissions\\Stage1AdmissionModal.jsx",
+    "components\\admissions\\Stage2AdmissionModal.jsx",
+    "components\\comparison\\InstitutionCompareDrawer.jsx",
+    "components\\comparison\\InstitutionCompareModal.jsx",
+    "components\\demo\\AiAssistantModal.jsx",
+    "components\\institution\\InstitutionAbout.jsx",
+    "components\\institution\\InstitutionAcademics.jsx",
+    "components\\institution\\InstitutionAchievements.jsx",
+    "components\\institution\\InstitutionAdmissions.jsx",
+    "components\\institution\\InstitutionDivisions.jsx",
+    "components\\institution\\InstitutionFacilities.jsx",
+    "components\\institution\\InstitutionHero.jsx",
+    "components\\institution\\InstitutionHostel.jsx",
+    "components\\institution\\InstitutionStudentDirectory.jsx",
+    "components\\institution\\InstitutionTransport.jsx",
+    "components\\institution\\LiveSeatAvailability.jsx",
+    "components\\institution\\SeatBadge.jsx",
+    "components\\layout\\Breadcrumbs.jsx",
+    "components\\layout\\Footer.jsx",
+    "components\\layout\\GovHeader.jsx",
+    "components\\notifications\\NotificationBellDropdown.jsx",
+    "components\\ui\\Alert.jsx",
+    "components\\ui\\LoadingSpinner.jsx",
+    "components\\ui\\StatusBadge.jsx",
+    "contexts\\AuthContext.jsx",
+    "pages\\admin\\AdminDashboard.jsx",
+    "pages\\admin\\InstitutionAdminDashboard.jsx",
+    "pages\\auth\\AcceptInvitationPage.jsx",
+    "pages\\auth\\ForgotPasswordPage.jsx",
+    "pages\\auth\\LoginPage.jsx",
+    "pages\\auth\\RegisterPage.jsx",
+    "pages\\auth\\ResetPasswordPage.jsx",
+    "pages\\auth\\SelectInstitutionPage.jsx",
+    "pages\\auth\\SelectWorkspacePage.jsx",
+    "pages\\auth\\StaffCandidateActivationPage.jsx",
+    "pages\\auth\\StaffCandidateApplicationPage.jsx",
+    "pages\\notifications\\NotificationCenterPage.jsx",
+    "pages\\parent\\ParentDashboard.jsx",
+    "pages\\public\\HomePage.jsx",
+    "pages\\public\\InfoPage.jsx",
+    "pages\\public\\SchoolDetailsPage.jsx",
+    "pages\\public\\SchoolDirectoryPage.jsx",
+    "pages\\staff\\StaffDashboard.jsx",
+    "pages\\student\\StudentDashboard.jsx",
+    "utils\\api.js",
+    "utils\\auth.js"
+  ],
+  "ai_agent_length": 29087
+}

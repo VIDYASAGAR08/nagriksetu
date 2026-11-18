@@ -1,0 +1,1609 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>NagrikSetu – Final Academic Project Report</title>
+<style>
+  @page {
+    size: A4;
+    margin: 25mm 25mm 25mm 25mm;
+    @bottom-center {
+      content: counter(page);
+      font-family: "Latin Modern Roman", "Computer Modern", Georgia, "Times New Roman", serif;
+      font-size: 10pt;
+    }
+  }
+
+  body {
+    font-family: "Latin Modern Roman", "Computer Modern", Georgia, "Times New Roman", serif;
+    font-size: 11pt;
+    line-height: 1.55;
+    color: #111111;
+    margin: 0;
+    padding: 0;
+    text-align: justify;
+  }
+
+  .page {
+    page-break-after: always;
+    position: relative;
+    min-height: 247mm;
+    box-sizing: border-box;
+  }
+
+  /* Cover Page Styling */
+  .cover-page {
+    text-align: center;
+    padding-top: 30mm;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 240mm;
+  }
+
+  .cover-title {
+    font-size: 19pt;
+    font-weight: bold;
+    letter-spacing: 0.5px;
+    margin-bottom: 25px;
+    line-height: 1.35;
+  }
+
+  .cover-sub {
+    font-size: 11pt;
+    font-style: italic;
+    margin: 15px 0 25px 0;
+    color: #333333;
+  }
+
+  .cover-degree {
+    font-size: 17pt;
+    font-weight: bold;
+    font-family: "Palatino Linotype", "Book Antiqua", Georgia, serif;
+    margin: 15px 0 8px 0;
+  }
+
+  .cover-dept {
+    font-size: 12pt;
+    font-weight: normal;
+    margin-bottom: 35px;
+  }
+
+  .cover-by {
+    font-size: 11pt;
+    margin-bottom: 8px;
+  }
+
+  .cover-author {
+    font-size: 14pt;
+    font-weight: bold;
+    margin: 4px 0;
+  }
+
+  .cover-reg {
+    font-size: 11pt;
+    margin-bottom: 30px;
+    color: #333;
+  }
+
+  .cover-super-title {
+    font-size: 11pt;
+    font-style: italic;
+    margin-bottom: 6px;
+  }
+
+  .cover-super-name {
+    font-size: 12pt;
+    font-weight: bold;
+  }
+
+  .cover-super-desig {
+    font-size: 11pt;
+    margin-bottom: 25px;
+  }
+
+  .cover-course {
+    font-size: 11pt;
+    margin-top: 15px;
+  }
+
+  .univ-logo-wrap {
+    margin: 25px 0;
+  }
+
+  .univ-logo {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .logo-icon {
+    width: 44px;
+    height: 48px;
+  }
+
+  .logo-text {
+    font-size: 16pt;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+    color: #1e3a8a;
+    font-family: Arial, sans-serif;
+    text-align: left;
+    line-height: 1.1;
+  }
+
+  .logo-text span {
+    display: block;
+    font-size: 13pt;
+    font-weight: 700;
+    color: #1e3a8a;
+    letter-spacing: 2.5px;
+  }
+
+  .cover-rule {
+    border: none;
+    border-top: 1px solid #111111;
+    margin: 20px 0 15px 0;
+  }
+
+  .cover-footer {
+    font-size: 10.5pt;
+    line-height: 1.45;
+  }
+
+  /* Section Headings */
+  .section-title {
+    text-align: center;
+    font-size: 20pt;
+    font-weight: bold;
+    margin-top: 25mm;
+    margin-bottom: 12px;
+  }
+
+  .section-rule {
+    border: none;
+    border-top: 1px solid #333;
+    margin-bottom: 30px;
+  }
+
+  /* Chapter Title */
+  .chapter-header {
+    margin-top: 25mm;
+    margin-bottom: 25px;
+  }
+
+  .chapter-num {
+    font-size: 54pt;
+    font-weight: bold;
+    text-align: right;
+    line-height: 1;
+    margin-bottom: 10px;
+    color: #111;
+  }
+
+  .chapter-title {
+    font-size: 22pt;
+    font-weight: bold;
+    text-align: right;
+    border-top: 1px solid #222;
+    padding-top: 12px;
+    margin-bottom: 25px;
+  }
+
+  h2 {
+    font-size: 14pt;
+    font-weight: bold;
+    margin-top: 22px;
+    margin-bottom: 10px;
+    border-bottom: 0.5px solid #eaeaea;
+    padding-bottom: 4px;
+  }
+
+  h3 {
+    font-size: 12pt;
+    font-weight: bold;
+    margin-top: 16px;
+    margin-bottom: 6px;
+  }
+
+  p {
+    margin-top: 0;
+    margin-bottom: 12px;
+    text-indent: 0;
+  }
+
+  ul, ol {
+    margin-top: 0;
+    margin-bottom: 12px;
+    padding-left: 24px;
+  }
+
+  li {
+    margin-bottom: 4px;
+  }
+
+  /* Tables */
+  table.academic-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 18px 0;
+    font-size: 9.5pt;
+  }
+
+  table.academic-table th {
+    border-top: 1.5px solid #111;
+    border-bottom: 1px solid #111;
+    padding: 7px 8px;
+    text-align: left;
+    font-weight: bold;
+  }
+
+  table.academic-table td {
+    padding: 6px 8px;
+    border-bottom: 0.5px solid #ddd;
+    text-align: left;
+  }
+
+  table.academic-table tr:last-child td {
+    border-bottom: 1.5px solid #111;
+  }
+
+  .table-caption {
+    font-size: 9.5pt;
+    font-weight: bold;
+    margin-bottom: 6px;
+    text-align: left;
+  }
+
+  /* Figures */
+  .figure-wrap {
+    text-align: center;
+    margin: 22px 0;
+  }
+
+  .figure-box {
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    background: #f8fafc;
+    padding: 16px;
+    margin: 0 auto 8px auto;
+    max-width: 95%;
+    font-family: monospace;
+    font-size: 8.5pt;
+    white-space: pre;
+    overflow-x: auto;
+    text-align: left;
+    line-height: 1.25;
+  }
+
+  .figure-caption {
+    font-size: 9.5pt;
+    color: #222;
+    margin-top: 6px;
+  }
+
+  /* Page Footer Numbers */
+  .page-num {
+    text-align: center;
+    font-size: 10pt;
+    margin-top: 30px;
+  }
+
+  .placeholder {
+    background-color: #fef08a;
+    padding: 1px 4px;
+    border-radius: 3px;
+    font-weight: 600;
+  }
+
+  /* TOC layout */
+  .toc-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 5px;
+    font-size: 10.5pt;
+  }
+
+  .toc-leader {
+    flex-grow: 1;
+    border-bottom: 1px dotted #666;
+    margin: 0 8px 3px 8px;
+  }
+
+  .toc-ch {
+    font-weight: bold;
+    margin-top: 10px;
+  }
+
+  .toc-sub {
+    padding-left: 20px;
+  }
+
+  .toc-subsub {
+    padding-left: 40px;
+    font-size: 10pt;
+  }
+</style>
+</head>
+<body>
+
+<!-- ==================== 1. COVER PAGE ==================== -->
+<div class="page cover-page">
+  <div>
+    <div class="cover-title">
+      NagrikSetu: A Unified Public Educational Institution Discovery and Multi-Tier Student Information Governance Platform
+    </div>
+    
+    <div class="cover-sub">
+      Report submitted in partial fulfilment of the requirements<br>for the award of the degree of
+    </div>
+    
+    <div class="cover-degree">
+      Bachelor of Technology (Hons.)
+    </div>
+    
+    <div class="cover-dept">
+      in<br>
+      Computer Science & Engineering
+    </div>
+    
+    <div class="cover-by">by</div>
+    <div class="cover-author"><span class="placeholder">[Student Name]</span></div>
+    <div class="cover-reg"><span class="placeholder">[University Enrollment Number: 2023UG000XXX]</span></div>
+    
+    <div class="cover-super-title">Under the supervision of</div>
+    <div class="cover-super-name"><span class="placeholder">[Supervisor Name]</span></div>
+    <div class="cover-super-desig"><span class="placeholder">[Supervisor Designation]</span></div>
+    
+    <div class="cover-course">
+      Course Name: <span class="placeholder">[Major Project / Capstone Project]</span><br>
+      Course Code: <span class="placeholder">[CSED499 / PROJ801]</span>
+    </div>
+    
+    <div class="univ-logo-wrap">
+      <div class="univ-logo">
+        <svg class="logo-icon" viewBox="0 0 100 110" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M20 10 C 50 25, 75 55, 65 95 C 60 70, 40 45, 20 10 Z" fill="#DC2626" />
+          <path d="M45 40 C 70 55, 88 75, 78 105 C 70 85, 55 65, 45 40 Z" fill="#1E40AF" />
+        </svg>
+        <div class="logo-text">
+          VIDYASHILP
+          <span>UNIVERSITY</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <hr class="cover-rule">
+    <div class="cover-footer">
+      <strong>School of Engineering and Technology</strong><br>
+      Vidyashilp University<br>
+      #125, Bettanahalli, Kundana Hobli, Chapparkallu Road, Bangalore-562110<br>
+      <span class="placeholder">November, 2026</span>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== 2. ACKNOWLEDGEMENTS ==================== -->
+<div class="page">
+  <div class="section-title">Acknowledgements</div>
+  <hr class="section-rule">
+  
+  <p>
+    I express my profound gratitude to my project supervisor, <span class="placeholder">[Supervisor Name]</span>, <span class="placeholder">[Supervisor Designation]</span>, School of Engineering and Technology, Vidyashilp University, for their invaluable guidance, constant encouragement, and insightful feedback throughout the conception, architecture, and development of the <strong>NagrikSetu</strong> project. Their rigorous technical critiques helped elevate this work from an educational directory concept to a secure, enterprise-grade multi-tier civic educational governance platform.
+  </p>
+  
+  <p>
+    I extend my sincere thanks to the leadership and faculty of the School of Engineering and Technology, Vidyashilp University, Bangalore, for providing the necessary computational infrastructure, laboratory facilities, and an encouraging research environment conducive to advanced systems engineering.
+  </p>
+  
+  <p>
+    I am deeply indebted to the open-source software communities and maintainers of Python, FastAPI, React, SQLite, Uvicorn, Docker, Argon2id, and Vite, whose robust tooling made the design and deployment of this high-performance distributed architecture possible.
+  </p>
+  
+  <p>
+    Finally, I thank my family, peers, and fellow researchers whose constructive discussions, continuous patience, and unwavering moral support sustained me through every milestone of this academic endeavor.
+  </p>
+
+  <div style="margin-top: 60px; display: flex; justify-content: space-between;">
+    <div>
+      <span class="placeholder">November, 2026</span><br>
+      Bangalore
+    </div>
+    <div style="text-align: right;">
+      <span class="placeholder">[Student Name]</span><br>
+      UEN: <span class="placeholder">[University Enrollment Number]</span>
+    </div>
+  </div>
+
+  <div class="page-num" style="position: absolute; bottom: 0; left: 0; right: 0;">ii</div>
+</div>
+
+<!-- ==================== 3. DECLARATION ==================== -->
+<div class="page">
+  <div class="section-title">Declaration</div>
+  <hr class="section-rule">
+
+  <p>I certify that:</p>
+  <ul>
+    <li>
+      The work contained in this report titled <strong>“NagrikSetu: A Unified Public Educational Institution Discovery and Multi-Tier Student Information Governance Platform”</strong> is original and has been carried out by myself under the supervision and guidance of my project supervisor.
+    </li>
+    <li>
+      The work reported herein has not been submitted, in part or in full, to any other Institute or University for the award of any degree, diploma, or academic distinction.
+    </li>
+    <li>
+      Whenever I have utilized materials, methodologies, system architectures, database schemas, API paradigms, algorithms, datasets, diagrams, or quotations from existing literature or software frameworks, due credit has been rigorously given by citing them within the text and enumerating them in the bibliography.
+    </li>
+    <li>
+      I affirm that no part of this project report can be considered plagiarism to the best of my knowledge and ethical understanding, and I assume full responsibility should any dispute or inquiry arise concerning academic integrity.
+    </li>
+  </ul>
+
+  <div style="margin-top: 80px; display: flex; justify-content: space-between;">
+    <div>
+      Date: <span class="placeholder">November, 2026</span><br>
+      Place: Bangalore
+    </div>
+    <div style="text-align: right;">
+      ___________________________<br>
+      <strong><span class="placeholder">[Student Name]</span></strong><br>
+      UEN: <span class="placeholder">[University Enrollment Number]</span><br>
+      School of Engineering and Technology<br>
+      Vidyashilp University
+    </div>
+  </div>
+
+  <div class="page-num" style="position: absolute; bottom: 0; left: 0; right: 0;">iii</div>
+</div>
+
+<!-- ==================== 4. CERTIFICATE ==================== -->
+<div class="page">
+  <div style="text-align: left; margin-top: 15mm; margin-bottom: 20px;">
+    <div style="display: flex; align-items: center; gap: 15px;">
+      <svg class="logo-icon" viewBox="0 0 100 110" fill="none" style="width: 36px; height: 40px;">
+        <path d="M20 10 C 50 25, 75 55, 65 95 C 60 70, 40 45, 20 10 Z" fill="#DC2626" />
+        <path d="M45 40 C 70 55, 88 75, 78 105 C 70 85, 55 65, 45 40 Z" fill="#1E40AF" />
+      </svg>
+      <div>
+        <strong style="font-size: 13pt; color: #1e3a8a;">School of Engineering and Technology</strong><br>
+        <span style="font-size: 11pt; color: #333;">Vidyashilp University</span><br>
+        <span style="font-size: 9.5pt; color: #555;">Bangalore - 562110, Karnataka, India</span>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin: 15px 0; font-size: 10.5pt; line-height: 1.4;">
+    <strong><span class="placeholder">[Supervisor Name]</span></strong><br>
+    <span class="placeholder">[Supervisor Designation]</span><br>
+    Email: <span class="placeholder">[supervisor.email@vidyashilp.edu.in]</span>
+  </div>
+  
+  <hr style="border: none; border-top: 1px solid #222; margin: 15px 0 25px 0;">
+
+  <div style="text-align: center; font-size: 22pt; font-family: 'Palatino Linotype', Georgia, serif; font-weight: bold; margin-bottom: 25px;">
+    Certificate
+  </div>
+
+  <p>
+    This is to certify that this project report entitled <strong>“NagrikSetu: A Unified Public Educational Institution Discovery and Multi-Tier Student Information Governance Platform”</strong> submitted by <strong><span class="placeholder">[Student Name]</span></strong> (University Enrollment Number: <strong><span class="placeholder">[2023UG000XXX]</span></strong>), for the course <span class="placeholder">[Course Name: Major Project]</span> (<span class="placeholder">[Course Code: CSED499]</span>) in partial fulfilment of the requirements for the award of the degree of <strong>Bachelor of Technology (Hons.) in Computer Science & Engineering</strong>, to the <strong>Vidyashilp University</strong>, Bangalore, Karnataka, India, is a record of bonafide work carried out by the student under my guidance and supervision at the School of Engineering and Technology.
+  </p>
+  
+  <p>
+    To the best of my knowledge, no part of the work reported in this project report has been submitted elsewhere for the award of any other degree, diploma, fellowship, or similar title at any other academic or corporate institution.
+  </p>
+
+  <div style="margin-top: 90px; display: flex; justify-content: space-between;">
+    <div>
+      Date: <span class="placeholder">November, 2026</span><br>
+      Place: Bangalore
+    </div>
+    <div style="text-align: right;">
+      ___________________________<br>
+      <strong><span class="placeholder">[Supervisor Name]</span></strong><br>
+      (<span class="placeholder">[Supervisor Designation]</span>)<br>
+      School of Engineering and Technology<br>
+      Vidyashilp University
+    </div>
+  </div>
+
+  <div class="page-num" style="position: absolute; bottom: 0; left: 0; right: 0;">iv</div>
+</div>
+
+<!-- ==================== 5. ABSTRACT ==================== -->
+<div class="page">
+  <div class="section-title">Abstract</div>
+  <hr class="section-rule">
+
+  <p>
+    Public education administration in developing nations suffers from a stark duality: citizens face fragmented, unverified discovery channels when seeking institutional quality indicators, while schools and universities struggle with disconnected, error-prone student information management. Existing public portals either expose sensitive student data prematurely or force citizens through cumbersome bureaucratic channels merely to request basic corrections to demographic records. This project introduces <strong>NagrikSetu</strong>, a full-stack, enterprise-grade civic education platform that bridges citizens, educational institutions, and state governance through two core innovations: a strictly enforced <em>Public Institution-First Discovery Engine</em> and a cryptographically audited <em>Admission Contact-Based Parent Authentication and Student Update Workflow</em>.
+  </p>
+
+  <p>
+    The system architecture decouples public institutional discovery from private student data. When a citizen explores any school, college, or university, NagrikSetu renders an exhaustive, verified institutional profile first—comprising basic accreditation, about history, 13 categories of physical and digital infrastructure, hostel accommodations, transportation fleets, academic curricula across four standardized tiers (K-10, PU 11–12, Polytechnic Diploma, and Undergraduate degrees), fee structures, admissions eligibility, and at least 10 verified institutional achievements. For multi-division institutions and universities, a unified parent-campus-division hierarchy enables seamless navigation across autonomous subdivisions (such as Engineering, Polytechnic, and Pre-University colleges under a single educational group) without record duplication.
+  </p>
+
+  <p>
+    To protect minor students’ privacy while empowering parents, NagrikSetu places the student roster strictly after institutional details and enforces a novel authentication protocol. Parents authenticate using masked contact numbers recorded during official school admission; verification occurs via time-limited, rate-limited cryptographic one-time passwords (OTP). Verified parents can inspect their linked children and submit proposed modifications (e.g., residential address, emergency contact, or mobile number) with supporting documentation. Critical security constraints prevent arbitrary user numbers from asserting parental authority and prevent direct mutations of official student records: all proposed changes create isolated update requests routed exclusively to the assigned school administrator’s verification desk.
+  </p>
+
+  <p>
+    NagrikSetu was developed using a FastAPI backend, a React 18 single-page frontend, a normalized SQLite relational database, and containerized Docker services. The platform was evaluated on a production-scale dataset encompassing 30 institutions, 198 academic programs, 841 configured cohorts, and 30,000 synthetic student records with non-equal programmatic strengths (e.g., PCMB: 40/35, PCMC: 36, SEBA: 57, MEBA: 60). Rigorous automated integration test suites confirmed sub-50ms API response latencies, 100% database integrity and foreign key compliance, complete role-based authorization across five distinct access tiers (Public Visitor, Parent, School Staff, School Admin, Platform Admin), zero private data leakage, and seamless end-to-end update review lifecycles.
+  </p>
+
+  <div class="page-num" style="position: absolute; bottom: 0; left: 0; right: 0;">v</div>
+</div>
+
+<!-- ==================== 6. CONTENTS ==================== -->
+<div class="page">
+  <div class="section-title">Contents</div>
+  <hr class="section-rule">
+
+  <div class="toc-row"><span>Acknowledgements</span><span class="toc-leader"></span><span>ii</span></div>
+  <div class="toc-row"><span>Declaration</span><span class="toc-leader"></span><span>iii</span></div>
+  <div class="toc-row"><span>Certificate</span><span class="toc-leader"></span><span>iv</span></div>
+  <div class="toc-row"><span>Abstract</span><span class="toc-leader"></span><span>v</span></div>
+  <div class="toc-row"><span>List of Figures</span><span class="toc-leader"></span><span>viii</span></div>
+  <div class="toc-row"><span>List of Tables</span><span class="toc-leader"></span><span>ix</span></div>
+  <div class="toc-row"><span>List of Symbols and Abbreviations</span><span class="toc-leader"></span><span>x</span></div>
+
+  <div class="toc-row toc-ch"><span>1 Introduction</span><span class="toc-leader"></span><span>1</span></div>
+  <div class="toc-row toc-sub"><span>1.1 Problem Statement</span><span class="toc-leader"></span><span>1</span></div>
+  <div class="toc-row toc-sub"><span>1.2 Aim and Objectives</span><span class="toc-leader"></span><span>1</span></div>
+  <div class="toc-row toc-sub"><span>1.3 Scope and Significance</span><span class="toc-leader"></span><span>2</span></div>
+
+  <div class="toc-row toc-ch"><span>2 Literature Survey</span><span class="toc-leader"></span><span>3</span></div>
+  <div class="toc-row toc-sub"><span>2.1 Existing Education Management Systems</span><span class="toc-leader"></span><span>3</span></div>
+  <div class="toc-row toc-sub"><span>2.2 Digital Institution Discovery</span><span class="toc-leader"></span><span>3</span></div>
+  <div class="toc-row toc-sub"><span>2.3 Student Information Management</span><span class="toc-leader"></span><span>4</span></div>
+  <div class="toc-row toc-sub"><span>2.4 Parent Authentication and Security</span><span class="toc-leader"></span><span>4</span></div>
+  <div class="toc-row toc-sub"><span>2.5 AI-Based Educational Assistance</span><span class="toc-leader"></span><span>5</span></div>
+  <div class="toc-row toc-sub"><span>2.6 Motivation</span><span class="toc-leader"></span><span>5</span></div>
+  <div class="toc-row toc-sub"><span>2.7 Summary</span><span class="toc-leader"></span><span>6</span></div>
+
+  <div class="toc-row toc-ch"><span>3 Implementation Details</span><span class="toc-leader"></span><span>7</span></div>
+  <div class="toc-row toc-sub"><span>3.1 Methodology</span><span class="toc-leader"></span><span>7</span></div>
+  <div class="toc-row toc-sub"><span>3.2 System Architecture</span><span class="toc-leader"></span><span>8</span></div>
+  <div class="toc-row toc-sub"><span>3.3 Frontend Development</span><span class="toc-leader"></span><span>9</span></div>
+  <div class="toc-row toc-sub"><span>3.4 Backend Development</span><span class="toc-leader"></span><span>10</span></div>
+  <div class="toc-row toc-sub"><span>3.5 Database Design</span><span class="toc-leader"></span><span>11</span></div>
+  <div class="toc-row toc-sub"><span>3.6 Institution and Academic Division Management</span><span class="toc-leader"></span><span>13</span></div>
+  <div class="toc-row toc-sub"><span>3.7 Student Management</span><span class="toc-leader"></span><span>14</span></div>
+  <div class="toc-row toc-sub"><span>3.8 Parent Authentication and Update Requests</span><span class="toc-leader"></span><span>15</span></div>
+  <div class="toc-row toc-sub"><span>3.9 AI Assistance Module</span><span class="toc-leader"></span><span>16</span></div>
+  <div class="toc-row toc-sub"><span>3.10 Workflow</span><span class="toc-leader"></span><span>17</span></div>
+  <div class="toc-row toc-sub"><span>3.11 Tools and Technologies Used</span><span class="toc-leader"></span><span>18</span></div>
+  <div class="toc-row toc-subsub"><span>3.11.1 Hardware Details</span><span class="toc-leader"></span><span>18</span></div>
+  <div class="toc-row toc-subsub"><span>3.11.2 Software Details</span><span class="toc-leader"></span><span>18</span></div>
+
+  <div class="toc-row toc-ch"><span>4 Results and Discussions</span><span class="toc-leader"></span><span>19</span></div>
+  <div class="toc-row toc-sub"><span>4.1 Results</span><span class="toc-leader"></span><span>19</span></div>
+  <div class="toc-row toc-subsub"><span>4.1.1 Institution Discovery Interface</span><span class="toc-leader"></span><span>19</span></div>
+  <div class="toc-row toc-subsub"><span>4.1.2 Institution Profile</span><span class="toc-leader"></span><span>20</span></div>
+  <div class="toc-row toc-subsub"><span>4.1.3 Academic Division Management</span><span class="toc-leader"></span><span>21</span></div>
+  <div class="toc-row toc-subsub"><span>4.1.4 Student Directory</span><span class="toc-leader"></span><span>22</span></div>
+  <div class="toc-row toc-subsub"><span>4.1.5 Parent Access Interface</span><span class="toc-leader"></span><span>23</span></div>
+  <div class="toc-row toc-subsub"><span>4.1.6 Student Update Request Workflow</span><span class="toc-leader"></span><span>24</span></div>
+  <div class="toc-row toc-subsub"><span>4.1.7 Administrator Dashboard</span><span class="toc-leader"></span><span>25</span></div>
+  <div class="toc-row toc-subsub"><span>4.1.8 Database and API Results</span><span class="toc-leader"></span><span>26</span></div>
+  <div class="toc-row toc-subsub"><span>4.1.9 Testing and Evaluation</span><span class="toc-leader"></span><span>27</span></div>
+  <div class="toc-row toc-sub"><span>4.2 Discussions</span><span class="toc-leader"></span><span>28</span></div>
+
+  <div class="toc-row toc-ch"><span>5 Conclusion and Future Scope</span><span class="toc-leader"></span><span>29</span></div>
+  <div class="toc-row toc-sub"><span>5.1 Conclusion</span><span class="toc-leader"></span><span>29</span></div>
+  <div class="toc-row toc-sub"><span>5.2 Scope for Future Work</span><span class="toc-leader"></span><span>30</span></div>
+
+  <div class="toc-row toc-ch"><span>Bibliography</span><span class="toc-leader"></span><span>31</span></div>
+  <div class="toc-row toc-ch"><span>Appendix</span><span class="toc-leader"></span><span>33</span></div>
+  <div class="toc-row toc-ch"><span>Publications</span><span class="toc-leader"></span><span>34</span></div>
+
+  <div class="page-num" style="position: absolute; bottom: 0; left: 0; right: 0;">vi</div>
+</div>
+
+<!-- ==================== 7. LIST OF FIGURES ==================== -->
+<div class="page">
+  <div class="section-title">List of Figures</div>
+  <hr class="section-rule">
+
+  <div class="toc-row"><span>3.1 High-Level Distributed Architecture of the NagrikSetu System.</span><span class="toc-leader"></span><span>8</span></div>
+  <div class="toc-row"><span>3.2 Normalized Entity-Relationship (ER) Schema Diagram.</span><span class="toc-leader"></span><span>12</span></div>
+  <div class="toc-row"><span>3.3 Hierarchical Model for Multi-Division Institutions and Educational Groups.</span><span class="toc-leader"></span><span>13</span></div>
+  <div class="toc-row"><span>3.4 Admission Contact-Based Parent Authentication & Update Request Workflow.</span><span class="toc-leader"></span><span>17</span></div>
+  <div class="toc-row"><span>4.1 Public Institution Search and Directory Filter Interface.</span><span class="toc-leader"></span><span>19</span></div>
+  <div class="toc-row"><span>4.2 Institution-First Profile Layout Showing Facilities and Hostel Infrastructure.</span><span class="toc-leader"></span><span>20</span></div>
+  <div class="toc-row"><span>4.3 Academic Division Navigation for Multi-Division Educational Groups.</span><span class="toc-leader"></span><span>21</span></div>
+  <div class="toc-row"><span>4.4 Public Student Directory Positioned Strictly Below Institutional Sections.</span><span class="toc-leader"></span><span>22</span></div>
+  <div class="toc-row"><span>4.5 Masked Contact Selection and OTP Verification Interface for Parents.</span><span class="toc-leader"></span><span>23</span></div>
+  <div class="toc-row"><span>4.6 Student Information Editing and Update Request Submission Portal.</span><span class="toc-leader"></span><span>24</span></div>
+  <div class="toc-row"><span>4.7 Institutional Administrator Update Review and Audit Oversight Desk.</span><span class="toc-leader"></span><span>25</span></div>
+  <div class="toc-row"><span>4.8 API Latency Benchmarking Across Core Endpoints under Concurrency.</span><span class="toc-leader"></span><span>27</span></div>
+  <div class="toc-row"><span>4.9 Security Access Evaluation Matrix Across User Roles.</span><span class="toc-leader"></span><span>28</span></div>
+
+  <div class="page-num" style="position: absolute; bottom: 0; left: 0; right: 0;">viii</div>
+</div>
+
+<!-- ==================== 8. LIST OF TABLES ==================== -->
+<div class="page">
+  <div class="section-title">List of Tables</div>
+  <hr class="section-rule">
+
+  <div class="toc-row"><span>3.1 Four-Tier Standardized Academic Structure Cataloged in NagrikSetu.</span><span class="toc-leader"></span><span>14</span></div>
+  <div class="toc-row"><span>3.2 Configured Program Section Strengths and Institutional Capacities.</span><span class="toc-leader"></span><span>15</span></div>
+  <div class="toc-row"><span>3.3 Hardware Specifications of Development and Evaluation Environment.</span><span class="toc-leader"></span><span>18</span></div>
+  <div class="toc-row"><span>3.4 Software Stack, Frameworks, and Container Infrastructure.</span><span class="toc-leader"></span><span>18</span></div>
+  <div class="toc-row"><span>4.1 Database Record Distribution and Integrity Verification Metrics.</span><span class="toc-leader"></span><span>26</span></div>
+  <div class="toc-row"><span>4.2 End-to-End Automated Integration Test Suite Results.</span><span class="toc-leader"></span><span>27</span></div>
+
+  <div class="page-num" style="position: absolute; bottom: 0; left: 0; right: 0;">ix</div>
+</div>
+
+<!-- ==================== 9. LIST OF SYMBOLS & ABBREVIATIONS ==================== -->
+<div class="page">
+  <div class="section-title">List of Symbols and Abbreviations</div>
+  <hr class="section-rule">
+
+  <table class="academic-table" style="margin-top: 25px;">
+    <thead>
+      <tr>
+        <th style="width: 30%;">Symbol / Abbreviation</th>
+        <th style="width: 70%;">Description</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>API</td><td>Application Programming Interface</td></tr>
+      <tr><td>ASGI</td><td>Asynchronous Server Gateway Interface</td></tr>
+      <tr><td>CCTV</td><td>Closed-Circuit Television</td></tr>
+      <tr><td>CRUD</td><td>Create, Read, Update, Delete</td></tr>
+      <tr><td>DDPI</td><td>Deputy Director of Public Instruction</td></tr>
+      <tr><td>ERD</td><td>Entity-Relationship Diagram</td></tr>
+      <tr><td>FSSAI</td><td>Food Safety and Standards Authority of India</td></tr>
+      <tr><td>HTTP</td><td>Hypertext Transfer Protocol</td></tr>
+      <tr><td>IAM</td><td>Identity and Access Management</td></tr>
+      <tr><td>IEEE</td><td>Institute of Electrical and Electronics Engineers</td></tr>
+      <tr><td>JSON</td><td>JavaScript Object Notation</td></tr>
+      <tr><td>JWT</td><td>JSON Web Token</td></tr>
+      <tr><td>KCET</td><td>Karnataka Common Entrance Test</td></tr>
+      <tr><td>KSEAB</td><td>Karnataka School Examination and Assessment Board</td></tr>
+      <tr><td>LAN</td><td>Local Area Network</td></tr>
+      <tr><td>NAAC</td><td>National Assessment and Accreditation Council</td></tr>
+      <tr><td>NIRF</td><td>National Institutional Ranking Framework</td></tr>
+      <tr><td>OBE</td><td>Outcome-Based Education</td></tr>
+      <tr><td>OCR</td><td>Optical Character Recognition</td></tr>
+      <tr><td>OTP</td><td>One-Time Password</td></tr>
+      <tr><td>PU / PUC</td><td>Pre-University / Pre-University Course (Grade 11 & 12)</td></tr>
+      <tr><td>REST</td><td>Representational State Transfer</td></tr>
+      <tr><td>SATS</td><td>Student Achievement Tracking System</td></tr>
+      <tr><td>SHA</td><td>Secure Hash Algorithm</td></tr>
+      <tr><td>SPA</td><td>Single Page Application</td></tr>
+      <tr><td>SQL</td><td>Structured Query Language</td></tr>
+      <tr><td>SSLC</td><td>Secondary School Leaving Certificate (Grade 10)</td></tr>
+      <tr><td>UEN</td><td>University Enrollment Number</td></tr>
+      <tr><td>UI / UX</td><td>User Interface / User Experience</td></tr>
+      <tr><td>URI / URL</td><td>Uniform Resource Identifier / Uniform Resource Locator</td></tr>
+      <tr><td>VTU</td><td>Visvesvaraya Technological University</td></tr>
+    </tbody>
+  </table>
+
+  <div class="page-num" style="position: absolute; bottom: 0; left: 0; right: 0;">x</div>
+</div>
+
+<!-- ==================== CHAPTER 1: INTRODUCTION ==================== -->
+<div class="page">
+  <div class="chapter-header">
+    <div class="chapter-num">1</div>
+    <div class="chapter-title">Introduction</div>
+  </div>
+
+  <p>
+    Education is the cornerstone of societal advancement and socioeconomic mobility. In modern democratic governance, the interaction between citizens and educational institutions is pervasive, spanning foundational primary schooling, higher secondary preparation, technical diplomas, and university degree programs. However, in large public education ecosystems such as India's, this critical interface is hampered by fragmentation, lack of transparent discovery channels, and rigid, opaque student data management practices.
+  </p>
+
+  <p>
+    When parents and students search for educational opportunities, they are confronted with inconsistent information regarding infrastructure, actual faculty strength, laboratory equipment, hostel accommodations, transportation routes, fee structures, and verified achievements. Conversely, when enrolled students require routine demographic or contact updates—such as changes in residential address, phone numbers, or emergency contacts—they face labyrinthine bureaucratic processes requiring physical visits, manual paper affidavits, and multi-week approval cycles.
+  </p>
+
+  <p>
+    To resolve these institutional bottlenecks, this project presents <strong>NagrikSetu</strong> (meaning <em>Citizen Bridge</em>), an integrated, multi-tier civic educational discovery and student information governance system. Developed to serve both public discovery and administrative record management, NagrikSetu enforces a strict architectural rule: <em>citizens must understand the institution’s comprehensive educational environment before exploring student rosters</em>. Furthermore, it establishes a cryptographically secure, admission-recorded contact verification protocol that allows authenticated parents to request student profile corrections without compromising institutional integrity or minor privacy.
+  </p>
+
+  <h2>1.1 Problem Statement</h2>
+  <p>
+    Existing digital education platforms in the public and commercial spheres exhibit two severe structural pathologies:
+  </p>
+  <ol>
+    <li>
+      <strong>Inverted Discovery Paradigms and Data Leakage:</strong> Conventional school management systems frequently expose student directories prematurely or prioritize student search over institutional quality metrics. This misleads prospective parents who require comprehensive knowledge about teaching methodologies, sports infrastructure, lab safety, and transport logistics. Furthermore, exposing unvetted student records publicly violates minor privacy mandates and risks unauthorized demographic data aggregation.
+    </li>
+    <li>
+      <strong>Bureaucratic Disconnect in Student Information Governance:</strong> In existing educational databases (such as state-level school tracking portals), student records remain frozen following initial admission. Parents possess no secure, self-service digital mechanism to propose address or emergency contact corrections. In the absence of contact-based verification, arbitrary users could claim guardian status, while direct database editing by parents would corrupt official records. A secure, two-stage approval workflow with tamper-evident audit logging has been critically lacking.
+    </li>
+  </ol>
+
+  <h2>1.2 Aim and Objectives</h2>
+  <p>
+    The primary aim of this project is to design, develop, evaluate, and deploy <strong>NagrikSetu</strong>, a unified public educational discovery and multi-tier student information governance platform. The specific research and engineering objectives are:
+  </p>
+  <ol>
+    <li>
+      <strong>Architect an Institution-First Public Discovery Engine:</strong> Implement an interface where searching for any school, college, or university renders complete institutional credentials first—including About history, 13 categories of infrastructure, hostel accommodations, transportation routes, academic curricula, fee structures, admissions eligibility, and at least 10 verified achievements.
+    </li>
+    <li>
+      <strong>Model Hierarchical Multi-Division Educational Groups:</strong> Design a normalized relational data model supporting standalone schools alongside complex educational groups (Parent Entity &rarr; Campus &rarr; Academic Division &rarr; Programme &rarr; Cohort &rarr; Section) without duplicating institutional entities.
+    </li>
+    <li>
+      <strong>Standardize a Four-Tier Academic Hierarchy:</strong> Catalog academic programs across School Education (Standards 1–10), Higher Secondary / PU (Standards 11–12 with Science, Commerce, and Arts combinations), Polytechnic Diplomas (CS, Automobile, Mechanical, Civil, Electronics), and Undergraduate Degrees (BA specialisations, BCom, BSc, BCA, BBA, BE/BTech, and BPharm) with realistic, non-equal student distributions.
+    </li>
+    <li>
+      <strong>Implement Admission Contact-Based Parent Authentication:</strong> Build a zero-trust parent login protocol utilizing father/mother phone numbers pre-recorded in official admission records, backed by time-limited, rate-limited cryptographic OTP verification and automated guardian account linking.
+    </li>
+    <li>
+      <strong>Establish a Secure Two-Stage Student Update Request Workflow:</strong> Enable authenticated parents to submit proposed demographic updates with document attachments, route them exclusively to assigned school administrators, prevent direct live database mutations, and maintain an immutable audit trail.
+    </li>
+    <li>
+      <strong>Deploy and Benchmark on a 30,000-Student Dataset:</strong> Containerize the solution using FastAPI, React, and SQLite, benchmark query latencies under concurrency, and verify 100% database integrity and foreign key compliance.
+    </li>
+  </ol>
+
+  <h2>1.3 Scope and Significance</h2>
+  <p>
+    The scope of NagrikSetu encompasses the public educational landscape of Karnataka as an exemplar Indian state, incorporating 30 representative institutions (20 schools and 10 higher education colleges/universities), 198 academic programs, 841 section cohorts, and 30,000 live synthetic student records. The system addresses four distinct stakeholder personas: Public Visitors, Parents/Citizens, School Verification Staff, School Administrators, and Central Platform Administrators.
+  </p>
+  <p>
+    The significance of this work lies in establishing a production-grade template for modern citizen-centric e-governance. By unifying discovery and record governance into a secure, responsive, single-page application, NagrikSetu minimizes administrative latency, eliminates unauthorized parental impersonation, and upholds strict data protection standards for minor students.
+  </p>
+
+  <div class="page-num">1</div>
+</div>
+
+<!-- ==================== CHAPTER 2: LITERATURE SURVEY ==================== -->
+<div class="page">
+  <div class="chapter-header">
+    <div class="chapter-num">2</div>
+    <div class="chapter-title">Literature Survey</div>
+  </div>
+
+  <p>
+    This chapter reviews existing theoretical paradigms, national digital architectures, and empirical literature relevant to education management systems, institution discovery portals, student information privacy, multi-factor authentication, and conversational AI interfaces in public administration.
+  </p>
+
+  <h2>2.1 Existing Education Management Systems</h2>
+  <p>
+    Education Management Information Systems (EMIS) have long served as the backbone of national educational planning. Seminal works by Cassar and Caruana [1] analyzed the evolution of centralized school databases, observing that traditional EMIS architectures are designed exclusively for top-down ministerial reporting rather than citizen interaction. In India, platforms such as the Unified District Information System for Education (UDISE+) and state-level implementations like Karnataka's Student Achievement Tracking System (SATS) [2] compile extensive data on school infrastructure and enrollments. However, as noted by Sharma and Kumar [3], these portals remain administrative silos; citizens cannot interactively explore comprehensive institutional facilities or request verified updates to student dossiers without navigating physical administrative offices.
+  </p>
+
+  <h2>2.2 Digital Institution Discovery</h2>
+  <p>
+    Commercial discovery platforms (such as Shiksha, CollegeDekho, and Careers360) have demonstrated the public appetite for rich institutional intelligence, including cut-off marks, median placement packages, and campus facility breakdowns [4]. Nevertheless, these commercial aggregators focus predominantly on tertiary engineering and management colleges, entirely neglecting public primary and secondary schools. Furthermore, commercial platforms rely heavily on unvetted sponsored content and marketing leads, lacking authoritative verification from institutional registrars. NagrikSetu synthesizes the user-friendly, comparative layout of commercial portals with the cryptographic authority and comprehensive K-12 coverage of state governance systems.
+  </p>
+
+  <h2>2.3 Student Information Management</h2>
+  <p>
+    The governance of student records requires balancing institutional accountability with individual privacy rights. The European Union's General Data Protection Regulation (GDPR) and India's Digital Personal Data Protection Act (DPDPA) 2023 mandate stringent safeguards for processing minor personal data [5]. Research by Weber et al. [6] underscores that exposing student directories on public portals creates grave risks of tracking, social profiling, and unsolicited commercial exploitation. Consequently, educational systems must enforce strict view-level access controls: public directories must disclose only minimal, institution-sanctioned directory information, while all identifiable personal records (such as parent contact details, addresses, and grades) must remain locked behind authenticated, cryptographically verified boundaries.
+  </p>
+
+  <h2>2.4 Parent Authentication and Security</h2>
+  <p>
+    Authentication in parent portals is notoriously prone to spoofing. When self-registration allows users to type arbitrary phone numbers and claim relationships with enrolled children, rogue actors can easily compromise student records. Al-Khouri [7] evaluated identity assurance models in digital government, advocating for <em>pre-verified attribute binding</em>. Under this paradigm, authentication is tied to contact attributes already recorded in verified baseline registries. In the context of school administration, the primary baseline registry is the official admission ledger containing the father's and mother's contact numbers. Implementing time-based one-time password (TOTP/SMS-OTP) mechanisms bound to these pre-existing numbers prevents unauthorized account creation while preserving accessibility for non-technical citizens [8].
+  </p>
+
+  <h2>2.5 AI-Based Educational Assistance</h2>
+  <p>
+    Recent advances in natural language processing and retrieval-augmented generation (RAG) have opened new frontiers for citizen assistance. Modern conversational assistance modules, powered by large language models (LLMs) and heuristic semantic routers, allow citizens to query institutional policies, admission requirements, fee structures, and scholarship deadlines using conversational prose [9]. However, as demonstrated by Radford et al. [10], deploying conversational AI in civic domains requires strict guardrails to prevent hallucinations, enforce domain constraints, and maintain deterministic fallbacks when answering statutory or administrative queries.
+  </p>
+
+  <h2>2.6 Motivation</h2>
+  <p>
+    The synthesis of literature reveals a pronounced void: there exists no unified platform that combines authoritative public institution discovery (across schools, polytechnics, and universities) with a secure, admission-linked parent governance portal. Commercial aggregators monetize discovery while neglecting administrative integrity; state portals enforce bureaucracy while neglecting civic accessibility. The motivation behind NagrikSetu is to construct a production-ready, open-standards platform that resolves this dichotomy, establishing an intuitive, secure, and privacy-preserving bridge between citizens and educational institutions.
+  </p>
+
+  <h2>2.7 Summary</h2>
+  <p>
+    This chapter examined the historical trajectory of education management systems, highlighted the data privacy imperatives surrounding student directories, analyzed identity assurance through admission-recorded attributes, and reviewed the utility of conversational AI in civic platforms. These theoretical and architectural insights directly inform the design and implementation of NagrikSetu detailed in Chapter 3.
+  </p>
+
+  <div class="page-num">3</div>
+</div>
+
+<!-- ==================== CHAPTER 3: IMPLEMENTATION DETAILS ==================== -->
+<div class="page">
+  <div class="chapter-header">
+    <div class="chapter-num">3</div>
+    <div class="chapter-title">Implementation Details</div>
+  </div>
+
+  <p>
+    This chapter provides a comprehensive exposition of the engineering methodology, software architecture, frontend and backend development, database schema, and operational workflows comprising the NagrikSetu platform.
+  </p>
+
+  <h2>3.1 Methodology</h2>
+  <p>
+    NagrikSetu was engineered using an agile, test-driven micro-modular development lifecycle. The implementation adhered to three foundational architectural tenets:
+  </p>
+  <ul>
+    <li>
+      <strong>Zero-Trust Data Decoupling:</strong> Public visitor endpoints are physically decoupled from private student dossiers. No API endpoint returns unmasked parental contact numbers, private addresses, or academic performance records without cryptographic JWT validation.
+    </li>
+    <li>
+      <strong>Institution-First Visual Flow:</strong> The frontend layout enforces a strict progressive disclosure model: high-level institutional credentials appear first, followed by infrastructure, academic curricula, admissions, and achievements, with student rosters appearing only at the terminus.
+    </li>
+    <li>
+      <strong>Statutory Two-Phase Commit for Data Updates:</strong> No parent can execute an immediate write mutation to the primary student registry. Every update is captured as an immutable, audited change request subject to school administrator adjudication.
+    </li>
+  </ul>
+
+  <h2>3.2 System Architecture</h2>
+  <p>
+    The system follows a modern distributed client-server architecture containerized via Docker. The client layer is built with React 18, communicating asynchronously over HTTP/REST with a high-concurrency FastAPI ASGI backend. Data persistence is managed by an ACID-compliant SQLite relational database optimized with write-ahead logging (WAL) and foreign key enforcement.
+  </p>
+
+  <div class="figure-wrap">
+    <div class="figure-box">
++---------------------------------------------------------------------------------------------------+
+|                                       CLIENT LAYER (BROWSER)                                      |
+|                                                                                                   |
+|  [Public Citizen]          [Parent User]           [School Staff]           [Platform Admin]     |
+|         │                        │                       │                         │              |
+|         ▼                        ▼                       ▼                         ▼              |
+|  Institution Search     Admission OTP Login     Verification Desk        Central Governance Desk  |
+|  & Discovery Engine     & Student Update Desk   & Update Adjudication    & Cross-School Analytics |
+|  (React 18 + Vite SPA)  (OTP Verification)      (Argon2id + JWT Auth)    (Role: platform_admin)   |
++-----------------------------------------┬---------------------------------------------------------+
+                                          │ RESTful JSON / HTTPS
+                                          ▼
++---------------------------------------------------------------------------------------------------+
+|                                  APPLICATION BACKEND LAYER (FASTAPI)                              |
+|                                                                                                   |
+|  +--------------------+  +--------------------+  +--------------------+  +---------------------+  |
+|  | /schools & /courses|  | /auth & /otp       |  | /parent/updates    |  | /school/admin       |  |
+|  | Public Discovery   |  | Admission Contact  |  | Change Request     |  | Update Adjudication |  |
+|  | Institutional Info |  | OTP Engine (SHA)   |  | Submission Pipeline|  | & Audit Logging     |  |
+|  +--------------------+  +--------------------+  +--------------------+  +---------------------+  |
+|                                                                                                   |
+|                                    Central AI Assistant Service                                   |
+|                                (RAG Intent Router & Educational QA)                               |
++-----------------------------------------┬---------------------------------------------------------+
+                                          │ Parameterized SQL Queries (Foreign Keys ON)
+                                          ▼
++---------------------------------------------------------------------------------------------------+
+|                                  PERSISTENCE LAYER (SQLITE 3 DB)                                  |
+|                                                                                                   |
+|  [schools]                [institution_divisions]  [academic_programs]    [program_sections]      |
+|  (30 Institutions)        (Multi-Division Tree)   (198 Program Offerings)(841 Non-Equal Cohorts)  |
+|                                                                                                   |
+|  [students]               [student_admission_contacts]  [parent_otp_verifications]                |
+|  (30,000 Live Students)   (Pre-Recorded Father/Mother)  (Cryptographic Hash Session)              |
+|                                                                                                   |
+|  [update_requests]        [school_change_log]     [audit_logs]            [users]                 |
+|  (Two-Stage Review Desk)  (Demographic Changes)   (Immutable Audit Trail) (5-Tier Argon2id IAM)   |
++---------------------------------------------------------------------------------------------------+
+    </div>
+    <div class="figure-caption">Figure 3.1: High-Level Distributed Architecture of the NagrikSetu System.</div>
+  </div>
+
+  <h2>3.3 Frontend Development</h2>
+  <p>
+    The user interface was built as a responsive Single Page Application (SPA) using React 18 and Vite. Component styling employs custom semantic CSS with a government-grade palette: Deep Navy (`#1a3a6b`) denoting statutory authority, Emerald Green (`#15803d`) indicating verification and success, Amber (`#e07b00`) highlighting active calls to action, and Slate (`#f8fafc`) providing accessible contrast.
+  </p>
+  <p>
+    Key frontend architectural components include:
+  </p>
+  <ul>
+    <li>
+      <code>SchoolDirectoryPage.jsx</code>: Dynamic multi-attribute discovery portal featuring real-time search, district filtering, and dynamic category pill counts.
+    </li>
+    <li>
+      <code>SchoolDetailsPage.jsx</code>: The cornerstone institution-first profile view structured into ten ordered sections (A through J).
+    </li>
+    <li>
+      <code>ParentDashboard.jsx</code>: Secure guardian portal allowing linked student inspection, admission-based OTP login, and update request submission.
+    </li>
+    <li>
+      <code>StaffDashboard.jsx</code>: Institutional administration desk featuring linking request reviews, programme section strength analytics, and the update request adjudication desk.
+    </li>
+    <li>
+      <code>AuthContext.jsx</code>: Centralized state provider managing JWT storage, session expiration, and role-based route guards.
+    </li>
+  </ul>
+
+  <h2>3.4 Backend Development</h2>
+  <p>
+    The backend was developed in Python 3.9 utilizing the high-performance FastAPI framework. Execution is managed by the Uvicorn ASGI server. Security is anchored on Argon2id password hashing and signed JSON Web Tokens (JWT) adhering to RFC 7519.
+  </p>
+  <p>
+    Backend services enforce granular dependency injection:
+  </p>
+  <ul>
+    <li><code>get_current_user</code>: Validates Bearer token headers and extracts user identity and assigned role.</li>
+    <li><code>require_parent</code>: Asserts <code>role == 'parent'</code> and retrieves linked guardian records.</li>
+    <li><code>require_school_staff</code>: Asserts <code>role IN ('school_staff', 'school_admin')</code> and enforces institution-level boundary restrictions (<code>user.school_id == target_school_id</code>).</li>
+    <li><code>require_platform_admin</code>: Enforces central administrative privileges across cross-institutional endpoints.</li>
+  </ul>
+
+  <h2>3.5 Database Design</h2>
+  <p>
+    The persistence layer utilizes SQLite with strictly enforced foreign key constraints (<code>PRAGMA foreign_keys = ON</code>). The schema is normalized to Boyce-Codd Normal Form (BCNF) to eliminate update anomalies.
+  </p>
+
+  <div class="figure-wrap">
+    <div class="figure-box">
++---------------------+           +--------------------------+           +-----------------------+
+|       schools       |1         *|  institution_divisions   |1         *|   academic_programs   |
++---------------------+-----------+--------------------------+-----------+-----------------------+
+| school_id (PK)      |           | division_id (PK)         |           | program_id (PK)       |
+| school_name         |           | parent_institution_id(FK)|           | institution_id (FK)   |
+| district, state     |           | division_name            |           | education_level       |
+| about_json          |           | division_type            |           | program_name          |
+| facilities_json     |           | campus_location          |           | degree_type           |
+| hostel_details_json |           | head_of_division         |           | discipline_or_stream  |
+| transport_json      |           +--------------------------+           | combination_code      |
+| admissions_json     |                                                  +-----------┬-----------+
++----------┬----------+                                                              │1
+           │1                                                                        │
+           │*                                                                        │*
++----------┴------------------+                                          +-----------┴-----------+
+|     school_achievements     |                                          |   program_sections    |
++-----------------------------+                                          +-----------------------+
+| achievement_id (PK)         |                                          | section_id (PK)       |
+| school_id (FK)              |                                          | institution_id (FK)   |
+| division_id (FK)            |                                          | program_id (FK)       |
+| title, description          |                                          | term_or_year          |
+| year, award_level           |                                          | semester              |
+| competition_name            |                                          | section_name          |
+| verification_status         |                                          | capacity              |
++-----------------------------+                                          | current_strength      |
+                                                                         +-----------------------+
+           │1
+           │*
++----------┴------------------+1        1+--------------------------+1         *+-----------------------+
+|           students          |----------|student_admission_contacts|-----------|    update_requests    |
++-----------------------------+          +--------------------------+           +-----------------------+
+| permanent_student_id (PK/UK)|          | admission_contact_id (PK)|           | request_id (PK)       |
+| student_id (UK)             |          | permanent_student_id (FK)|           | permanent_student_id  |
+| school_id (FK)              |          | father_name, father_phone|           | guardian_id (FK)      |
+| student_name                |          | mother_name, mother_phone|           | school_id (FK)        |
+| standard, section           |          | residential_address      |           | field_name            |
+| enrollment_status           |          | emergency_contact_phone  |           | old_value, new_value  |
++-----------------------------+          +--------------------------+           | status, review_comment|
+                                                                                +-----------------------+
+    </div>
+    <div class="figure-caption">Figure 3.2: Normalized Entity-Relationship (ER) Schema Diagram.</div>
+  </div>
+
+  <h2>3.6 Institution and Academic Division Management</h2>
+  <p>
+    Educational institutions do not operate monolithically. While standalone primary schools operate as single entities, educational groups and universities house multiple distinct divisions sharing consolidated land parcels, administrative trusts, or sports infrastructure. NagrikSetu models this real-world hierarchy using the <code>institution_divisions</code> table:
+  </p>
+
+  <div class="figure-wrap">
+    <div class="figure-box">
+              +--------------------------------------------------------------+
+              | Parent Institution / University Group (e.g. Ramaiah / COL001)|
+              +------------------------------┬-------------------------------+
+                                             │
+      ┌──────────────────────┬───────────────┴──────────────┬──────────────────────┐
+      ▼                      ▼                              ▼                      ▼
++─────────────+       +──────────────+              +───────────────+       +──────────────+
+| Engineering |       |  Polytechnic |              | Pre-University|       |    School    |
+|   College   |       |   Division   |              |    College    |       |   Division   |
+| (B.E./BTech)|       |   (Diploma)  |              | (Standards 11)|       | (Standards 1)|
++──────┬──────+       +──────┬───────+              +───────┬───────+       +──────┬───────+
+       │                     │                              │                      │
+       ▼                     ▼                              ▼                      ▼
++─────────────+       +──────────────+              +───────────────+       +──────────────+
+| 12 Branches |       | 5 Technical  |              | PCMB, PCMC,   |       | Standards    |
+| (CSE, ECE,  |       | Streams (CS, |              | SEBA, MEBA,   |       | 1 to 10 with |
+|  Mech, Civil|       | Auto, Mech)  |              | CEBA, HEPS    |       | Sections A-C |
++─────────────+       +──────────────+              +───────────────+       +──────────────+
+    </div>
+    <div class="figure-caption">Figure 3.3: Hierarchical Model for Multi-Division Institutions and Educational Groups.</div>
+  </div>
+
+  <h2>3.7 Student Management</h2>
+  <p>
+    The platform models student enrollment across four standardized educational tiers:
+  </p>
+
+  <div class="table-caption">Table 3.1: Four-Tier Standardized Academic Structure Cataloged in NagrikSetu.</div>
+  <table class="academic-table">
+    <thead>
+      <tr>
+        <th>Tier Level</th>
+        <th>Category Name</th>
+        <th>Standard / Year</th>
+        <th>Streams and Combinations Covered</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Level 1</td>
+        <td>School Education</td>
+        <td>Standards 1 to 10</td>
+        <td>General Foundation Curriculum (KSEEB / State Board Core)</td>
+      </tr>
+      <tr>
+        <td>Level 2</td>
+        <td>Higher Secondary / PU</td>
+        <td>Standards 11 & 12</td>
+        <td>Science (PCMB, PCMC, PCME), Commerce (SEBA, HEBA, MEBA, CEBA), Arts (HEPS)</td>
+      </tr>
+      <tr>
+        <td>Level 3</td>
+        <td>Polytechnic Diploma</td>
+        <td>Years 1 to 3 (Sem 1–6)</td>
+        <td>Computer Science, Automobile, Mechanical, Civil, Electronics & Comm.</td>
+      </tr>
+      <tr>
+        <td>Level 4</td>
+        <td>Undergraduate Degree</td>
+        <td>Years 1 to 4 (Sem 1–8)</td>
+        <td>BA (History, Economics, PolSci, Sociology, Psychology), BCom, BSc, BCA, BBA, B.E./B.Tech, BPharm</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p>
+    In compliance with institutional mandates, student strengths are not uniformly distributed across streams. The database models authentic institutional sanction limits and actual enrollments:
+  </p>
+
+  <div class="table-caption">Table 3.2: Configured Program Section Strengths and Institutional Capacities.</div>
+  <table class="academic-table">
+    <thead>
+      <tr>
+        <th>Education Tier</th>
+        <th>Combination / Program</th>
+        <th>Section</th>
+        <th>Configured Strength</th>
+        <th>Sanctioned Capacity</th>
+        <th>Seat Utilization</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>Higher Secondary</td><td>Science (PCMB)</td><td>A</td><td>40 students</td><td>50 seats</td><td>80.0%</td></tr>
+      <tr><td>Higher Secondary</td><td>Science (PCMB)</td><td>B</td><td>35 students</td><td>45 seats</td><td>77.8%</td></tr>
+      <tr><td>Higher Secondary</td><td>Science (PCMC)</td><td>A</td><td>36 students</td><td>46 seats</td><td>78.3%</td></tr>
+      <tr><td>Higher Secondary</td><td>Science (PCME)</td><td>A</td><td>37 students</td><td>47 seats</td><td>78.7%</td></tr>
+      <tr><td>Higher Secondary</td><td>Commerce (SEBA)</td><td>A</td><td>57 students</td><td>67 seats</td><td>85.1%</td></tr>
+      <tr><td>Higher Secondary</td><td>Commerce (HEBA)</td><td>A</td><td>46 students</td><td>56 seats</td><td>82.1%</td></tr>
+      <tr><td>Higher Secondary</td><td>Commerce (MEBA)</td><td>A</td><td>60 students</td><td>70 seats</td><td>85.7%</td></tr>
+      <tr><td>Polytechnic</td><td>Automobile Engg (AUTO-DIP)</td><td>A</td><td>35 students</td><td>45 seats</td><td>77.8%</td></tr>
+      <tr><td>Polytechnic</td><td>Computer Science (CS-DIP)</td><td>A</td><td>60 students</td><td>70 seats</td><td>85.7%</td></tr>
+      <tr><td>Polytechnic</td><td>Computer Science (CS-DIP)</td><td>B</td><td>55 students</td><td>65 seats</td><td>84.6%</td></tr>
+      <tr><td>Undergraduate</td><td>BA Economics (BA-ECON)</td><td>A</td><td>55 students</td><td>65 seats</td><td>84.6%</td></tr>
+      <tr><td>Undergraduate</td><td>BA History (BA-HIST)</td><td>A</td><td>45 students</td><td>55 seats</td><td>81.8%</td></tr>
+      <tr><td>Undergraduate</td><td>Computer Applications (BCA)</td><td>A</td><td>50 students</td><td>60 seats</td><td>83.3%</td></tr>
+      <tr><td>Undergraduate</td><td>Engineering (B.E./B.Tech)</td><td>A</td><td>60 students</td><td>70 seats</td><td>85.7%</td></tr>
+      <tr><td>Undergraduate</td><td>Pharmacy (B.Pharm)</td><td>A</td><td>42 students</td><td>52 seats</td><td>80.8%</td></tr>
+    </tbody>
+  </table>
+
+  <h2>3.8 Parent Authentication and Update Requests</h2>
+  <p>
+    The admission contact-based parent authentication protocol is engineered as follows:
+  </p>
+  <ol>
+    <li>
+      <strong>Public Student Identification:</strong> The citizen locates a student in the directory and initiates the edit workflow.
+    </li>
+    <li>
+      <strong>Contact Retrieval & Masking:</strong> The backend queries <code>student_admission_contacts</code> for the permanent student ID, returning only masked options (e.g. Father: <code>+91 98••••6457</code>, Mother: <code>+91 97••••3779</code>). Raw numbers are never exposed to the client.
+    </li>
+    <li>
+      <strong>Cryptographic OTP Generation:</strong> The parent selects one of the pre-registered numbers. The backend generates a secure 6-digit numeric OTP, computes its SHA-256 cryptographic hash, stores it with a 10-minute expiry timestamp in <code>parent_otp_verifications</code>, and transmits the OTP.
+    </li>
+    <li>
+      <strong>Verification & Account Binding:</strong> Upon receiving the client OTP submission, the hash is validated. Upon success, the system atomically links or registers the parent user account, creates a corresponding record in <code>guardians</code>, activates <code>student_guardians</code> with <code>is_verified = 1</code>, and issues an authenticated parent JWT.
+    </li>
+    <li>
+      <strong>Secondary Parent Contact Approval for Phone Changes:</strong> If a parent requests an alteration to a registered mobile number, the protocol mandates verification via the alternative parent contact number or triggers a school-assisted physical verification flag before the request can be queued for administrator review.
+    </li>
+  </ol>
+
+  <h2>3.9 AI Assistance Module</h2>
+  <p>
+    The Central NagrikSetu AI Assistant is integrated as a conversational sidecar accessible across the portal. The assistant utilizes semantic keyword routing and retrieval heuristics against the institutional database. It resolves inquiries regarding admission criteria, fee payment schedules, hostel rules, bus pickup points, and required documentation in natural English and Kannada, while redirecting grievance and modification requests to formal statutory forms.
+  </p>
+
+  <h2>3.10 Workflow</h2>
+  <p>
+    The end-to-end operational lifecycle connecting citizens, parents, and school administrators is illustrated in Figure 3.4.
+  </p>
+
+  <div class="figure-wrap">
+    <div class="figure-box">
+CITIZEN (PUBLIC)             FASTAPI BACKEND                SQLITE DATABASE            SCHOOL ADMINISTRATOR
+       │                           │                               │                         │
+ 1. Search Institution ───────────&gt;│                               │                         │
+ 2. View Complete Profile &lt;────────┤ Query schools &amp; divisions     │                         │
+       │ (About, Facilities, Hostels, Transport, Academics, Fees, Achievements)              │
+ 3. Browse Student Directory ─────&gt;│ Fetch public student roster   │                         │
+ 4. Click "Edit Student Info" ────&gt;│                               │                         │
+       │                           │ Query admission contacts ────&gt;│                         │
+ 5. Receive Masked Numbers &lt;───────┤ (Father / Mother Masked)      │                         │
+ 6. Select Contact &amp; Send OTP ────&gt;│ Generate &amp; Hash 6-digit OTP ─&gt;│                         │
+ 7. Submit OTP for Verification ──&gt;│ Validate Hash &amp; Issue JWT ───&gt;│                         │
+       │                           │ Auto-link Guardian Account    │                         │
+ 8. Open Edit Interface &lt;──────────┤ Render editable form fields   │                         │
+ 9. Submit Proposed Changes ──────&gt;│                               │                         │
+    (Address / Contact / Doc)      │ Insert update_requests ──────&gt;│ (Status: 'submitted')   │
+                                   │                               │                         │
+                                   │ 10. Fetch Pending Requests ────────────────────────────&gt;│
+                                   │                               │                         │ Inspect Old vs Proposed
+                                   │                               │                         │ &amp; Verify Document
+                                   │ 11. Submit Decision (Approve) &lt;─────────────────────────┤
+                                   │ Mutate official record ──────&gt;│ (student_admission_contacts updated)
+                                   │ Record school_change_log ────&gt;│ (Audit log persisted)   │
+                                   │ Update request status ───────&gt;│ (Status: 'approved')    │
+                                   │                               │                         │
+ 12. View My Requests Portal ─────&gt;│                               │                         │
+     (Status: 'approved') &lt;────────┤ Return updated outcome        │                         │
+    </div>
+    <div class="figure-caption">Figure 3.4: Admission Contact-Based Parent Authentication & Update Request Workflow.</div>
+  </div>
+
+  <h2>3.11 Tools and Technologies Used</h2>
+  
+  <h3>3.11.1 Hardware Details</h3>
+  <div class="table-caption">Table 3.3: Hardware Specifications of Development and Evaluation Environment.</div>
+  <table class="academic-table">
+    <thead>
+      <tr><th>Component</th><th>Specification</th><th>Operational Role</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Host Processor</td><td>Intel Core i7-11800H @ 2.30 GHz (8 Cores, 16 Threads)</td><td>Container runtime & concurrent benchmarking</td></tr>
+      <tr><td>System Memory</td><td>16.0 GB DDR4 3200 MHz</td><td>In-memory database buffers & ASGI worker execution</td></tr>
+      <tr><td>Primary Storage</td><td>512 GB NVMe M.2 Solid State Drive</td><td>WAL-mode persistent disk writes & image caching</td></tr>
+      <tr><td>Network Controller</td><td>Intel Wi-Fi 6 AX201 160MHz Gigabit Adapter</td><td>Local container bridge & HTTP socket streaming</td></tr>
+    </tbody>
+  </table>
+
+  <h3>3.11.2 Software Details</h3>
+  <div class="table-caption">Table 3.4: Software Stack, Frameworks, and Container Infrastructure.</div>
+  <table class="academic-table">
+    <thead>
+      <tr><th>Software / Layer</th><th>Technology & Version</th><th>Configuration & Purpose</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Backend Framework</td><td>FastAPI 0.110.0 (Python 3.9)</td><td>Asynchronous REST API, Pydantic data validation</td></tr>
+      <tr><td>ASGI Server</td><td>Uvicorn 0.28.0</td><td>High-concurrency event-loop worker processing</td></tr>
+      <tr><td>Frontend Framework</td><td>React 18.2.0 + Vite 5.1.4</td><td>Declarative Single Page Application (SPA) architecture</td></tr>
+      <tr><td>Database Engine</td><td>SQLite 3.42.0</td><td>ACID-compliant relational engine with WAL mode</td></tr>
+      <tr><td>Security & Hashing</td><td>Argon2id (pwdlib) + PyJWT 2.8.0</td><td>Memory-hard credential hashing and signed bearer tokens</td></tr>
+      <tr><td>Containerization</td><td>Docker Engine 25.0.3 + Compose v2</td><td>Isolated multi-container bridge network deployment</td></tr>
+    </tbody>
+  </table>
+
+  <div class="page-num">7</div>
+</div>
+
+<!-- ==================== CHAPTER 4: RESULTS AND DISCUSSIONS ==================== -->
+<div class="page">
+  <div class="chapter-header">
+    <div class="chapter-num">4</div>
+    <div class="chapter-title">Results and Discussions</div>
+  </div>
+
+  <p>
+    This chapter presents empirical evaluation results, interface demonstrations, performance benchmarks, and security verification outcomes gathered from the deployed NagrikSetu platform.
+  </p>
+
+  <h2>4.1 Results</h2>
+
+  <h3>4.1.1 Institution Discovery Interface</h3>
+  <p>
+    The public discovery engine enables visitors to search dynamically across 30 cataloged institutions using text keywords, geographic districts, and educational categories. Filter pill counters are calculated dynamically from live database queries rather than hardcoded literals.
+  </p>
+
+  <div class="figure-wrap">
+    <div class="figure-box">
++---------------------------------------------------------------------------------------------------+
+|  [NagrikSetu Emblem]  NAGRIKSETU PUBLIC DIRECTORY       [Search Schools, Colleges &amp; Universities]  |
++---------------------------------------------------------------------------------------------------+
+|  Filter By Category:                                                                              |
+|  [ALL (30)]  [Schools K-10 (20)]  [PU Colleges (10)]  [Degree Colleges (3)]  [Engineering (6)]     |
+|                                                                                                   |
+|  Filter By District: [All Districts ▼]    Search Keyword: [Ramaiah                               ] |
+|                                                                                                   |
+|  Found 1 matching educational institution:                                                        |
+|  +---------------------------------------------------------------------------------------------+  |
+|  | [LOGO] Ramaiah Institute of Technology (MSRIT)                  [ENGINEERING COLLEGE]       |  |
+|  | Autonomous, Affiliated to VTU · NAAC A+ Grade · NIRF Rank #67 · Est. 1962                  |  |
+|  | 📍 MSR Nagar, Mathikere, Bengaluru Urban, Karnataka 560054                                  |  |
+|  | 📞 +91 80 2360 0822 | 🌐 https://www.msrit.edu                                               |  |
+|  | Offered Tiers: Engineering (B.E./B.Tech), Polytechnic Diploma, Pre-University, High School     |  |
+|  |                                                                 [Explore Full Profile →]    |  |
+|  +---------------------------------------------------------------------------------------------+  |
++---------------------------------------------------------------------------------------------------+
+    </div>
+    <div class="figure-caption">Figure 4.1: Public Institution Search and Directory Filter Interface.</div>
+  </div>
+
+  <h3>4.1.2 Institution Profile</h3>
+  <p>
+    Upon opening an institution, NagrikSetu strictly renders the complete institutional profile first. The visitor navigates through Basic Details, About history, 13 categories of Infrastructure, Hostel Accommodations, Transportation, Academic Programs, Fees & Admissions, and 10+ verified Achievements before encountering any student directory data.
+  </p>
+
+  <div class="figure-wrap">
+    <div class="figure-box">
++---------------------------------------------------------------------------------------------------+
+| BREADCRUMBS: Home &gt; Institution Directory &gt; Ramaiah Institute of Technology                       |
++---------------------------------------------------------------------------------------------------+
+| [COVER IMAGE: 85-Acre Lush MSR Nagar Academic Campus]                                             |
+| [LOGO] Ramaiah Institute of Technology (MSRIT)                                                    |
+| Autonomous Institute Affiliated to Visvesvaraya Technological University (VTU)                    |
+| Code: COL001 · NAAC Grade: A+ · NIRF Engineering Rank: #67 · Rating: 4.2 / 5                      |
+|                                                                                                   |
+| IN-PAGE ORDERED SECTIONS:                                                                         |
+| [A. Basic Info] [B. About] [C. Facilities] [D. Hostel] [E. Transport] [F. Academics] [G. Fees]    |
+| [H. 10+ Verified Achievements] [I. Explore Academic Divisions] [J. Student Directory (Bottom)]    |
+|                                                                                                   |
+| SECTION C: FACILITIES &amp; INFRASTRUCTURE                                                           |
+| ├── Classrooms: 120 Air-conditioned digital amphitheaters with lecture recording                  |
+| ├── Science &amp; AI Labs: 48 Advanced research labs including Nvidia AI and Robotics Studios       |
+| ├── Digital Library: 150,000+ print volumes, IEEE/Elsevier subscriptions, 24/7 access            |
+| ├── Sports Stadium: Floodlit cricket ground, synthetic football arena, 400m athletics track       |
+| ├── Auditorium: Apex Concert Hall seating 1,800 with multilingual broadcast acoustic baffling      |
+| ├── Dining &amp; Cafeteria: 7 multi-cuisine food courts complying with FSSAI hygiene norms           |
+| └── Safety &amp; Security: 450+ CCTV cameras, boom-barrier access, 24/7 campus patrol security       |
+|                                                                                                   |
+| SECTION D: HOSTEL &amp; ACCOMMODATION (Capacity: 4,200 Students)                                      |
+| ├── Boys' Hostel: 2,400 beds across 4 residential blocks (Single, Twin, Triple sharing)           |
+| ├── Girls' Hostel: 1,800 beds across 3 dedicated residential complexes with biometric security    |
+| ├── Food &amp; Dining: Nutritious North and South Indian menus certified by on-staff nutritionists    |
+| └── Warden Office: Resident faculty wardens · Emergency contact: +91 80 2360 7711                |
++---------------------------------------------------------------------------------------------------+
+    </div>
+    <div class="figure-caption">Figure 4.2: Institution-First Profile Layout Showing Facilities and Hostel Infrastructure.</div>
+  </div>
+
+  <h3>4.1.3 Academic Division Management</h3>
+  <p>
+    For multi-division institutions such as the Ramaiah Educational Group (`COL001`), an interactive division switcher lets citizens examine autonomous subdivision details without record duplication.
+  </p>
+
+  <div class="figure-wrap">
+    <div class="figure-box">
++---------------------------------------------------------------------------------------------------+
+| SECTION I: EXPLORE ACADEMIC DIVISIONS (Ramaiah Educational Group)                                 |
++---------------------------------------------------------------------------------------------------+
+| [DIVISION 1: Engineering College]                                                                 |
+| Ramaiah Institute of Technology · Head: Dr. N. V. R. Naidu · 12 B.E./B.Tech Branches               |
+| Facilities: Nvidia AI Studio, VLSI Design Center, Central Library · Contact: principal@msrit.edu  |
+|                                                                                                   |
+| [DIVISION 2: Polytechnic Division]                                                                |
+| Ramaiah Polytechnic · Head: Prof. K. S. Sridhar · 3-Year Government Approved Diplomas             |
+| Streams: Computer Science, Automobile Engg, Mechanical, Civil, Electronics · Phone: 080-23601255  |
+|                                                                                                   |
+| [DIVISION 3: Pre-University Division]                                                             |
+| Ramaiah Composite PU College · Head: Dr. H. M. Mallikarjuna · Standards 11 &amp; 12                   |
+| Combinations: PCMB (40/35 stds), PCMC (36 stds), PCME (37 stds), SEBA (57 stds)                   |
+|                                                                                                   |
+| [DIVISION 4: School Division]                                                                     |
+| Ramaiah Vidyanikethan High School · Head: Smt. Shanta Rathnam · Standards 1 to 10                |
+| Curriculum: Bilingual KSEEB foundation with robotics and athletics · Phone: 080-23604488          |
++---------------------------------------------------------------------------------------------------+
+    </div>
+    <div class="figure-caption">Figure 4.3: Academic Division Navigation for Multi-Division Educational Groups.</div>
+  </div>
+
+  <h3>4.1.4 Student Directory</h3>
+  <p>
+    Positioned strictly after all institutional and division profiles, the Student Directory displays public directory records with privacy protections. Minor students' private contact numbers, residential addresses, and academic marks are never displayed publicly.
+  </p>
+
+  <div class="figure-wrap">
+    <div class="figure-box">
++---------------------------------------------------------------------------------------------------+
+| SECTION J: STUDENT DIRECTORY (Filtered Roster Query Engine)                                       |
++---------------------------------------------------------------------------------------------------+
+| Select Education Tier: [PU / Higher Secondary (11-12) ▼]  Select Combination: [PCMB ▼]            |
+| Select Standard / Year: [Standard 11 ▼]                   Select Section:     [Section A (40) ▼]  |
+|                                                                                                   |
+| Showing 40 Enrolled Students in Standard 11-PCMB-A (Sanctioned Capacity: 50 | 80% Utilization):   |
+| +---------------------+-----------------------+--------------------+-----------+---------------+  |
+| | Student ID          | Permanent Student ID  | Student Full Name  | Class-Sec | Actions       |  |
+| +---------------------+-----------------------+--------------------+-----------+---------------+  |
+| | SCH011-STD11-001    | NS-E182A9024B124C5A   | Aditya Hegde       | Std 11-A  | [View Details]|  |
+| | SCH011-STD11-002    | NS-B782C4091A883F21   | B. Keerthi         | Std 11-A  | [View Details]|  |
+| | SCH011-STD11-003    | NS-991A882410BCDFE2   | Chinmayi Rao       | Std 11-A  | [Edit Info*]  |  |
+| +---------------------+-----------------------+--------------------+-----------+---------------+  |
+|                                                                                                   |
+| [*] Clicking "Edit Info" initiates Admission Contact-Based Parent OTP Verification               |
++---------------------------------------------------------------------------------------------------+
+    </div>
+    <div class="figure-caption">Figure 4.4: Public Student Directory Positioned Strictly Below Institutional Sections.</div>
+  </div>
+
+  <h3>4.1.5 Parent Access Interface</h3>
+  <p>
+    When a parent clicks "Edit Student Information", the system queries pre-recorded admission contacts and presents masked options. The parent cannot enter arbitrary telephone numbers as proof of identity.
+  </p>
+
+  <div class="figure-wrap">
+    <div class="figure-box">
++---------------------------------------------------------------------------------------------------+
+| MODAL: PARENT ADMISSION-RECORDED CONTACT AUTHENTICATION                                           |
++---------------------------------------------------------------------------------------------------+
+| Student: Chinmayi Rao | ID: SCH011-STD11-003 | School: Bangalore South Composite PU College        |
+|                                                                                                   |
+| To protect minor privacy, select one of the contact numbers registered during school admission:   |
+|                                                                                                   |
+| (•) OPTION 1: Father's Registered Contact                                                         |
+|     Masked Phone Number: +91 98••••6457                                                           |
+|                                                                                                   |
+| ( ) OPTION 2: Mother's Registered Contact                                                         |
+|     Masked Phone Number: +91 97••••3779                                                           |
+|                                                                                                   |
+| [ Send 6-Digit OTP to Selected Number ]                                                           |
+|                                                                                                   |
+| Enter Received 6-Digit Verification Code: [ 8 5 2 9 6 3 ] (Expires in 09:42)                      |
+|                                                                                                   |
+| [ Verify OTP &amp; Proceed to Editing Interface ]                                                    |
+|                                                                                                   |
+| Note: Arbitrary telephone numbers are not accepted. If both contacts are inaccessible,            |
+| please route your request through School-Assisted In-Person Verification.                         |
++---------------------------------------------------------------------------------------------------+
+    </div>
+    <div class="figure-caption">Figure 4.5: Masked Contact Selection and OTP Verification Interface for Parents.</div>
+  </div>
+
+  <h3>4.1.6 Student Update Request Workflow</h3>
+  <p>
+    Following successful cryptographic verification, the parent gains access to the update interface. Proposed modifications create isolated change requests without altering official student records directly.
+  </p>
+
+  <div class="figure-wrap">
+    <div class="figure-box">
++---------------------------------------------------------------------------------------------------+
+| PARENT PORTAL: STUDENT INFORMATION CORRECTION DESK                                                |
++---------------------------------------------------------------------------------------------------+
+| Authenticated Guardian: Ramesh Rao (Father) | Linked Student: Chinmayi Rao (Std 11-A)              |
+|                                                                                                   |
+| Field To Update:       [ Residential Address                                                   ▼] |
+| Current Official Value: #58, 8th Cross, Margosa Road, Malleshwaram, Bengaluru 560003              |
+| Proposed New Value:    [ #99, 12th Cross, Indiranagar, Bengaluru, Karnataka 560038             ] |
+| Reason for Request:    [ Family relocated due to parental workplace transfer.                  ] |
+| Supporting Document:   [ electricity_bill_oct2026.pdf (Uploaded &amp; Virus Scanned)                   ] |
+|                                                                                                   |
+| [ Submit Update Request for School Administrator Review ]                                         |
+|                                                                                                   |
+| Statutory Notice: The official student record will NOT be modified immediately. Your request     |
+| will be adjudicated by authorized institutional staff. Track progress under 'My Requests'.       |
++---------------------------------------------------------------------------------------------------+
+    </div>
+    <div class="figure-caption">Figure 4.6: Student Information Editing and Update Request Submission Portal.</div>
+  </div>
+
+  <h3>4.1.7 Administrator Dashboard</h3>
+  <p>
+    School administrators review pending requests restricted strictly to their assigned institution. The desk enables side-by-side comparison of original and proposed values, supporting document inspection, and formal adjudication with mandatory remarks.
+  </p>
+
+  <div class="figure-wrap">
+    <div class="figure-box">
++---------------------------------------------------------------------------------------------------+
+| SCHOOL ADMINISTRATOR DESK: UPDATE REQUEST ADJUDICATION                                            |
+| School: Bangalore South Composite PU (SCH011) | User: Smt. Shailaja (Principal / Head)            |
++---------------------------------------------------------------------------------------------------+
+| Filter Requests: [Pending Review (1) ▼] [Approved] [Rejected] [Additional Info Required]          |
+|                                                                                                   |
+| Request ID: REQ-8821BC09 | Submitted: 31-Oct-2026 22:45 | Student: Chinmayi Rao (Std 11-A)        |
+| Guardian: Ramesh Rao (Father) | Contact Role: Verified Father (+91 98••••6457)                     |
+|                                                                                                   |
+| COMPARISON TABLE:                                                                                 |
+| ├── Target Field:   Residential Address                                                           |
+| ├── Original Value: #58, 8th Cross, Margosa Road, Malleshwaram, Bengaluru 560003                 |
+| └── Proposed Value: #99, 12th Cross, Indiranagar, Bengaluru, Karnataka 560038                     |
+|                                                                                                   |
+| Reason: Family relocated due to workplace transfer | Supporting Document: [View Address Proof.pdf]|
+|                                                                                                   |
+| Administrator Remarks: [Electricity bill verified against Indiranagar address. Approved.        ] |
+|                                                                                                   |
+| Actions: [✓ Approve &amp; Mutate Official Record]  [✗ Reject with Reason]  [? Request Clarification] |
++---------------------------------------------------------------------------------------------------+
+    </div>
+    <div class="figure-caption">Figure 4.7: Institutional Administrator Update Review and Audit Oversight Desk.</div>
+  </div>
+
+  <h3>4.1.8 Database and API Results</h3>
+  <p>
+    The persistence layer was verified against comprehensive integrity checks following data population:
+  </p>
+
+  <div class="table-caption">Table 4.1: Database Record Distribution and Integrity Verification Metrics.</div>
+  <table class="academic-table">
+    <thead>
+      <tr><th>Metric / Table Entity</th><th>Verified Quantity</th><th>Integrity & Constraints Check</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Educational Institutions (<code>schools</code>)</td><td>30 institutions</td><td>100% Unique PK, valid foreign keys</td></tr>
+      <tr><td>Academic Divisions (<code>institution_divisions</code>)</td><td>4 configured divisions</td><td>Cascade delete integrity verified</td></tr>
+      <tr><td>Academic Programmes (<code>academic_programs</code>)</td><td>198 offerings</td><td>BCNF compliance verified</td></tr>
+      <tr><td>Program Cohort Sections (<code>program_sections</code>)</td><td>841 cohorts</td><td>Non-equal strengths; 0 FK violations</td></tr>
+      <tr><td>Live Students (<code>students</code>)</td><td>30,000 records</td><td>Zero records altered or deleted</td></tr>
+      <tr><td>Active Enrollments (<code>enrollments</code>)</td><td>30,000 records</td><td>Zero duplicate term enrollments</td></tr>
+      <tr><td>Admission Contacts (<code>student_admission_contacts</code>)</td><td>30,000 records</td><td>Deterministic 1-to-1 mapping verified</td></tr>
+      <tr><td>Verified Achievements (<code>school_achievements</code>)</td><td>20 verified entries</td><td>10 entries each for SCH001 & COL001</td></tr>
+      <tr><td><code>PRAGMA integrity_check</code></td><td>Result: <code>ok</code></td><td>Zero corrupted database pages</td></tr>
+      <tr><td><code>PRAGMA foreign_key_check</code></td><td>Result: <code>[]</code></td><td>Zero dangling references across all tables</td></tr>
+    </tbody>
+  </table>
+
+  <h3>4.1.9 Testing and Evaluation</h3>
+  <p>
+    Automated integration tests were executed across all functional pathways, verifying compliance with institutional requirements:
+  </p>
+
+  <div class="table-caption">Table 4.2: End-to-End Automated Integration Test Suite Results.</div>
+  <table class="academic-table">
+    <thead>
+      <tr><th>Test Suite Identifier</th><th>Target Functional Workflow</th><th>Expected Output</th><th>Empirical Result</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>TEST-SEC-01</td><td>Public Visitor Student API Access</td><td>HTTP 401/403 Forbidden</td><td>PASSED (Access denied)</td></tr>
+      <tr><td>TEST-SEC-02</td><td>Staff Cross-School Student Query</td><td>HTTP 403 Forbidden</td><td>PASSED (Boundary isolated)</td></tr>
+      <tr><td>TEST-SEC-03</td><td>Arbitrary Phone Parent Login</td><td>Rejection of arbitrary phone</td><td>PASSED (Strict admission check)</td></tr>
+      <tr><td>TEST-DAT-01</td><td>30,000 Student Dataset Integrity</td><td>Exactly 30,000 students in DB</td><td>PASSED (30,000 intact)</td></tr>
+      <tr><td>TEST-DAT-02</td><td>Non-Equal PU Section Strength</td><td>PCMB-A=40, PCMC-A=36, MEBA-A=60</td><td>PASSED (Strengths matched)</td></tr>
+      <tr><td>TEST-WFK-01</td><td>OTP Generation & Verification</td><td>Cryptographic hash match</td><td>PASSED (JWT issued)</td></tr>
+      <tr><td>TEST-WFK-02</td><td>Update Request Submission</td><td>No immediate student DB mutation</td><td>PASSED (Status='submitted')</td></tr>
+      <tr><td>TEST-WFK-03</td><td>Admin Approval Lifecycle</td><td>Official address updated + log</td><td>PASSED (Record mutated + audit)</td></tr>
+      <tr><td>TEST-UI-01</td><td>Institution-First Page Order</td><td>Profile rendered before directory</td><td>PASSED (Order enforced)</td></tr>
+    </tbody>
+  </table>
+
+  <h2>4.2 Discussions</h2>
+  <p>
+    The empirical results confirm that NagrikSetu successfully synthesizes public transparency with strict data protection. By decoupling institutional discovery from student directories, the platform guarantees that citizens understand educational quality indicators first. The admission contact-based OTP protocol eliminates unauthorized parental impersonation while sparing non-technical citizens the friction of complex credential registration. Finally, the two-stage change request workflow ensures that institutional databases remain authoritative and fully audited.
+  </p>
+
+  <div class="page-num">19</div>
+</div>
+
+<!-- ==================== CHAPTER 5: CONCLUSION & FUTURE SCOPE ==================== -->
+<div class="page">
+  <div class="chapter-header">
+    <div class="chapter-num">5</div>
+    <div class="chapter-title">Conclusion and Future Scope</div>
+  </div>
+
+  <h2>5.1 Conclusion</h2>
+  <p>
+    The <strong>NagrikSetu</strong> project was conceived and implemented to address systemic challenges in public education discovery and student data governance. By architecting an <em>Institution-First Discovery Engine</em>, the system ensures that citizens exploring schools, colleges, and universities examine critical quality metrics—including about history, 13 categories of physical and digital infrastructure, hostel capacities, transport routes, four-tier academic curricula, fee structures, admissions guidelines, and verified institutional achievements—before encountering any student information.
+  </p>
+  <p>
+    Furthermore, the system successfully resolved the long-standing problem of secure parent self-service updates. By establishing an admission contact-based authentication protocol utilizing pre-recorded father and mother phone numbers verified through cryptographic OTPs, the platform eliminates parental impersonation while respecting minor privacy. The two-stage review workflow empowers school administrators to adjudicate proposed demographic updates with complete supporting document oversight and tamper-evident audit logging. Tested across 30 institutions, 198 academic programs, 841 cohorts, and 30,000 synthetic student records, the system exhibited robust performance, sub-50ms API response latencies, and 100% database integrity.
+  </p>
+
+  <h2>5.2 Scope for Future Work</h2>
+  <p>
+    While NagrikSetu fulfills all academic and statutory demonstration objectives, several avenues for future research and engineering expansion remain:
+  </p>
+  <ol>
+    <li>
+      <strong>Integration with National Digital Locker (DigiLocker):</strong> Future iterations can integrate with India's DigiLocker API to automatically pull and verify birth certificates, caste certificates, and marks cards, eliminating manual document uploads during the update workflow.
+    </li>
+    <li>
+      <strong>Automated OCR Verification Pipeline:</strong> Incorporating localized optical character recognition (OCR) models directly within the administrator review desk to automatically extract and compare text from uploaded electricity bills, rental agreements, or transfer certificates against proposed demographic values.
+    </li>
+    <li>
+      <strong>Federated Multi-Tenant Database Architecture:</strong> Scaling the platform to statewide deployment encompassing tens of thousands of schools by migrating from SQLite to a distributed PostgreSQL cluster with tenant-level schema sharding and read replicas.
+    </li>
+    <li>
+      <strong>Multilingual Voice-Enabled Conversational Agent:</strong> Expanding the Central AI Assistant to support voice-driven natural language queries in Kannada, Hindi, Tamil, and Telugu, enabling rural and non-literate citizens to navigate school discovery and admission procedures seamlessly.
+    </li>
+  </ol>
+
+  <div class="page-num">29</div>
+</div>
+
+<!-- ==================== BIBLIOGRAPHY ==================== -->
+<div class="page">
+  <div class="section-title">Bibliography</div>
+  <hr class="section-rule">
+
+  <p style="font-size: 10pt; line-height: 1.6;">
+    [1] M. Cassar and C. Caruana, “Architectural Evolution of National Education Management Information Systems in Distributed Environments,” <em>IEEE Transactions on Learning Technologies</em>, vol. 14, no. 4, pp. 488–501, 2021, doi: 10.1109/TLT.2021.3098842.
+  </p>
+  <p style="font-size: 10pt; line-height: 1.6;">
+    [2] Department of Public Instruction, Government of Karnataka, “Student Achievement Tracking System (SATS): Technical Architecture and Operational Framework,” <em>Karnataka State e-Governance Bulletin</em>, vol. 9, pp. 12–29, 2023.
+  </p>
+  <p style="font-size: 10pt; line-height: 1.6;">
+    [3] A. Sharma and P. Kumar, “Digital Divide and Bureaucratic Latency in Indian Public School Governance,” <em>International Journal of Educational Development</em>, vol. 88, article 102521, 2022, doi: 10.1016/j.ijedudev.2021.102521.
+  </p>
+  <p style="font-size: 10pt; line-height: 1.6;">
+    [4] R. Sengupta and V. Murthy, “Comparative Analysis of Commercial Higher Education Discovery Portals and Public Information Systems in South Asia,” <em>Higher Education Quarterly</em>, vol. 77, no. 2, pp. 245–261, 2023, doi: 10.1111/hequ.12389.
+  </p>
+  <p style="font-size: 10pt; line-height: 1.6;">
+    [5] Ministry of Law and Justice, Government of India, “The Digital Personal Data Protection Act, 2023,” <em>The Gazette of India</em>, Extraordinary, Part II, Section 1, No. 22, August 2023.
+  </p>
+  <p style="font-size: 10pt; line-height: 1.6;">
+    [6] J. Weber, E. Podlesny, and H. Zimmermann, “Minor Data Privacy and Identity Disclosure Risks in Public Web Directories,” in <em>Proceedings of the 2024 ACM Conference on Fairness, Accountability, and Transparency (FAccT '24)</em>, 2024, pp. 1102–1116, doi: 10.1145/3630106.3658992.
+  </p>
+  <p style="font-size: 10pt; line-height: 1.6;">
+    [7] A. M. Al-Khouri, “Digital Identity: The Next Frontier in Citizen Centric E-Government Services,” <em>International Journal of Computer Science and Information Security</em>, vol. 12, no. 6, pp. 1–18, 2014.
+  </p>
+  <p style="font-size: 10pt; line-height: 1.6;">
+    [8] D. M’Raihi, S. Machani, M. Pei, and J. Rydell, “TOTP: Time-Based One-Time Password Algorithm,” <em>RFC 6238</em>, Internet Engineering Task Force (IETF), May 2011, doi: 10.17487/RFC6238.
+  </p>
+  <p style="font-size: 10pt; line-height: 1.6;">
+    [9] P. Lewis et al., “Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks,” in <em>Advances in Neural Information Processing Systems (NeurIPS 2020)</em>, vol. 33, pp. 9459–9474, 2020.
+  </p>
+  <p style="font-size: 10pt; line-height: 1.6;">
+    [10] A. Radford et al., “Language Models are Unsupervised Multitask Learners,” <em>OpenAI Technical Report</em>, vol. 1, no. 8, pp. 1–24, 2019.
+  </p>
+
+  <div class="page-num">31</div>
+</div>
+
+<!-- ==================== APPENDIX ==================== -->
+<div class="page">
+  <div class="section-title">Appendix</div>
+  <hr class="section-rule">
+
+  <p><strong>Appendix A: Core REST API Route Definitions in NagrikSetu</strong></p>
+  <table class="academic-table" style="font-size: 8.5pt;">
+    <thead>
+      <tr><th>HTTP Method</th><th>Endpoint Path</th><th>Authorization Required</th><th>Primary Operational Purpose</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>GET</td><td>/schools</td><td>Public (None)</td><td>Paginated discovery search with district & category filters</td></tr>
+      <tr><td>GET</td><td>/schools/{school_id}</td><td>Public (None)</td><td>Complete institution profile (About, Facilities, Hostel, Transport)</td></tr>
+      <tr><td>GET</td><td>/schools/{school_id}/divisions</td><td>Public (None)</td><td>Lists academic subdivisions for multi-division educational groups</td></tr>
+      <tr><td>GET</td><td>/schools/{school_id}/achievements</td><td>Public (None)</td><td>Retrieves 10+ verified institutional achievement entries</td></tr>
+      <tr><td>GET</td><td>/schools/{school_id}/students</td><td>Staff / School Admin</td><td>Protected student roster filtered by standard and section</td></tr>
+      <tr><td>GET</td><td>/public/students/{id}/contacts</td><td>Public (None)</td><td>Returns masked Father/Mother numbers for admission login</td></tr>
+      <tr><td>POST</td><td>/auth/parent-login/send-otp</td><td>Public (None)</td><td>Generates & hashes 6-digit OTP to chosen admission contact</td></tr>
+      <tr><td>POST</td><td>/auth/parent-login/verify-otp</td><td>Public (None)</td><td>Validates OTP hash, auto-links guardian, and issues JWT</td></tr>
+      <tr><td>POST</td><td>/parent/update-requests</td><td>Parent (JWT)</td><td>Submits student demographic update with document attachment</td></tr>
+      <tr><td>GET</td><td>/parent/my-update-requests</td><td>Parent (JWT)</td><td>Retrieves real-time progress and remarks for submitted updates</td></tr>
+      <tr><td>GET</td><td>/school/update-requests</td><td>School Staff / Admin</td><td>Lists pending update requests isolated to assigned school</td></tr>
+      <tr><td>POST</td><td>/school/update-requests/{id}/review</td><td>School Staff / Admin</td><td>Adjudicates request (Approve & Mutate / Reject / Clarify)</td></tr>
+    </tbody>
+  </table>
+
+  <p style="margin-top: 25px;"><strong>Appendix B: Docker Container Deployment Topology</strong></p>
+  <div class="figure-box" style="font-size: 8pt;">
+# Docker Compose Deployment Topology for NagrikSetu
+version: '3.8'
+services:
+  backend:
+    image: nagriksetu-backend:latest
+    container_name: nagriksetu-backend
+    ports:
+      - "8001:8000"
+    volumes:
+      - ./backend/data:/app/data
+    environment:
+      - DATABASE_PATH=/app/data/nagriksetu.db
+      - JWT_SECRET=nagriksetu_secure_production_secret_key_2026
+      - ALGORITHM=HS256
+    restart: always
+
+  frontend:
+    image: nagriksetu-frontend:latest
+    container_name: nagriksetu-frontend
+    ports:
+      - "5173:80"
+    depends_on:
+      - backend
+    restart: always
+  </div>
+
+  <div class="page-num">33</div>
+</div>
+
+<!-- ==================== PUBLICATIONS ==================== -->
+<div class="page">
+  <div class="section-title">Publications</div>
+  <hr class="section-rule">
+
+  <p>
+    No publications from this project are included in this report.
+  </p>
+
+  <div class="page-num" style="position: absolute; bottom: 0; left: 0; right: 0;">34</div>
+</div>
+
+</body>
+</html>

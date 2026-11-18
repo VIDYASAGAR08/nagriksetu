@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>NagrikSetu Auth Bootstrap</title>
+</head>
+<body>
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get('token');
+    const role = params.get('role') || 'school_staff';
+    const schoolId = params.get('school_id') || 'SCH001';
+    const email = params.get('email') || (role === 'platform_admin' ? 'admin.central@nagriksetu.gov' : role === 'school_admin' ? 'admin.sch001@example.com' : 'staff.sch001@example.com');
+    const fullName = params.get('full_name') || (role === 'platform_admin' ? 'Central Platform Administrator' : role === 'school_admin' ? 'Institution Administrator' : 'Staff Member');
+    const target = params.get('target') || '/staff';
+
+    if (token) {
+      localStorage.setItem('nagriksetu_token', token);
+      localStorage.setItem('nagriksetu_user', JSON.stringify({
+        user_id: 'bootstrap-user-id',
+        email: email,
+        role: role,
+        school_id: schoolId,
+        full_name: fullName,
+        status: 'active'
+      }));
+    }
+    window.location.replace(target);
+  </script>
+</body>
+</html>

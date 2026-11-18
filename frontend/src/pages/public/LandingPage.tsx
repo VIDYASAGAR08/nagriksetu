@@ -17,6 +17,7 @@ import {
   X,
   Building2,
   ChevronRight,
+  ExternalLink,
 } from 'lucide-react';
 
 interface CivicServiceItem {
@@ -181,10 +182,17 @@ export const LandingPage: React.FC = () => {
                     <div className={`w-14 h-14 rounded-2xl ${service.colorClass} flex items-center justify-center font-bold shadow-xs border transition-transform group-hover:scale-105`}>
                       <Icon className="w-7 h-7" />
                     </div>
-                    <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-1 rounded-full bg-amber-100 text-amber-900 border border-amber-300 shadow-2xs">
-                      <Clock className="w-3 h-3 text-amber-600 animate-pulse" />
-                      <span>In Development</span>
-                    </span>
+                    {service.id === 'education' ? (
+                      <span className="inline-flex items-center gap-1.5 text-[10px] font-bold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-900 border border-emerald-300 shadow-2xs">
+                        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
+                        <span>Live Service</span>
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-1 rounded-full bg-amber-100 text-amber-900 border border-amber-300 shadow-2xs">
+                        <Clock className="w-3 h-3 text-amber-600 animate-pulse" />
+                        <span>In Development</span>
+                      </span>
+                    )}
                   </div>
 
                   {/* Service Titles */}
@@ -216,7 +224,7 @@ export const LandingPage: React.FC = () => {
 
                 {/* Footer Action */}
                 <div className="mt-5 pt-3.5 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-navy-900 group-hover:text-saffron-600 transition-colors">
-                  <span>View Details & Scope</span>
+                  <span>{service.id === 'education' ? 'Explore Schools & Portal' : 'View Details & Scope'}</span>
                   <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
                 </div>
               </div>
@@ -343,15 +351,27 @@ export const LandingPage: React.FC = () => {
             </div>
 
             <div className="p-6 space-y-4 text-xs">
-              <div className="bg-amber-50/80 border border-amber-200 rounded-2xl p-3.5 flex items-start gap-2.5 text-amber-900">
-                <Clock className="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
-                <div>
-                  <p className="font-bold text-amber-950">Team Member Active Development Notice</p>
-                  <p className="text-amber-800 text-[11px] mt-0.5 leading-relaxed">
-                    This civic service is currently under development by our technical team. The backend API endpoints and user interfaces are being authored and will be connected directly to this card once finalized.
-                  </p>
+              {selectedService.id === 'education' ? (
+                <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-3.5 flex items-start gap-2.5 text-emerald-950">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-bold text-emerald-950">Integrated School Service Online</p>
+                    <p className="text-emerald-800 text-[11px] mt-0.5 leading-relaxed">
+                      The School & Education Microservice has been successfully federated with NagrikSetu. You can browse all verified schools, admission portals, and academic certificates directly or launch the full School Management Portal.
+                    </p>
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <div className="bg-amber-50/80 border border-amber-200 rounded-2xl p-3.5 flex items-start gap-2.5 text-amber-900">
+                  <Clock className="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-bold text-amber-950">Team Member Active Development Notice</p>
+                    <p className="text-amber-800 text-[11px] mt-0.5 leading-relaxed">
+                      This civic service is currently under development by our technical team. The backend API endpoints and user interfaces are being authored and will be connected directly to this card once finalized.
+                    </p>
+                  </div>
+                </div>
+              )}
 
               <div>
                 <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400 block mb-1">
@@ -383,14 +403,35 @@ export const LandingPage: React.FC = () => {
                 </div>
               </div>
 
-              <div className="pt-2 flex justify-end">
+              <div className="pt-2 flex flex-wrap items-center justify-end gap-2">
                 <button
                   type="button"
                   onClick={() => setSelectedService(null)}
-                  className="py-2 px-5 rounded-xl text-xs font-bold bg-navy-900 hover:bg-navy-800 text-white shadow-md transition"
+                  className="py-2 px-4 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition"
                 >
-                  Understood (Dismiss)
+                  Close
                 </button>
+                {selectedService.id === 'education' && (
+                  <>
+                    <Link
+                      to="/education"
+                      onClick={() => setSelectedService(null)}
+                      className="py-2 px-4 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-xs transition inline-flex items-center gap-1.5"
+                    >
+                      <GraduationCap className="w-3.5 h-3.5" />
+                      <span>Browse School Directory</span>
+                    </Link>
+                    <a
+                      href="http://localhost:5174"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="py-2 px-4 rounded-xl text-xs font-bold bg-navy-900 hover:bg-navy-800 text-white shadow-md transition inline-flex items-center gap-1.5"
+                    >
+                      <span>Launch School Portal (Port 5174)</span>
+                      <ExternalLink className="w-3.5 h-3.5 text-saffron-400" />
+                    </a>
+                  </>
+                )}
               </div>
             </div>
           </div>

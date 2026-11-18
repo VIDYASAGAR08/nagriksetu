@@ -1,0 +1,623 @@
+
+from typing import Literal, Optional
+
+from fastapi import Depends, FastAPI, HTTPException, Query, status
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.security import OAuth2PasswordRequestForm
+from pydantic import BaseModel, Field
+
+from database import get_connection
+from auth import create_access_token, get_current_user, verify_password
+
+
+app = FastAPI(
+    title="NagrikSetu School Service",
+    description=(
+        "School discovery, public student profiles, authentication, "
+        "and secure parent services."
+    ),
+    version="1.3.0",
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+class LoginResponse(BaseModel):
+    access_token: str
+    token_type: str
+
+
+class ParentUpdateRequest(BaseModel):
+    permanent_student_id: str = Field(min_length=1, max_length=100)
+    request_type: Literal["request_change", "report_change"]
+    field_name: Literal[
+        "student_name",
+        "date_of_birth",
+        "gender",
+        "first_language",
+    ]
+    proposed_value: str = Field(min_length=1, max_length=500)
+    reason: str = Field(min_length=5, max_length=1000)
+    supporting_document_id: Optional[str] = Field(
+        default=None, max_length=100
+    )
+
+
+def require_parent(user: dict = Depends(get_current_user)) -> dict:
+    if user["role"] != "parent":
+        raise HTTPException(
+            status_code=403,
+            detail="This endpoint is only available to parent accounts.",
+        )
+    return user
+
+
+def get_parent_guardian(conn, user_id: str):
+    return conn.execute(
+        """
+        SELECT guardian_id, user_id, full_name
+        FROM guardians
+        WHERE user_id = ?
+        """,
+        (user_id,),
+    ).fetchone()
+
+
+def get_authorized_child(
+    conn,
+    guardian_id: str,
+    permanent_student_id: str,
+    permission_column: str,
+):
+    # permission_column is selected only from fixed values in this file.
+    if permission_column not in (
+        "can_view_records",
+        "can_request_updates",
+    ):
+        raise ValueError("Unsupported guardian permission.")
+
+    return conn.execute(
+        f"""
+        SELECT s.student_id, s.permanent_student_id,
+               s.student_name, s.school_id, s.standard,
+               s.section, s.first_language, s.date_of_birth,
+               s.gender, s.enrollment_status
+        FROM student_guardians sg
+        JOIN students s
+          ON s.permanent_student_id = sg.permanent_student_id
+        WHERE sg.guardian_id = ?
+          AND sg.permanent_student_id = ?
+          AND sg.is_verified = 1
+          AND sg.{permission_column} = 1
+        """,
+        (guardian_id, permanent_student_id),
+    ).fetchone()
+
+
+@app.post("/auth/login", response_model=LoginResponse)
+def login(form: OAuth2PasswordRequestForm = Depends()):
+    """Use the username field for an email address or phone number."""
+    identifier = form.username.strip()
+
+    conn = get_connection()
+    try:
+        user = conn.execute(
+            """
+            SELECT user_id, email, phone, password_hash,
+                   role, school_id, is_active
+            FROM users
+            WHERE email = ? COLLATE NOCASE OR phone = ?
+            """,
+            (identifier, identifier),
+        ).fetchone()
+    finally:
+        conn.close()
+
+    if (
+        user is None
+        or not user["is_active"]
+        or not verify_password(form.password, user["password_hash"])
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect username or password.",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    return {
+        "access_token": create_access_token(dict(user)),
+        "token_type": "bearer",
+    }
+
+
+@app.get("/auth/me")
+def get_my_account(user: dict = Depends(get_current_user)):
+    return {
+        "user_id": user["user_id"],
+        "email": user["email"],
+        "phone": user["phone"],
+        "role": user["role"],
+        "school_id": user["school_id"],
+        "is_active": bool(user["is_active"]),
+    }
+
+
+@app.get("/")
+def home():
+    conn = get_connection()
+    try:
+        schools = conn.execute(
+            "SELECT COUNT(*) FROM schools"
+        ).fetchone()[0]
+        students = conn.execute(
+            "SELECT COUNT(*) FROM students"
+        ).fetchone()[0]
+        return {
+            "service": "NagrikSetu School Service",
+            "status": "running",
+            "database": "SQLite",
+            "total_schools": schools,
+            "total_students": students,
+        }
+    finally:
+        conn.close()
+
+
+@app.get("/health")
+def health_check():
+    return {"status": "healthy"}
+
+
+@app.get("/schools")
+def list_schools(
+    limit: int = Query(default=10, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
+):
+    conn = get_connection()
+    try:
+        rows = conn.execute(
+            """
+            SELECT school_id, school_name, district, state,
+                   school_type, address, established_year,
+                   description, public_phone, website, facilities_json
+            FROM schools
+            ORDER BY school_name
+            LIMIT ? OFFSET ?
+            """,
+            (limit, offset),
+        ).fetchall()
+        return [dict(row) for row in rows]
+    finally:
+        conn.close()
+
+
+@app.get("/schools/{school_id}")
+def get_school(school_id: str):
+    conn = get_connection()
+    try:
+        row = conn.execute(
+            """
+            SELECT school_id, school_name, district, state,
+                   school_type, address, established_year,
+                   description, public_phone, website, facilities_json
+            FROM schools
+            WHERE school_id = ?
+            """,
+            (school_id,),
+        ).fetchone()
+
+        if row is None:
+            raise HTTPException(404, "School not found")
+
+        return dict(row)
+    finally:
+        conn.close()
+
+
+@app.get("/search-schools")
+def search_schools(
+    keyword: str = Query(min_length=1, max_length=100),
+    limit: int = Query(default=20, ge=1, le=100),
+):
+    conn = get_connection()
+    try:
+        term = f"%{keyword.strip()}%"
+        rows = conn.execute(
+            """
+            SELECT school_id, school_name, district, state,
+                   school_type, address, public_phone, website
+            FROM schools
+            WHERE school_name LIKE ?
+               OR district LIKE ?
+               OR school_id LIKE ?
+            ORDER BY school_name
+            LIMIT ?
+            """,
+            (term, term, term, limit),
+        ).fetchall()
+        return [dict(row) for row in rows]
+    finally:
+        conn.close()
+
+
+@app.get("/schools/{school_id}/students")
+def get_school_students(
+    school_id: str,
+    limit: int = Query(default=50, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
+    standard: Optional[int] = Query(default=None, ge=1, le=12),
+):
+    conn = get_connection()
+    try:
+        school = conn.execute(
+            "SELECT school_id FROM schools WHERE school_id = ?",
+            (school_id,),
+        ).fetchone()
+
+        if school is None:
+            raise HTTPException(404, "School not found")
+
+        sql = """
+            SELECT s.student_id, s.permanent_student_id,
+                   s.school_id, sc.school_name, s.standard,
+                   s.section, s.first_language, s.enrollment_status
+            FROM students s
+            JOIN schools sc ON sc.school_id = s.school_id
+            WHERE s.school_id = ?
+        """
+        params = [school_id]
+
+        if standard is not None:
+            sql += " AND s.standard = ?"
+            params.append(standard)
+
+        sql += " ORDER BY s.standard, s.student_id LIMIT ? OFFSET ?"
+        params.extend([limit, offset])
+
+        rows = conn.execute(sql, params).fetchall()
+        return [dict(row) for row in rows]
+    finally:
+        conn.close()
+
+
+@app.get("/students/{student_id}")
+def get_public_student(student_id: str):
+    conn = get_connection()
+    try:
+        student = conn.execute(
+            """
+            SELECT student_id, permanent_student_id, school_id,
+                   standard, section, enrollment_status
+            FROM students
+            WHERE student_id = ?
+            """,
+            (student_id,),
+        ).fetchone()
+
+        if student is None:
+            raise HTTPException(404, "Student not found")
+
+        school = conn.execute(
+            """
+            SELECT school_id, school_name, address, district, state
+            FROM schools
+            WHERE school_id = ?
+            """,
+            (student["school_id"],),
+        ).fetchone()
+
+        history = conn.execute(
+            """
+            SELECT e.standard, e.section, e.academic_year,
+                   e.school_id, sc.school_name
+            FROM enrollments e
+            JOIN schools sc ON sc.school_id = e.school_id
+            WHERE e.permanent_student_id = ?
+            ORDER BY e.academic_year, e.standard
+            """,
+            (student["permanent_student_id"],),
+        ).fetchall()
+
+        return {
+            "student_id": student["student_id"],
+            "current_school": dict(school) if school else None,
+            "current_standard": student["standard"],
+            "current_section": student["section"],
+            "enrollment_status": student["enrollment_status"],
+            "school_history": [dict(row) for row in history],
+        }
+    finally:
+        conn.close()
+
+
+@app.get("/schools/{school_id}/programs")
+def get_school_programs(school_id: str):
+    conn = get_connection()
+    try:
+        school = conn.execute(
+            "SELECT school_id FROM schools WHERE school_id = ?",
+            (school_id,),
+        ).fetchone()
+
+        if school is None:
+            raise HTTPException(404, "School not found")
+
+        rows = conn.execute(
+            """
+            SELECT program_id, school_id, standard, section,
+                   first_language, stream, subject_combination,
+                   is_available
+            FROM school_programs
+            WHERE school_id = ?
+            ORDER BY standard, section, stream
+            """,
+            (school_id,),
+        ).fetchall()
+        return [dict(row) for row in rows]
+    finally:
+        conn.close()
+
+
+@app.get("/schools/{school_id}/achievements")
+def get_school_achievements(school_id: str):
+    conn = get_connection()
+    try:
+        school = conn.execute(
+            "SELECT school_id FROM schools WHERE school_id = ?",
+            (school_id,),
+        ).fetchone()
+
+        if school is None:
+            raise HTTPException(404, "School not found")
+
+        rows = conn.execute(
+            """
+            SELECT achievement_id, school_id, title, description,
+                   achievement_date, public_document_url
+            FROM school_achievements
+            WHERE school_id = ? AND is_published = 1
+            ORDER BY achievement_date DESC
+            """,
+            (school_id,),
+        ).fetchall()
+        return [dict(row) for row in rows]
+    finally:
+        conn.close()
+
+
+@app.get("/parent/children")
+def list_parent_children(user: dict = Depends(require_parent)):
+    """List only children linked to this verified parent account."""
+    conn = get_connection()
+    try:
+        guardian = get_parent_guardian(conn, user["user_id"])
+        if guardian is None:
+            return []
+
+        rows = conn.execute(
+            """
+            SELECT s.student_id, s.permanent_student_id,
+                   s.student_name, s.school_id, sc.school_name,
+                   s.standard, s.section, s.first_language,
+                   s.enrollment_status
+            FROM student_guardians sg
+            JOIN students s
+              ON s.permanent_student_id = sg.permanent_student_id
+            LEFT JOIN schools sc ON sc.school_id = s.school_id
+            WHERE sg.guardian_id = ?
+              AND sg.is_verified = 1
+              AND sg.can_view_records = 1
+            ORDER BY s.student_name
+            """,
+            (guardian["guardian_id"],),
+        ).fetchall()
+        return [dict(row) for row in rows]
+    finally:
+        conn.close()
+
+
+@app.get("/parent/children/{permanent_student_id}/records")
+def get_parent_child_records(
+    permanent_student_id: str,
+    user: dict = Depends(require_parent),
+):
+    """Return private academic results and safe document metadata."""
+    conn = get_connection()
+    try:
+        guardian = get_parent_guardian(conn, user["user_id"])
+        if guardian is None:
+            raise HTTPException(403, "No guardian profile is linked to this account.")
+
+        child = get_authorized_child(
+            conn,
+            guardian["guardian_id"],
+            permanent_student_id,
+            "can_view_records",
+        )
+        if child is None:
+            raise HTTPException(
+                404,
+                "Child not found or access has not been verified.",
+            )
+
+        results = conn.execute(
+            """
+            SELECT ar.result_id, ar.subject_name, ar.exam_name,
+                   ar.marks_obtained, ar.maximum_marks,
+                   ar.academic_year, ar.exam_date,
+                   e.standard, e.section, e.school_id, sc.school_name
+            FROM academic_results ar
+            JOIN enrollments e ON e.enrollment_id = ar.enrollment_id
+            LEFT JOIN schools sc ON sc.school_id = e.school_id
+            WHERE e.permanent_student_id = ?
+            ORDER BY ar.academic_year DESC, ar.exam_date DESC
+            """,
+            (permanent_student_id,),
+        ).fetchall()
+
+        documents = conn.execute(
+            """
+            SELECT document_id, enrollment_id, document_type,
+                   file_name, verification_status, created_at
+            FROM student_documents
+            WHERE permanent_student_id = ?
+            ORDER BY created_at DESC
+            """,
+            (permanent_student_id,),
+        ).fetchall()
+
+        history = conn.execute(
+            """
+            SELECT e.school_id, sc.school_name, e.academic_year,
+                   e.standard, e.section, e.first_language, e.stream,
+                   e.subject_combination, e.admission_date,
+                   e.leaving_date, e.enrollment_status
+            FROM enrollments e
+            LEFT JOIN schools sc ON sc.school_id = e.school_id
+            WHERE e.permanent_student_id = ?
+            ORDER BY e.academic_year DESC, e.standard DESC
+            """,
+            (permanent_student_id,),
+        ).fetchall()
+
+        return {
+            "student": {
+                "student_id": child["student_id"],
+                "permanent_student_id": child["permanent_student_id"],
+                "student_name": child["student_name"],
+                "school_id": child["school_id"],
+                "standard": child["standard"],
+                "section": child["section"],
+                "first_language": child["first_language"],
+            },
+            "academic_results": [dict(row) for row in results],
+            "documents": [dict(row) for row in documents],
+            "enrollment_history": [dict(row) for row in history],
+        }
+    finally:
+        conn.close()
+
+
+@app.post("/parent/update-requests", status_code=201)
+def create_parent_update_request(
+    request: ParentUpdateRequest,
+    user: dict = Depends(require_parent),
+):
+    """Submit a proposed change; do not modify official student data."""
+    conn = get_connection()
+    try:
+        guardian = get_parent_guardian(conn, user["user_id"])
+        if guardian is None:
+            raise HTTPException(403, "No guardian profile is linked to this account.")
+
+        child = get_authorized_child(
+            conn,
+            guardian["guardian_id"],
+            request.permanent_student_id,
+            "can_request_updates",
+        )
+        if child is None:
+            raise HTTPException(
+                404,
+                "Child not found or you are not authorized to request updates.",
+            )
+
+        old_value = child[request.field_name]
+        proposed_value = request.proposed_value.strip()
+
+        if not proposed_value:
+            raise HTTPException(422, "The proposed value cannot be empty.")
+
+        if request.supporting_document_id:
+            document = conn.execute(
+                """
+                SELECT document_id
+                FROM student_documents
+                WHERE document_id = ?
+                  AND permanent_student_id = ?
+                """,
+                (
+                    request.supporting_document_id,
+                    request.permanent_student_id,
+                ),
+            ).fetchone()
+
+            if document is None:
+                raise HTTPException(
+                    422,
+                    "The supporting document does not belong to this child.",
+                )
+
+        import uuid
+
+        request_id = str(uuid.uuid4())
+
+        conn.execute(
+            """
+            INSERT INTO update_requests (
+                request_id, permanent_student_id, guardian_id,
+                request_type, field_name, old_value, proposed_value,
+                reason, supporting_document_id, status
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')
+            """,
+            (
+                request_id,
+                request.permanent_student_id,
+                guardian["guardian_id"],
+                request.request_type,
+                request.field_name,
+                old_value,
+                proposed_value,
+                request.reason.strip(),
+                request.supporting_document_id,
+            ),
+        )
+        conn.commit()
+
+        return {
+            "request_id": request_id,
+            "status": "pending",
+            "message": (
+                "Request submitted for school review. "
+                "The official student record has not been changed."
+            ),
+        }
+    finally:
+        conn.close()
+
+
+@app.get("/parent/update-requests")
+def list_parent_update_requests(
+    user: dict = Depends(require_parent),
+):
+    """Return only update requests submitted under this guardian account."""
+    conn = get_connection()
+    try:
+        guardian = get_parent_guardian(conn, user["user_id"])
+        if guardian is None:
+            return []
+
+        rows = conn.execute(
+            """
+            SELECT request_id, permanent_student_id, request_type,
+                   field_name, old_value, proposed_value, reason,
+                   status, review_comment, submitted_at, reviewed_at
+            FROM update_requests
+            WHERE guardian_id = ?
+            ORDER BY submitted_at DESC
+            """,
+            (guardian["guardian_id"],),
+        ).fetchall()
+        return [dict(row) for row in rows]
+    finally:
+        conn.close()
