@@ -343,7 +343,7 @@ class OTPVerificationSession(Base):
     __tablename__ = "otp_verification_sessions"
     id = Column(Integer, primary_key=True, autoincrement=True)
     reference = Column(String(80), unique=True, index=True, nullable=False)
-    phone = Column(String(40), index=True, nullable=False)
+    phone = Column(String(120), index=True, nullable=False)
     citizen_ref = Column(String(80), index=True, nullable=True)
     purpose = Column(String(60), nullable=False) # REGISTRATION, ENROLMENT, PROFILE_PHONE_UPDATE
     provider = Column(String(40), default="OTP.dev")

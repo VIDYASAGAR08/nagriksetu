@@ -370,11 +370,17 @@ def test_skill_catalogue_crud_and_deactivation():
 def test_citizen_skill_profile_and_proficiency_validation():
     """FR-SKL-002, FR-SKL-004: Citizen skill profile management and validation."""
     t_stamp = int(time.time() * 1000)
+    email_prof = f"citizen.profile.{t_stamp}@nagriksetu.local"
+    phone_prof = f"+91 977{t_stamp % 10000000:07d}"
+    otp_ref_prof = create_verified_otp(email_prof, "REGISTRATION")
     user_res = client.post("/api/auth/register", json={
-        "email": f"citizen.profile.{t_stamp}@nagriksetu.local",
+        "email": email_prof,
         "password": "Password@123",
-        "full_name": "Skill Profile Citizen"
+        "full_name": "Skill Profile Citizen",
+        "phone": phone_prof,
+        "otp_reference": otp_ref_prof
     })
+    assert user_res.status_code == 200
     token = user_res.json()["access_token"]
 
     # 1. Add valid skill with proficiency (FR-SKL-002, FR-SKL-004)
