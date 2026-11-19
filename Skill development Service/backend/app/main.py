@@ -2550,11 +2550,17 @@ def get_audit_logs(admin: Account = Depends(require_admin), db: Session = Depend
 # ---------------------------------------------------------------------------
 # Document & Resume Management
 # ---------------------------------------------------------------------------
+import tempfile
 from app.models import CitizenDocument, CitizenNotification
 from fastapi.responses import Response, FileResponse
 
-UPLOAD_DIR = os.getenv("UPLOAD_DIR", "/app/uploads")
-os.makedirs(UPLOAD_DIR, exist_ok=True)
+DEFAULT_UPLOAD_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "uploads")
+UPLOAD_DIR = os.getenv("UPLOAD_DIR", DEFAULT_UPLOAD_DIR)
+try:
+    os.makedirs(UPLOAD_DIR, exist_ok=True)
+except Exception:
+    UPLOAD_DIR = os.path.join(tempfile.gettempdir(), "skill_uploads")
+    os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 @app.post("/api/documents/upload")
 async def upload_citizen_document(

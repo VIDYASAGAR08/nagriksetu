@@ -163,6 +163,7 @@ jobs:
           DATABASE_URL: "mysql+pymysql://nagriksetu_skill:skill-app-pass-2026@127.0.0.1:3306/skill_db"
           JWT_SECRET: "nagriksetu-skill-super-secret-key-2026-xyz-32char"
           APP_ENV: "test"
+          UPLOAD_DIR: "/tmp/skill_uploads"
           PYTHONPATH: "."
         run: |
           pytest tests/ -v
