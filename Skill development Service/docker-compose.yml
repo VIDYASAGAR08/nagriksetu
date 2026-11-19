@@ -1,0 +1,35 @@
+
+services:
+  skill-backend:
+    build: ./backend
+    container_name: nagriksetu-skill-backend
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      DATABASE_URL: mysql+pymysql://${MYSQL_USER:-nagriksetu_skill}:${MYSQL_PASSWORD:-skill-app-pass-2026}@host.docker.internal:3308/${MYSQL_DATABASE:-skill_db}
+      RABBITMQ_URL: amqp://${RABBITMQ_DEFAULT_USER:-nagriksetu}:${RABBITMQ_DEFAULT_PASS:-rabbitmq-pass-2026}@host.docker.internal:5672/
+      JWT_SECRET: ${JWT_SECRET:-nagriksetu-skill-super-secret-key-2026-xyz-32char}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-skill.admin@nagriksetu.local}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-SkillAdmin@2026!}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173,http://localhost:5174,http://localhost:8003}
+      EMPLOYMENT_SERVICE_URL: ${EMPLOYMENT_SERVICE_URL:-http://host.docker.internal:8002}
+      GOOGLE_PLACES_API_KEY: ${GOOGLE_PLACES_API_KEY:-}
+      SMTP_HOST: ${SMTP_HOST:-smtp.gmail.com}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USERNAME: ${SMTP_USERNAME:-gundumani234@gmail.com}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_FROM_EMAIL: ${SMTP_FROM_EMAIL:-gundumani234@gmail.com}
+      OTP_DEMO_MODE: ${OTP_DEMO_MODE:-false}
+      APP_ENV: ${APP_ENV:-development}
+    ports:
+      - "${SKILL_BACKEND_PORT:-8003}:8000"
+    restart: unless-stopped
+
+  skill-frontend:
+    build: ./frontend
+    container_name: nagriksetu-skill-frontend
+    ports:
+      - "${SKILL_FRONTEND_PORT:-5173}:80"
+    depends_on:
+      - skill-backend
+    restart: unless-stopped

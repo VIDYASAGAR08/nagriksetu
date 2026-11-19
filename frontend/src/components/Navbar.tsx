@@ -15,6 +15,7 @@ import {
   QrCode,
   Layers,
   GraduationCap,
+  Sparkles,
 } from 'lucide-react';
 
 export const Navbar: React.FC = () => {
@@ -132,6 +133,13 @@ export const Navbar: React.FC = () => {
                     <GraduationCap className="w-4 h-4 text-blue-600" aria-hidden="true" />
                     <span>Education Service</span>
                   </a>
+                  <a
+                    href="http://localhost:5175/"
+                    className="px-3 py-2 rounded-md text-sm font-semibold transition-colors flex items-center gap-1.5 text-amber-700 hover:bg-amber-50"
+                  >
+                    <Sparkles className="w-4 h-4 text-amber-600" aria-hidden="true" />
+                    <span>Skill Development</span>
+                  </a>
                   <Link
                     to="/whatsapp"
                     className={`px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-1.5 ${
@@ -221,6 +229,13 @@ export const Navbar: React.FC = () => {
               >
                 <GraduationCap className="w-4 h-4 text-blue-600" />
                 <span>Education Service</span>
+              </a>
+              <a
+                href="http://localhost:5175/"
+                className="px-3 py-2 rounded-md text-sm font-semibold transition-colors flex items-center gap-1.5 text-amber-700 hover:bg-amber-50"
+              >
+                <Sparkles className="w-4 h-4 text-amber-600" />
+                <span>Skill Development</span>
               </a>
               <Link
                 to="/whatsapp"
@@ -401,6 +416,13 @@ export const Navbar: React.FC = () => {
                 className="block px-3 py-2 rounded-md text-base font-medium text-blue-700 hover:bg-blue-50 font-semibold"
               >
                 Education Service
+              </a>
+              <a
+                href="http://localhost:5175/"
+                onClick={() => setMobileMenuOpen(false)}
+                className="block px-3 py-2 rounded-md text-base font-medium text-amber-700 hover:bg-amber-50 font-semibold"
+              >
+                Skill Development Service
               </a>
               <Link
                 to="/login"

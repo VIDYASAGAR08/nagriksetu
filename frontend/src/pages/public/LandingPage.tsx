@@ -225,6 +225,64 @@ export const LandingPage: React.FC = () => {
               );
             }
 
+            if (service.id === 'skills') {
+              return (
+                <a
+                  key={service.id}
+                  href="http://localhost:5175/"
+                  className={`bg-white rounded-3xl border ${service.borderColor} p-6 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between group cursor-pointer hover:-translate-y-1 relative overflow-hidden block text-inherit no-underline`}
+                >
+                  {/* Accent Top Strip */}
+                  <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-amber-400 via-orange-500 to-saffron-600 opacity-80" />
+
+                  <div>
+                    {/* Icon & Development Status Badge */}
+                    <div className="flex items-start justify-between gap-2 mb-4">
+                      <div className={`w-14 h-14 rounded-2xl ${service.colorClass} flex items-center justify-center font-bold shadow-xs border transition-transform group-hover:scale-105`}>
+                        <Icon className="w-7 h-7" />
+                      </div>
+                      <span className="inline-flex items-center gap-1.5 text-[10px] font-bold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-900 border border-emerald-300 shadow-2xs">
+                        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
+                        <span>Live Service</span>
+                      </span>
+                    </div>
+
+                    {/* Service Titles */}
+                    <h3 className="text-lg font-black text-navy-950 group-hover:text-saffron-600 transition-colors">
+                      {service.title}
+                    </h3>
+                    <span className="text-xs font-bold text-slate-500 block mb-2">
+                      {service.titleHindi}
+                    </span>
+
+                    {/* Description */}
+                    <p className="text-xs text-slate-600 leading-relaxed mb-4">
+                      {service.description}
+                    </p>
+
+                    {/* Highlights List */}
+                    <div className="space-y-1.5 border-t border-slate-100 pt-3">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+                        Key Schemes & Facilities:
+                      </span>
+                      {service.highlights.map((item, idx) => (
+                        <div key={idx} className="flex items-center gap-1.5 text-[11px] text-slate-700 font-medium">
+                          <CheckCircle2 className="w-3 h-3 text-emerald-600 shrink-0" />
+                          <span className="truncate">{item}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Footer Action */}
+                  <div className="mt-5 pt-3.5 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-navy-900 group-hover:text-saffron-600 transition-colors">
+                    <span>Explore Skill Courses & Portal</span>
+                    <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+                  </div>
+                </a>
+              );
+            }
+
             return (
               <div
                 key={service.id}
@@ -469,6 +527,15 @@ export const LandingPage: React.FC = () => {
                   >
                     <GraduationCap className="w-3.5 h-3.5 text-saffron-400" />
                     <span>Explore Schools & Portal</span>
+                  </a>
+                )}
+                {selectedService.id === 'skills' && (
+                  <a
+                    href="http://localhost:5175/"
+                    className="py-2 px-4 rounded-xl text-xs font-bold bg-navy-900 hover:bg-navy-800 text-white shadow-md transition inline-flex items-center gap-1.5"
+                  >
+                    <Sparkles className="w-3.5 h-3.5 text-saffron-400" />
+                    <span>Explore Skill Courses & Portal</span>
                   </a>
                 )}
               </div>
