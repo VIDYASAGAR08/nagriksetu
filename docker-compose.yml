@@ -34,6 +34,7 @@ services:
       - INITIAL_ADMIN_PASSWORD=${INITIAL_ADMIN_PASSWORD:-AdminPass123!@#}
       - SCHOOL_SERVICE_URL=http://school_backend:8000
       - SKILL_SERVICE_URL=http://skill_backend:8000
+      - RABBITMQ_URL=amqp://${RABBITMQ_USER:-nagriksetu}:${RABBITMQ_PASS:-nagriksetu-mq-pass-2026}@message_broker:5672/
     volumes:
       - "./School service/backend/data:/app/school_data:ro"
     ports:
@@ -115,6 +116,7 @@ services:
       - ADMIN_PASSWORD=${ADMIN_PASSWORD:-SkillAdmin@2026!}
       - CORS_ORIGINS=http://localhost:5173,http://localhost:5174,http://localhost:5175,http://localhost:8000,http://localhost:8001,http://localhost:8003,http://127.0.0.1:5173,http://127.0.0.1:5174,http://127.0.0.1:5175,http://127.0.0.1:8003
       - APP_ENV=production
+      - RABBITMQ_URL=amqp://${RABBITMQ_USER:-nagriksetu}:${RABBITMQ_PASS:-nagriksetu-mq-pass-2026}@message_broker:5672/
     ports:
       - "8003:8000"
 
@@ -128,6 +130,22 @@ services:
       - skill_backend
     ports:
       - "5175:80"
+
+  message_broker:
+    image: rabbitmq:3-management-alpine
+    container_name: nagriksetu_message_broker
+    restart: always
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-nagriksetu}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS:-nagriksetu-mq-pass-2026}
+    ports:
+      - "5672:5672"    # AMQP protocol for microservices
+      - "15672:15672"  # RabbitMQ Management Web UI dashboard
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "check_running"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
 volumes:
   postgres_data:

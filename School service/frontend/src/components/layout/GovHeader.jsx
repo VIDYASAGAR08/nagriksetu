@@ -76,7 +76,7 @@ export default function GovHeader() {
             <span style={{ color: '#475467' }} className="hide-mobile">|</span>
             <span style={{ color: '#94a3b8' }} className="hide-mobile">शिक्षा सेवा पोर्टल (Education Portal · Karnataka)</span>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <a
               href="http://localhost:5173"
               style={{
@@ -94,6 +94,24 @@ export default function GovHeader() {
               }}
             >
               🏛️ Central Portal (Port 5173)
+            </a>
+            <a
+              href="http://localhost:5175"
+              style={{
+                background: 'rgba(56, 189, 248, 0.15)',
+                color: '#38bdf8',
+                border: '1px solid rgba(56, 189, 248, 0.4)',
+                padding: '0.2rem 0.65rem',
+                borderRadius: '6px',
+                textDecoration: 'none',
+                fontWeight: 700,
+                fontSize: '0.75rem',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.35rem',
+              }}
+            >
+              💡 Skill Development (Port 5175)
             </a>
           </div>
         </div>
