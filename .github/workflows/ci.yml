@@ -1,0 +1,214 @@
+name: NagrikSetu CI - Continuous Integration Pipeline
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # =========================================================================
+  # 1. FRONTEND BUILD & STATIC TYPE VERIFICATION MATRIX
+  # =========================================================================
+  frontend-matrix:
+    name: Frontend CI (${{ matrix.service.name }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - name: "Central Portal"
+            path: "frontend"
+            node-version: 20
+            install-cmd: "npm ci"
+          - name: "School Service"
+            path: "School service/frontend"
+            node-version: 20
+            install-cmd: "npm install"
+          - name: "Skill Development Service"
+            path: "Skill development Service/frontend"
+            node-version: 20
+            install-cmd: "npm install"
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ matrix.service.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.service.node-version }}
+          cache: "npm"
+          cache-dependency-path: "${{ matrix.service.path }}/package-lock.json"
+
+      - name: Install Dependencies
+        working-directory: ${{ matrix.service.path }}
+        run: ${{ matrix.service.install-cmd }}
+
+      - name: Build Production Frontend Assets
+        working-directory: ${{ matrix.service.path }}
+        run: npm run build
+
+      - name: Validate Build Output Directory
+        working-directory: ${{ matrix.service.path }}
+        run: |
+          if [ -d "dist" ] && [ -f "dist/index.html" ]; then
+            echo "✓ Production bundle build succeeded for ${{ matrix.service.name }}."
+            ls -la dist/
+          else
+            echo "✗ Missing dist/index.html after build for ${{ matrix.service.name }}."
+            exit 1
+          fi
+
+  # =========================================================================
+  # 2. CENTRAL BACKEND TEST SUITE (FastAPI + Pytest + In-Memory SQLite / PG)
+  # =========================================================================
+  central-backend-ci:
+    name: Central Backend CI (FastAPI & Pytest)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+          cache-dependency-path: "backend/requirements.txt"
+
+      - name: Install System Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends libpq-dev
+
+      - name: Install Python Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install flake8
+
+      - name: Python Syntax & Lint Check (flake8)
+        run: |
+          # Stop build if there are Python syntax errors or undefined names
+          flake8 app --count --select=E9,F63,F7,F82 --show-source --statistics
+          # Warning check for complexity
+          flake8 app --count --exit-zero --max-complexity=15 --max-line-length=127 --statistics
+
+      - name: Execute Pytest Suite (46 Test Cases)
+        env:
+          SECRET_KEY: "ci-testing-secret-key-nagriksetu-32-chars-long"
+          ALGORITHM: "HS256"
+          ACCESS_TOKEN_EXPIRE_MINUTES: "60"
+          ENVIRONMENT: "test"
+          PYTHONPATH: "."
+        run: |
+          pytest tests/ -v --durations=10
+
+  # =========================================================================
+  # 3. SKILL DEVELOPMENT BACKEND TEST SUITE (FastAPI + MySQL 8.4 Service)
+  # =========================================================================
+  skill-backend-ci:
+    name: Skill Development Backend CI (MySQL 8.4)
+    runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: skill_db
+          MYSQL_USER: nagriksetu_skill
+          MYSQL_PASSWORD: skill-app-pass-2026
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost -uroot -proot"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=6
+
+    defaults:
+      run:
+        working-directory: "Skill development Service/backend"
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+          cache-dependency-path: "Skill development Service/backend/requirements.txt"
+
+      - name: Install Python Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install cryptography
+
+      - name: Run Skill Development Pytest Suite
+        env:
+          DATABASE_URL: "mysql+pymysql://nagriksetu_skill:skill-app-pass-2026@127.0.0.1:3306/skill_db"
+          JWT_SECRET: "nagriksetu-skill-super-secret-key-2026-xyz-32char"
+          APP_ENV: "test"
+          PYTHONPATH: "."
+        run: |
+          pytest tests/ -v
+
+  # =========================================================================
+  # 4. DOCKER COMPOSE CONFIG & MULTI-CONTAINER BUILD VALIDATION
+  # =========================================================================
+  docker-compose-validation:
+    name: Docker Compose & Image Builds
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Validate Docker Compose Configuration Syntax
+        run: |
+          docker compose config --quiet
+          echo "✓ Docker Compose specification syntax is 100% valid."
+
+      - name: Build All 6 Multi-Service Containers in Parallel
+        run: |
+          docker compose build --parallel
+          echo "✓ All container images (backend, frontend, school, skill) built cleanly."
+
+      - name: Inspect Built Images
+        run: |
+          docker images | grep -E "nagriksetu|sad" || docker images
+
+  # =========================================================================
+  # 5. UNIFIED CI COMPLETION GATE
+  # =========================================================================
+  ci-status-gate:
+    name: CI Pipeline Status Gate
+    needs: [frontend-matrix, central-backend-ci, skill-backend-ci, docker-compose-validation]
+    runs-on: ubuntu-latest
+    steps:
+      - name: CI Success Confirmation
+        run: |
+          echo "========================================================="
+          echo "🎉 ALL CI GATES PASSED SUCCESSFULLY!"
+          echo "- Frontend Builds (Central, School, Skill): PASSED"
+          echo "- Central Backend Pytest Suite: PASSED"
+          echo "- Skill Development Backend Pytest Suite: PASSED"
+          echo "- Docker Compose & Container Image Builds: PASSED"
+          echo "========================================================="
