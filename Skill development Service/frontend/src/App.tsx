@@ -38,6 +38,7 @@ export default function App() {
   const [loginEmail, setLoginEmail] = useState<string>('');
   const [loginPassword, setLoginPassword] = useState<string>('');
   const [isAdminLogin, setIsAdminLogin] = useState<boolean>(false);
+  const [loginMethod, setLoginMethod] = useState<'password' | 'otp'>('password');
   const [loginOtpSent, setLoginOtpSent] = useState<boolean>(false);
   const [loginOtpCode, setLoginOtpCode] = useState<string>('');
   const [loginOtpRef, setLoginOtpRef] = useState<string>('');
@@ -768,6 +769,7 @@ export default function App() {
       setLoginOtpDemoMode(Boolean(data.demo_mode));
       if (data.demo_otp) {
         setLoginOtpDemoCode(data.demo_otp);
+        setLoginOtpCode(data.demo_otp);
       } else {
         setLoginOtpDemoCode('');
       }
@@ -828,15 +830,19 @@ export default function App() {
   // Handle Citizen & Admin Login
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isAdminLogin && (!loginOtpVerified || !loginOtpRef)) {
-      setAuthError('Please verify your email address via OTP before logging in.');
+    const isUsingPassword = isAdminLogin || loginMethod === 'password' || Boolean(loginPassword.trim() && !loginOtpVerified);
+    if (!isUsingPassword && (!loginOtpVerified || !loginOtpRef)) {
+      setAuthError('Please verify your email address via OTP before logging in, or enter your password.');
       return;
     }
     setAuthLoading(true);
     setAuthError('');
     try {
-      const payload: any = { email: loginEmail };
-      if (isAdminLogin || loginPassword.trim()) {
+      const payload: any = { email: loginEmail.trim() };
+      if (isUsingPassword) {
+        if (!loginPassword.trim()) {
+          throw new Error('Please enter your account password.');
+        }
         payload.password = loginPassword;
       } else {
         payload.otp_reference = loginOtpRef;
@@ -898,6 +904,7 @@ export default function App() {
       setRegOtpDemoMode(Boolean(data.demo_mode));
       if (data.demo_otp) {
         setRegOtpDemoCode(data.demo_otp);
+        setRegOtpCode(data.demo_otp);
       } else {
         setRegOtpDemoCode('');
       }
@@ -961,6 +968,10 @@ export default function App() {
       setAuthError('Please verify your email address via OTP before completing registration.');
       return;
     }
+    if (!regPassword || regPassword.trim().length < 6) {
+      setAuthError('Please choose a password with at least 6 characters.');
+      return;
+    }
     setAuthLoading(true);
     setAuthError('');
     try {
@@ -968,23 +979,25 @@ export default function App() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          full_name: regFullName,
-          email: regEmail,
-          phone: regPhone,
+          full_name: regFullName.trim(),
+          email: regEmail.trim(),
+          phone: regPhone.trim(),
+          password: regPassword.trim(),
           otp_reference: regOtpRef
         })
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.detail || 'Registration failed');
 
-      // Pre-fill registered email for smooth login
-      setLoginEmail(regEmail);
-      setLoginPassword('');
+      // Pre-fill registered email and password for smooth login
+      setLoginEmail(regEmail.trim());
+      setLoginPassword(regPassword.trim());
+      setLoginMethod('password');
 
       // Navigate to login
       setShowRegisterModal(false);
       setShowLoginModal(true);
-      setBannerNotice('Account created successfully. Please log in.');
+      setBannerNotice('Account created successfully! Your credentials have been pre-filled. Click Login below.');
     } catch (err: any) {
       setAuthError(err.message);
     } finally {
@@ -4293,10 +4306,54 @@ export default function App() {
                 </div>
               )}
               <form onSubmit={handleLogin}>
+                {/* Method selector for citizen login */}
+                {!isAdminLogin && (
+                  <div style={{ display: 'flex', gap: '0.4rem', marginBottom: '1.2rem', background: '#f1f5f9', padding: '0.25rem', borderRadius: '8px' }}>
+                    <button
+                      type="button"
+                      onClick={() => { setLoginMethod('password'); setAuthError(''); }}
+                      style={{
+                        flex: 1,
+                        padding: '0.45rem',
+                        borderRadius: '6px',
+                        border: 'none',
+                        fontWeight: 700,
+                        fontSize: '0.8rem',
+                        cursor: 'pointer',
+                        background: loginMethod === 'password' ? '#ffffff' : 'transparent',
+                        color: loginMethod === 'password' ? '#0f2444' : '#64748b',
+                        boxShadow: loginMethod === 'password' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'
+                      }}
+                    >
+                      🔑 Password Login
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setLoginMethod('otp'); setAuthError(''); }}
+                      style={{
+                        flex: 1,
+                        padding: '0.45rem',
+                        borderRadius: '6px',
+                        border: 'none',
+                        fontWeight: 700,
+                        fontSize: '0.8rem',
+                        cursor: 'pointer',
+                        background: loginMethod === 'otp' ? '#ffffff' : 'transparent',
+                        color: loginMethod === 'otp' ? '#0f2444' : '#64748b',
+                        boxShadow: loginMethod === 'otp' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'
+                      }}
+                    >
+                      📱 Instant Email OTP
+                    </button>
+                  </div>
+                )}
+
                 <div className="form-group">
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.3rem' }}>
-                    <label style={{ margin: 0 }}>Registered Email Address:</label>
-                    {!isAdminLogin && loginOtpDemoMode && (
+                    <label style={{ margin: 0 }}>
+                      {isAdminLogin ? 'Administrator Email:' : 'Registered Email Address:'}
+                    </label>
+                    {!isAdminLogin && loginMethod === 'otp' && loginOtpDemoMode && (
                       <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#b45309', backgroundColor: '#fef3c7', padding: '0.15rem 0.45rem', borderRadius: '4px', border: '1px solid #fde68a' }}>
                         DEMO MODE
                       </span>
@@ -4319,10 +4376,10 @@ export default function App() {
                           setLoginOtpDemoCode('');
                         }
                       }}
-                      placeholder="e.g. karthik@example.com"
-                      disabled={loginOtpVerified}
+                      placeholder={isAdminLogin ? "skill.admin@nagriksetu.local" : "e.g. karthik@example.com"}
+                      disabled={loginMethod === 'otp' && loginOtpVerified}
                     />
-                    {!isAdminLogin && (
+                    {!isAdminLogin && loginMethod === 'otp' && (
                       <button
                         type="button"
                         className="btn-navy-outline"
@@ -4330,11 +4387,11 @@ export default function App() {
                         onClick={handleSendLoginOtp}
                         disabled={loginOtpLoading || loginOtpCooldown > 0 || loginOtpVerified}
                       >
-                        {loginOtpVerified ? 'Verified' : (loginOtpCooldown > 0 ? `Resend OTP in ${loginOtpCooldown}s` : (loginOtpSent ? 'Resend OTP' : 'Send OTP'))}
+                        {loginOtpVerified ? 'Verified' : (loginOtpCooldown > 0 ? `Resend (${loginOtpCooldown}s)` : (loginOtpSent ? 'Resend OTP' : 'Send OTP'))}
                       </button>
                     )}
                   </div>
-                  {!isAdminLogin && loginOtpVerified && (
+                  {!isAdminLogin && loginMethod === 'otp' && loginOtpVerified && (
                     <div style={{ color: '#16a34a', fontSize: '0.78rem', marginTop: '0.3rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
                       <CheckCircle2 size={14} /> Email verified successfully.
                     </div>
@@ -4342,7 +4399,7 @@ export default function App() {
                 </div>
 
                 {/* Email OTP Verification Section for Passwordless Citizen Login */}
-                {!isAdminLogin && loginOtpSent && !loginOtpVerified && (
+                {!isAdminLogin && loginMethod === 'otp' && loginOtpSent && !loginOtpVerified && (
                   <div style={{ backgroundColor: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '6px', padding: '0.75rem', marginBottom: '1rem' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
                       <label style={{ fontSize: '0.82rem', fontWeight: 600, color: '#166534', margin: 0 }}>
@@ -4387,17 +4444,17 @@ export default function App() {
                   </div>
                 )}
 
-                {/* Password field shown only when in Admin Login mode */}
-                {isAdminLogin && (
+                {/* Password field shown in Password mode and Admin mode */}
+                {(isAdminLogin || loginMethod === 'password') && (
                   <div className="form-group">
-                    <label>Administrator Password:</label>
+                    <label>{isAdminLogin ? 'Administrator Password:' : 'Account Password:'}</label>
                     <input
                       type="password"
                       required
                       className="form-control"
                       value={loginPassword}
                       onChange={(e) => setLoginPassword(e.target.value)}
-                      placeholder="Enter administrator password"
+                      placeholder={isAdminLogin ? "Enter administrator password" : "Enter your account password"}
                     />
                   </div>
                 )}
@@ -4406,9 +4463,13 @@ export default function App() {
                   type="submit"
                   className="btn-primary-orange"
                   style={{ width: '100%', justifyContent: 'center' }}
-                  disabled={authLoading || (!isAdminLogin && !loginOtpVerified)}
+                  disabled={
+                    authLoading ||
+                    !loginEmail.trim() ||
+                    (isAdminLogin ? !loginPassword.trim() : (loginMethod === 'password' ? !loginPassword.trim() : !loginOtpVerified))
+                  }
                 >
-                  {authLoading ? 'Logging In...' : 'Login'}
+                  {authLoading ? 'Logging In...' : (isAdminLogin ? 'Login as Administrator' : 'Login')}
                 </button>
               </form>
 
@@ -4417,11 +4478,17 @@ export default function App() {
                   type="button"
                   style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', textDecoration: 'underline' }}
                   onClick={() => {
-                    setIsAdminLogin(!isAdminLogin);
+                    const nextAdmin = !isAdminLogin;
+                    setIsAdminLogin(nextAdmin);
                     setAuthError('');
+                    if (nextAdmin) {
+                      setLoginMethod('password');
+                      if (!loginEmail) setLoginEmail('skill.admin@nagriksetu.local');
+                      if (!loginPassword) setLoginPassword('SkillAdmin@2026!');
+                    }
                   }}
                 >
-                  {isAdminLogin ? '← Switch to Citizen Email OTP Login' : 'Admin Login (with Password)'}
+                  {isAdminLogin ? '← Switch to Citizen Login' : 'Admin Login (with Password)'}
                 </button>
                 <button
                   style={{ background: 'none', border: 'none', color: '#ea580c', fontWeight: 700, cursor: 'pointer' }}
@@ -4568,7 +4635,18 @@ export default function App() {
                     placeholder="+91 9876543210"
                   />
                 </div>
-                <button type="submit" className="btn-primary-orange" style={{ width: '100%', justifyContent: 'center' }} disabled={authLoading || !regOtpVerified}>
+                <div className="form-group">
+                  <label>Create Account Password:</label>
+                  <input
+                    type="password"
+                    required
+                    className="form-control"
+                    value={regPassword}
+                    onChange={(e) => setRegPassword(e.target.value)}
+                    placeholder="Choose a secure password (min 6 characters)"
+                  />
+                </div>
+                <button type="submit" className="btn-primary-orange" style={{ width: '100%', justifyContent: 'center' }} disabled={authLoading || !regOtpVerified || !regPassword.trim()}>
                   {authLoading ? 'Registering...' : 'Create Citizen Account'}
                 </button>
               </form>
