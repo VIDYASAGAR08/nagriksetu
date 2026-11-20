@@ -478,6 +478,41 @@ async def verify_otp_submission(
 # ---------------------------------------------------------------------------
 # Authentication & Identity
 # ---------------------------------------------------------------------------
+def verify_via_central_sso(identifier: str, password: str) -> Optional[dict]:
+    """
+    Federated Single Sign-On (SSO): Query NagrikSetu Central Portal to verify citizen credentials.
+    """
+    import urllib.request
+    import json
+    urls = [
+        os.getenv("CENTRAL_AUTH_URL", "http://nagriksetu_backend:8000/api/v1/auth/federated-verify"),
+        "http://nagriksetu_backend:8000/api/v1/auth/federated-verify",
+        "http://backend:8000/api/v1/auth/federated-verify",
+        "http://localhost:8000/api/v1/auth/federated-verify",
+        "http://127.0.0.1:8000/api/v1/auth/federated-verify",
+    ]
+    seen = set()
+    payload = json.dumps({"identifier": identifier, "password": password}).encode("utf-8")
+    for u in urls:
+        if not u or u in seen:
+            continue
+        seen.add(u)
+        try:
+            req = urllib.request.Request(
+                u,
+                data=payload,
+                headers={"Content-Type": "application/json", "Accept": "application/json"}
+            )
+            with urllib.request.urlopen(req, timeout=3.5) as resp:
+                if resp.status == 200:
+                    data = json.loads(resp.read().decode("utf-8"))
+                    if data.get("valid"):
+                        return data
+        except Exception:
+            continue
+    return None
+
+
 @app.post("/api/auth/register", response_model=TokenResponse)
 def register_citizen(req: RegisterRequest, db: Session = Depends(get_db)):
     existing = db.query(Account).filter(Account.email == req.email).first()
@@ -519,7 +554,7 @@ def register_citizen(req: RegisterRequest, db: Session = Depends(get_db)):
     otp_sess.is_consumed = True
 
     count = db.query(Account).count() + 1
-    citizen_ref = req.citizen_ref or f"CIT-{count:06d}"
+    citizen_ref = req.citizen_ref or f"CIT-2026-{count:06d}"
 
     # Handle passwordless registration (generate secure cryptographic token hash if password not provided)
     raw_pass = req.password if (req.password and req.password.strip()) else secrets.token_hex(32)
@@ -572,12 +607,62 @@ def login_citizen(req: LoginRequest, db: Session = Depends(get_db)):
         # Also check case-insensitive / normalized email
         account = db.query(Account).filter(Account.email.ilike(clean_email), Account.active == True).first()
 
-    # If user provided a password (e.g. Administrator or legacy password account)
+    # If user provided a password (e.g. Administrator, Citizen, or Federated Central Login)
     authenticated = False
     if req.password and req.password.strip():
-        if not account or not verify_password(req.password, account.password_hash):
-            raise HTTPException(status_code=401, detail="Invalid email address or credentials.")
-        authenticated = True
+        local_valid = False
+        if account and account.password_hash and verify_password(req.password, account.password_hash):
+            local_valid = True
+
+        if not local_valid:
+            # Fallback to Federated SSO with Central Citizen Portal
+            sso_data = verify_via_central_sso(req.email, req.password)
+            if sso_data and sso_data.get("valid"):
+                full_name_val = sso_data.get("full_name") or req.email.split("@")[0]
+                citizen_ref_val = sso_data.get("citizen_code") or f"CIT-2026-{db.query(Account).count() + 1:06d}"
+                phone_val = sso_data.get("phone_number")
+
+                if not account:
+                    account = Account(
+                        email=req.email,
+                        password_hash=hash_password(req.password),
+                        role="CITIZEN",
+                        citizen_ref=citizen_ref_val,
+                        full_name=full_name_val,
+                        phone=phone_val,
+                        active=True
+                    )
+                    db.add(account)
+                    db.flush()
+
+                    profile = CitizenProfile(
+                        citizen_ref=citizen_ref_val,
+                        full_name=full_name_val,
+                        email=req.email,
+                        phone=phone_val
+                    )
+                    db.add(profile)
+                else:
+                    account.password_hash = hash_password(req.password)
+                    if not account.citizen_ref:
+                        account.citizen_ref = citizen_ref_val
+                    if full_name_val:
+                        account.full_name = full_name_val
+
+                audit = AuditLog(
+                    actor=req.email,
+                    role="CITIZEN",
+                    action="FEDERATED_SSO_LOGIN",
+                    target=account.citizen_ref,
+                    details=f"Citizen authenticated via Central Portal Federated SSO ({account.citizen_ref})"
+                )
+                db.add(audit)
+                db.commit()
+                authenticated = True
+            else:
+                raise HTTPException(status_code=401, detail="Invalid email address or credentials.")
+        else:
+            authenticated = True
     elif req.otp_reference and req.otp_reference.strip():
         # Secure passwordless login via verified Email OTP session
         otp_sess = db.query(OTPVerificationSession).filter(
@@ -1320,7 +1405,7 @@ def submit_enrolment(req: EnrollmentCreateRequest, user: Account = Depends(requi
             batch.status = "FULL"
 
     next_num = db.query(Enrollment).count() + 1
-    enr_code = f"ENR-{next_num:06d}"
+    enr_code = f"ENR-2026-{next_num:06d}"
 
     # Serialize multi-section application details if provided
     app_details_json = None
@@ -2332,7 +2417,7 @@ def issue_completion_certificate(
         }
 
     next_c = db.query(Certificate).count() + 1
-    cert_code = f"CRT-{next_c:06d}"
+    cert_code = f"CRT-2026-{next_c:06d}"
 
     if e.assessment_score >= 85:
         grade = "Distinction (A+)"
@@ -2445,7 +2530,7 @@ def deactivate_skill(skill_id: int, admin: Account = Depends(require_admin), db:
 @app.post("/api/admin/programmes")
 def create_programme(req: ProgramCreateUpdateRequest, admin: Account = Depends(require_admin), db: Session = Depends(get_db)):
     next_p = db.query(TrainingProgram).count() + 1
-    code = f"PRG-{next_p:04d}"
+    code = f"PRG-2026-{next_p:04d}"
     prog = TrainingProgram(
         code=code,
         skill_id=req.skill_id,
@@ -2469,7 +2554,7 @@ def create_programme(req: ProgramCreateUpdateRequest, admin: Account = Depends(r
 @app.post("/api/admin/batches")
 def create_batch(req: BatchCreateUpdateRequest, admin: Account = Depends(require_admin), db: Session = Depends(get_db)):
     next_b = db.query(Batch).count() + 1
-    code = f"BAT-{next_b:04d}"
+    code = f"BAT-2026-{next_b:04d}"
     batch = Batch(
         code=code,
         program_id=req.program_id,

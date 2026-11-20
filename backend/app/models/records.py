@@ -16,6 +16,7 @@ class MedicalRecord(Base):
     __tablename__ = "medical_records"
 
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    record_code = Column(String(50), unique=True, index=True, nullable=True)
     citizen_id = Column(Integer, ForeignKey("citizen_profiles.id", ondelete="CASCADE"), unique=True, nullable=False, index=True)
     
     blood_group = Column(String(10), nullable=True, default="Unknown")
@@ -45,6 +46,7 @@ class EducationRecord(Base):
     __tablename__ = "education_records"
 
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    record_code = Column(String(50), unique=True, index=True, nullable=True)
     citizen_id = Column(Integer, ForeignKey("citizen_profiles.id", ondelete="CASCADE"), unique=True, nullable=False, index=True)
 
     highest_qualification = Column(String(150), nullable=True, default="Secondary (10th)")
@@ -53,6 +55,8 @@ class EducationRecord(Base):
     year_of_completion = Column(Integer, nullable=True)
     literacy_status = Column(String(100), nullable=True, default="Literate")
     certificate_number = Column(String(100), nullable=True)
+    student_id = Column(String(50), nullable=True)
+    permanent_student_id = Column(String(100), nullable=True)
 
     created_at = Column(DateTime(timezone=True), default=utc_now, nullable=False)
     updated_at = Column(DateTime(timezone=True), default=utc_now, onupdate=utc_now, nullable=False)
@@ -71,6 +75,7 @@ class LandRecord(Base):
     __tablename__ = "land_records"
 
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    record_code = Column(String(50), unique=True, index=True, nullable=True)
     household_id = Column(Integer, ForeignKey("households.id", ondelete="CASCADE"), nullable=False, index=True)
 
     survey_number = Column(String(100), nullable=False)  # Khasra / Survey Number

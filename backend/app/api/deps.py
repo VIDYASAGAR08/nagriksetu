@@ -68,6 +68,26 @@ def get_current_user(
     return user
 
 
+def get_optional_current_user(
+    token: Optional[str] = Depends(get_token_from_request),
+    db: Session = Depends(get_db)
+) -> Optional[User]:
+    """Return user if token is valid, otherwise None without raising 401."""
+    if not token:
+        return None
+    payload = decode_access_token(token)
+    if payload is None:
+        return None
+    user_id = payload.get("sub")
+    if user_id is None:
+        return None
+    try:
+        user_id_int = int(user_id)
+    except ValueError:
+        return None
+    return db.query(User).filter(User.id == user_id_int).first()
+
+
 def require_role(required_role: str):
     """Factory dependency to enforce user roles (e.g., 'admin', 'citizen')."""
     def role_checker(current_user: User = Depends(get_current_user)) -> User:

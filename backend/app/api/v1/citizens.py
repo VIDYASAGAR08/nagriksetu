@@ -27,6 +27,7 @@ from app.schemas.records import (
 )
 from app.api.deps import (
     get_current_user,
+    get_optional_current_user,
     get_current_citizen,
     get_current_admin,
     get_current_citizen_profile,
@@ -84,6 +85,69 @@ def get_my_profile(
     Derives identity strictly from authenticated session with completeness metrics (FR-ADM-013).
     """
     return _to_citizen_response(profile)
+
+
+@router.get("/household-children")
+def get_household_children(
+    email: Optional[str] = Query(None, description="Optional citizen email for federated service lookup"),
+    current_user: Optional[User] = Depends(get_optional_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Federated integration endpoint for School & Skill microservices.
+    Fetches children belonging to the citizen's registered household.
+    """
+    target_user = None
+    if email and email.strip():
+        target_user = db.query(User).filter(User.email == email.strip().lower()).first()
+    elif current_user:
+        target_user = current_user
+
+    if not target_user or not target_user.citizen_profile or not target_user.citizen_profile.household_id:
+        return {"household_id": None, "children": []}
+
+    profile = target_user.citizen_profile
+    from app.models.household import HouseholdMembership
+    from app.models.records import EducationRecord
+
+    memberships = db.query(HouseholdMembership).filter(
+        HouseholdMembership.household_id == profile.household_id,
+        HouseholdMembership.status == "active"
+    ).all()
+
+    children_list = []
+    for mem in memberships:
+        if mem.citizen_id == profile.id:
+            continue
+        child_p = db.query(CitizenProfile).filter(CitizenProfile.id == mem.citizen_id).first()
+        if not child_p:
+            continue
+        rel_lower = (mem.relationship_type or "").lower()
+        is_child = any(r in rel_lower for r in ["child", "daughter", "son", "ward", "student", "dependent"])
+        if not is_child and child_p.date_of_birth:
+            from datetime import date
+            age = (date.today() - child_p.date_of_birth).days // 365
+            if age < 18:
+                is_child = True
+
+        if is_child:
+            edu = db.query(EducationRecord).filter(EducationRecord.citizen_id == child_p.id).first()
+            children_list.append({
+                "citizen_id": child_p.id,
+                "citizen_code": child_p.citizen_code,
+                "full_name": child_p.full_name,
+                "date_of_birth": str(child_p.date_of_birth) if child_p.date_of_birth else None,
+                "relationship": mem.relationship_type or "Child",
+                "student_id": edu.student_id if edu else None,
+                "permanent_student_id": edu.permanent_student_id if edu else None,
+                "school_name": edu.institution_name if edu else None,
+            })
+
+    return {
+        "household_id": profile.household_id,
+        "parent_name": profile.full_name,
+        "children": children_list
+    }
 
 
 @router.patch("/me", response_model=CitizenProfileResponse)

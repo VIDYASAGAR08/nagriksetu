@@ -50,6 +50,7 @@ class HouseholdMembership(Base):
     __tablename__ = "household_memberships"
 
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    membership_code = Column(String(50), unique=True, index=True, nullable=True)
     household_id = Column(Integer, ForeignKey("households.id", ondelete="CASCADE"), nullable=False, index=True)
     citizen_id = Column(Integer, ForeignKey("citizen_profiles.id", ondelete="CASCADE"), nullable=False, index=True)
     relationship_type = Column(String(100), nullable=False)
@@ -89,6 +90,7 @@ class HouseholdLinkRequest(Base):
     __tablename__ = "household_link_requests"
 
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    request_code = Column(String(50), unique=True, index=True, nullable=True)
     household_id = Column(Integer, ForeignKey("households.id", ondelete="CASCADE"), nullable=False, index=True)
     requester_citizen_id = Column(Integer, ForeignKey("citizen_profiles.id", ondelete="CASCADE"), nullable=False, index=True)
     target_citizen_id = Column(Integer, ForeignKey("citizen_profiles.id", ondelete="CASCADE"), nullable=False, index=True)

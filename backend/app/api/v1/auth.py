@@ -28,6 +28,9 @@ from app.schemas.auth import (
     OTPVerifyRequest,
     OTPResponse,
     OTPVerifyResponse,
+    FederatedVerifyRequest,
+    FederatedVerifyResponse,
+    FederatedChildInfo,
 )
 from app.schemas.citizen import CitizenProfileResponse
 from app.api.deps import get_current_user, get_token_from_request
@@ -39,7 +42,7 @@ router = APIRouter(prefix="/auth", tags=["Authentication"])
 
 def generate_citizen_code() -> str:
     """Generate a clean, unique citizen identifier."""
-    return f"CIT-{uuid.uuid4().hex[:8].upper()}"
+    return f"CIT-2026-{uuid.uuid4().hex[:8].upper()}"
 
 
 def find_user_by_any_identifier(
@@ -130,6 +133,7 @@ def register_citizen(
 
     # 5. Create user record strictly with 'citizen' role
     new_user = User(
+        user_code=f"USR-2026-{uuid.uuid4().hex[:6].upper()}",
         email=payload.email,
         phone_number=payload.phone_number,
         password_hash=hashed_pwd,
@@ -163,6 +167,7 @@ def register_citizen(
     # Create initial linked medical and education records for the citizen
     from app.models.records import MedicalRecord, EducationRecord
     initial_med = MedicalRecord(
+        record_code=f"MED-2026-{uuid.uuid4().hex[:6].upper()}",
         citizen_id=new_profile.id,
         blood_group="Unknown",
         chronic_conditions="None Reported",
@@ -171,6 +176,7 @@ def register_citizen(
         disability_status="None",
     )
     initial_edu = EducationRecord(
+        record_code=f"EDU-2026-{uuid.uuid4().hex[:6].upper()}",
         citizen_id=new_profile.id,
         highest_qualification="Secondary (10th)",
         literacy_status="Literate",
@@ -246,6 +252,97 @@ def login(
         access_token=token,
         token_type="bearer",
         user=UserResponse.model_validate(user)
+    )
+
+
+@router.post("/federated-verify", response_model=FederatedVerifyResponse)
+def federated_verify(payload: FederatedVerifyRequest, db: Session = Depends(get_db)):
+    """
+    Central Citizen Registry Single Sign-On (SSO) & Identity Verification endpoint.
+    Allows independent microservices (School Education, Skill Development) to securely
+    verify citizen credentials, retrieve profile info, and fetch linked household children.
+    """
+    ident = payload.identifier.strip()
+    user = find_user_by_any_identifier(db, email=ident, phone=ident)
+    
+    if not user or not verify_password(payload.password, user.password_hash):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid credentials for central citizen authentication."
+        )
+
+    if user.account_status != UserStatus.ACTIVE.value:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"Account is currently {user.account_status}."
+        )
+
+    # Ensure user has a standardized business code
+    if not user.user_code:
+        user.user_code = f"USR-2026-{user.id:04d}"
+        db.commit()
+
+    profile = user.citizen_profile
+    household_code = None
+    children_list = []
+
+    if profile and profile.household_id:
+        from app.models.household import Household, HouseholdMembership
+        from app.models.records import EducationRecord
+        household = db.query(Household).filter(Household.id == profile.household_id).first()
+        if household:
+            household_code = household.household_code
+            
+            memberships = db.query(HouseholdMembership).filter(
+                HouseholdMembership.household_id == profile.household_id,
+                HouseholdMembership.status == "active"
+            ).all()
+
+            for mem in memberships:
+                if mem.citizen_id == profile.id:
+                    continue
+                child_p = db.query(CitizenProfile).filter(CitizenProfile.id == mem.citizen_id).first()
+                if not child_p:
+                    continue
+                rel_lower = (mem.relationship_type or "").lower()
+                is_child = any(r in rel_lower for r in ["child", "daughter", "son", "ward", "student", "dependent"])
+                
+                if not is_child and child_p.date_of_birth:
+                    from datetime import date
+                    age = (date.today() - child_p.date_of_birth).days // 365
+                    if age < 18:
+                        is_child = True
+
+                if is_child:
+                    edu = db.query(EducationRecord).filter(EducationRecord.citizen_id == child_p.id).first()
+                    children_list.append(
+                        FederatedChildInfo(
+                            citizen_id=child_p.id,
+                            citizen_code=child_p.citizen_code,
+                            full_name=child_p.full_name,
+                            date_of_birth=str(child_p.date_of_birth) if child_p.date_of_birth else None,
+                            relationship=mem.relationship_type or "Child",
+                            student_id=edu.student_id if edu else None,
+                            permanent_student_id=edu.permanent_student_id if edu else None,
+                            school_name=edu.institution_name if edu else None,
+                        )
+                    )
+
+    return FederatedVerifyResponse(
+        valid=True,
+        user_id=user.id,
+        user_code=user.user_code,
+        email=user.email,
+        phone_number=user.phone_number,
+        role=user.role,
+        account_status=user.account_status,
+        full_name=profile.full_name if profile else user.email.split("@")[0],
+        citizen_code=profile.citizen_code if profile else f"CIT-2026-{user.id:04d}",
+        date_of_birth=str(profile.date_of_birth) if (profile and profile.date_of_birth) else None,
+        password_hash=user.password_hash,
+        household_id=profile.household_id if profile else None,
+        household_code=household_code,
+        children=children_list,
     )
 
 

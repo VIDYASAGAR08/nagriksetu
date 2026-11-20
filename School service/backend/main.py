@@ -678,6 +678,71 @@ def get_authorized_child(
     ).fetchone()
 
 
+def verify_via_central_sso(identifier: str, password: str) -> Optional[dict]:
+    """
+    Federated Single Sign-On (SSO): Query NagrikSetu Central Portal to verify citizen credentials.
+    Returns citizen profile and linked household children when credentials match.
+    """
+    import urllib.request
+    import json
+    urls = [
+        os.getenv("CENTRAL_AUTH_URL", "http://nagriksetu_backend:8000/api/v1/auth/federated-verify"),
+        "http://nagriksetu_backend:8000/api/v1/auth/federated-verify",
+        "http://backend:8000/api/v1/auth/federated-verify",
+        "http://localhost:8000/api/v1/auth/federated-verify",
+        "http://127.0.0.1:8000/api/v1/auth/federated-verify",
+    ]
+    seen = set()
+    payload = json.dumps({"identifier": identifier, "password": password}).encode("utf-8")
+    for u in urls:
+        if not u or u in seen:
+            continue
+        seen.add(u)
+        try:
+            req = urllib.request.Request(
+                u,
+                data=payload,
+                headers={"Content-Type": "application/json", "Accept": "application/json"}
+            )
+            with urllib.request.urlopen(req, timeout=3.5) as resp:
+                if resp.status == 200:
+                    data = json.loads(resp.read().decode("utf-8"))
+                    if data.get("valid"):
+                        return data
+        except Exception:
+            continue
+    return None
+
+
+def fetch_central_household_children(email: str) -> list:
+    """
+    Query NagrikSetu Central Portal to fetch verified household children for a citizen.
+    """
+    import urllib.request
+    import urllib.parse
+    import json
+    urls = [
+        f"http://nagriksetu_backend:8000/api/v1/citizens/household-children?email={urllib.parse.quote(email)}",
+        f"http://backend:8000/api/v1/citizens/household-children?email={urllib.parse.quote(email)}",
+        f"http://localhost:8000/api/v1/citizens/household-children?email={urllib.parse.quote(email)}",
+        f"http://127.0.0.1:8000/api/v1/citizens/household-children?email={urllib.parse.quote(email)}",
+    ]
+    seen = set()
+    for u in urls:
+        if not u or u in seen:
+            continue
+        seen.add(u)
+        try:
+            req = urllib.request.Request(u, headers={"Accept": "application/json"})
+            with urllib.request.urlopen(req, timeout=3.5) as resp:
+                if resp.status == 200:
+                    data = json.loads(resp.read().decode("utf-8"))
+                    return data.get("children", [])
+        except Exception:
+            continue
+    return []
+
+
 @app.post("/auth/login", response_model=LoginResponse)
 def login(
     request: Request,
@@ -716,13 +781,119 @@ def login(
             (identifier, identifier, identifier, identifier),
         ).fetchone()
 
-        if user is None:
-            auth_limiter.record_failed_login(client_ip, identifier, max_failures=5)
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Incorrect username or password.",
-                headers={"WWW-Authenticate": "Bearer"},
-            )
+        # Check local credentials
+        local_valid = False
+        if user and user["password_hash"] and user["password_hash"].strip():
+            if verify_password(form.password, user["password_hash"]):
+                local_valid = True
+
+        if not local_valid:
+            # Fallback to Federated SSO with Central Citizen Portal
+            sso_data = verify_via_central_sso(identifier, form.password)
+            if sso_data and sso_data.get("valid"):
+                email_val = sso_data.get("email") or identifier
+                phone_val = sso_data.get("phone_number")
+                user_phone = phone_val if phone_val else None
+                if user_phone:
+                    dup = conn.execute("SELECT 1 FROM users WHERE phone = ?", (user_phone,)).fetchone()
+                    if dup:
+                        user_phone = None
+                guardian_phone = phone_val if phone_val else "+91-9876543210"
+                full_name_val = sso_data.get("full_name") or email_val.split("@")[0]
+                pwd_hash_val = hash_password(form.password)
+
+                if user is None:
+                    # Check if user exists by email specifically
+                    existing_user = conn.execute(
+                        "SELECT user_id FROM users WHERE email = ? COLLATE NOCASE", (email_val,)
+                    ).fetchone()
+                    if existing_user:
+                        uid = existing_user["user_id"]
+                        conn.execute(
+                            "UPDATE users SET password_hash = ?, full_name = COALESCE(full_name, ?), is_active = 1 WHERE user_id = ?",
+                            (pwd_hash_val, full_name_val, uid)
+                        )
+                    else:
+                        uid = f"PRN-2026-{uuid.uuid4().hex[:6].upper()}"
+                        conn.execute(
+                            """
+                            INSERT INTO users (
+                                user_id, email, phone, password_hash, role,
+                                school_id, is_active, status, full_name, is_email_verified
+                            ) VALUES (?, ?, ?, ?, 'parent', NULL, 1, 'active', ?, 1)
+                            """,
+                            (uid, email_val, user_phone, pwd_hash_val, full_name_val)
+                        )
+                else:
+                    uid = user["user_id"]
+                    conn.execute(
+                        "UPDATE users SET password_hash = ?, full_name = COALESCE(full_name, ?), is_active = 1 WHERE user_id = ?",
+                        (pwd_hash_val, full_name_val, uid)
+                    )
+
+                # Ensure Guardian record exists with standardized business ID
+                g_row = conn.execute("SELECT guardian_id FROM guardians WHERE user_id = ? OR email = ?", (uid, email_val)).fetchone()
+                if g_row:
+                    g_id = g_row["guardian_id"]
+                else:
+                    g_id = f"GRD-2026-{uuid.uuid4().hex[:6].upper()}"
+                    conn.execute(
+                        """
+                        INSERT INTO guardians (guardian_id, user_id, full_name, relationship, phone, email)
+                        VALUES (?, ?, ?, 'Parent', ?, ?)
+                        """,
+                        (g_id, uid, full_name_val, guardian_phone, email_val)
+                    )
+
+                # Link household children from Central Portal
+                for ch in sso_data.get("children", []):
+                    perm_id = ch.get("permanent_student_id")
+                    stu_id = ch.get("student_id")
+                    ch_name = ch.get("full_name")
+                    st_row = None
+                    if perm_id:
+                        st_row = conn.execute("SELECT permanent_student_id FROM students WHERE permanent_student_id = ?", (perm_id,)).fetchone()
+                    if not st_row and stu_id:
+                        st_row = conn.execute("SELECT permanent_student_id FROM students WHERE student_id = ?", (stu_id,)).fetchone()
+                    if not st_row and ch_name:
+                        st_row = conn.execute("SELECT permanent_student_id FROM students WHERE student_name = ?", (ch_name,)).fetchone()
+                    
+                    if st_row:
+                        matched_perm_id = st_row["permanent_student_id"]
+                        sg_exists = conn.execute(
+                            "SELECT 1 FROM student_guardians WHERE guardian_id = ? AND permanent_student_id = ?",
+                            (g_id, matched_perm_id)
+                        ).fetchone()
+                        if not sg_exists:
+                            sg_id = f"SGL-2026-{uuid.uuid4().hex[:6].upper()}"
+                            conn.execute(
+                                """
+                                INSERT INTO student_guardians (
+                                    student_guardian_id, permanent_student_id, guardian_id,
+                                    can_view_records, can_request_updates, is_verified
+                                ) VALUES (?, ?, ?, 1, 1, 1)
+                                """,
+                                (sg_id, matched_perm_id, g_id)
+                            )
+
+                conn.commit()
+                # Reload user row
+                user = conn.execute(
+                    """
+                    SELECT user_id, email, phone, password_hash,
+                           role, school_id, is_active, status, full_name,
+                           permanent_student_id, student_id, is_email_verified
+                    FROM users WHERE user_id = ?
+                    """,
+                    (uid,)
+                ).fetchone()
+            else:
+                auth_limiter.record_failed_login(client_ip, identifier, max_failures=5)
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Incorrect username or password.",
+                    headers={"WWW-Authenticate": "Bearer"},
+                )
 
         if not user["is_active"] or user["status"] == "suspended":
             raise HTTPException(
@@ -4525,13 +4696,72 @@ def get_school_academic_hierarchy(school_id: str):
 
 
 
+class ParentDirectStudentUpdateRequest(BaseModel):
+    student_name: Optional[str] = None
+    date_of_birth: Optional[str] = None
+    gender: Optional[str] = None
+    first_language: Optional[str] = None
+
+
 @app.get("/parent/children")
 def list_parent_children(user: dict = Depends(require_parent)):
-    """List only children linked to this verified parent account."""
+    """
+    List children linked to this verified parent account.
+    Federated with NagrikSetu Central Portal household registry.
+    """
     conn = get_connection()
     try:
         guardian = get_parent_guardian(conn, user["user_id"])
-        if guardian is None:
+        if guardian is None and user.get("email"):
+            g_id = f"GRD-2026-{uuid.uuid4().hex[:6].upper()}"
+            conn.execute(
+                """
+                INSERT INTO guardians (guardian_id, user_id, full_name, relationship, phone, email)
+                VALUES (?, ?, ?, 'Parent', ?, ?)
+                """,
+                (g_id, user["user_id"], user.get("full_name") or user["email"].split("@")[0], user.get("phone") or "9876543210", user["email"])
+            )
+            conn.commit()
+            guardian = get_parent_guardian(conn, user["user_id"])
+
+        g_id = guardian["guardian_id"] if guardian else None
+
+        # Fetch federated children from Central Citizen Database
+        central_children = []
+        if user.get("email"):
+            central_children = fetch_central_household_children(user["email"])
+            if central_children and g_id:
+                for ch in central_children:
+                    perm_id = ch.get("permanent_student_id")
+                    stu_id = ch.get("student_id")
+                    ch_name = ch.get("full_name")
+                    st_row = None
+                    if perm_id:
+                        st_row = conn.execute("SELECT permanent_student_id FROM students WHERE permanent_student_id = ?", (perm_id,)).fetchone()
+                    if not st_row and stu_id:
+                        st_row = conn.execute("SELECT permanent_student_id FROM students WHERE student_id = ?", (stu_id,)).fetchone()
+                    if not st_row and ch_name:
+                        st_row = conn.execute("SELECT permanent_student_id FROM students WHERE student_name = ?", (ch_name,)).fetchone()
+                    if st_row:
+                        matched_perm = st_row["permanent_student_id"]
+                        sg_exists = conn.execute(
+                            "SELECT 1 FROM student_guardians WHERE guardian_id = ? AND permanent_student_id = ?",
+                            (g_id, matched_perm)
+                        ).fetchone()
+                        if not sg_exists:
+                            sg_id = f"SGL-2026-{uuid.uuid4().hex[:6].upper()}"
+                            conn.execute(
+                                """
+                                INSERT INTO student_guardians (
+                                    student_guardian_id, permanent_student_id, guardian_id,
+                                    can_view_records, can_request_updates, is_verified
+                                ) VALUES (?, ?, ?, 1, 1, 1)
+                                """,
+                                (sg_id, matched_perm, g_id)
+                            )
+                conn.commit()
+
+        if g_id is None:
             return []
 
         rows = conn.execute(
@@ -4539,6 +4769,7 @@ def list_parent_children(user: dict = Depends(require_parent)):
             SELECT s.student_id, s.permanent_student_id,
                    s.student_name, s.school_id, sc.school_name,
                    s.standard, s.section, s.first_language,
+                   s.date_of_birth, s.gender,
                    s.enrollment_status
             FROM student_guardians sg
             JOIN students s
@@ -4549,9 +4780,94 @@ def list_parent_children(user: dict = Depends(require_parent)):
               AND sg.can_view_records = 1
             ORDER BY s.student_name
             """,
-            (guardian["guardian_id"],),
+            (g_id,),
         ).fetchall()
-        return [dict(row) for row in rows]
+        
+        result = [dict(row) for row in rows]
+        existing_perm_ids = {r["permanent_student_id"] for r in result if r.get("permanent_student_id")}
+
+        # Add any Central Citizen children who are not yet enrolled in any school
+        for ch in central_children:
+            ch_perm = ch.get("permanent_student_id")
+            if ch_perm and ch_perm in existing_perm_ids:
+                continue
+            # If not in school yet, allow parent to view and apply
+            result.append({
+                "student_id": ch.get("student_id") or f"STU-PENDING-{ch.get('citizen_code', '01')}",
+                "permanent_student_id": ch.get("permanent_student_id") or f"NS-PENDING-{ch.get('citizen_code', '01')}",
+                "student_name": ch.get("full_name"),
+                "school_id": None,
+                "school_name": "Not Yet Enrolled (Central Citizen Registry)",
+                "standard": 1,
+                "section": "-",
+                "first_language": "Kannada",
+                "date_of_birth": ch.get("date_of_birth"),
+                "gender": "Unknown",
+                "enrollment_status": "eligible_for_admission",
+                "can_apply": True,
+                "citizen_code": ch.get("citizen_code"),
+            })
+
+        return result
+    finally:
+        conn.close()
+
+
+@app.put("/parent/children/{permanent_student_id}/profile")
+@app.post("/parent/children/{permanent_student_id}/profile")
+def update_parent_child_profile(
+    permanent_student_id: str,
+    payload: ParentDirectStudentUpdateRequest,
+    user: dict = Depends(require_parent),
+):
+    """
+    Allows authorized parent to update child student profile details directly.
+    Audited with structured business audit log ID.
+    """
+    conn = get_connection()
+    try:
+        guardian = get_parent_guardian(conn, user["user_id"])
+        if guardian is None:
+            raise HTTPException(403, "No guardian profile is linked to this account.")
+
+        child = get_authorized_child(
+            conn,
+            guardian["guardian_id"],
+            permanent_student_id,
+            "can_request_updates",
+        )
+        if child is None:
+            raise HTTPException(404, "Child record not found or update permissions not granted.")
+
+        if payload.student_name and payload.student_name.strip():
+            conn.execute("UPDATE students SET student_name = ? WHERE permanent_student_id = ?", (payload.student_name.strip(), permanent_student_id))
+        if payload.date_of_birth and payload.date_of_birth.strip():
+            conn.execute("UPDATE students SET date_of_birth = ? WHERE permanent_student_id = ?", (payload.date_of_birth.strip(), permanent_student_id))
+        if payload.gender and payload.gender.strip():
+            conn.execute("UPDATE students SET gender = ? WHERE permanent_student_id = ?", (payload.gender.strip(), permanent_student_id))
+        if payload.first_language and payload.first_language.strip():
+            conn.execute("UPDATE students SET first_language = ? WHERE permanent_student_id = ?", (payload.first_language.strip(), permanent_student_id))
+        conn.commit()
+
+        log_id = f"AUD-SCH-2026-{uuid.uuid4().hex[:8].upper()}"
+        try:
+            conn.execute(
+                """
+                INSERT INTO audit_logs (log_id, actor_id, actor_email, action, resource_type, resource_id, details)
+                VALUES (?, ?, ?, 'PARENT_STUDENT_PROFILE_UPDATE', 'students', ?, ?)
+                """,
+                (log_id, user["user_id"], user.get("email"), permanent_student_id, json.dumps(payload.dict(exclude_unset=True)))
+            )
+            conn.commit()
+        except Exception:
+            pass
+
+        updated = conn.execute("SELECT * FROM students WHERE permanent_student_id = ?", (permanent_student_id,)).fetchone()
+        return {
+            "success": True,
+            "message": "Student profile updated successfully by verified parent.",
+            "student": dict(updated) if updated else None
+        }
     finally:
         conn.close()
 
@@ -7812,9 +8128,10 @@ def get_parent_admission_applications(
             JOIN schools s ON s.school_id = a.institution_id
             LEFT JOIN academic_programs p ON p.program_id = a.requested_program_id
             WHERE a.parent_user_id = ?
+               OR (a.parent_email IS NOT NULL AND a.parent_email = ?)
             ORDER BY a.created_at DESC
         """
-        rows = conn.execute(sql, (user["user_id"],)).fetchall()
+        rows = conn.execute(sql, (user["user_id"], user.get("email", ""))).fetchall()
         return [dict(r) for r in rows]
     finally:
         conn.close()
@@ -7836,9 +8153,9 @@ def get_parent_application_details(
             FROM admission_applications a
             JOIN schools s ON s.school_id = a.institution_id
             LEFT JOIN academic_programs p ON p.program_id = a.requested_program_id
-            WHERE a.application_id = ? AND a.parent_user_id = ?
+            WHERE a.application_id = ? AND (a.parent_user_id = ? OR (a.parent_email IS NOT NULL AND a.parent_email = ?))
         """
-        row = conn.execute(sql, (application_id, user["user_id"])).fetchone()
+        row = conn.execute(sql, (application_id, user["user_id"], user.get("email", ""))).fetchone()
         if not row:
             raise HTTPException(404, "Admission application not found or unauthorized.")
 

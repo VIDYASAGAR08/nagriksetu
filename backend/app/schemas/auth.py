@@ -91,6 +91,7 @@ class OTPVerifyResponse(BaseModel):
 
 class UserResponse(BaseModel):
     id: int
+    user_code: Optional[str] = None
     email: str
     phone_number: Optional[str] = None
     role: str
@@ -118,3 +119,37 @@ class TokenResponse(BaseModel):
 class AuthMeResponse(BaseModel):
     user: UserResponse
     citizen_profile: Optional[dict] = None
+
+
+class FederatedVerifyRequest(BaseModel):
+    identifier: str = Field(..., description="Email, phone number, or citizen identifier")
+    password: str = Field(..., description="Account password")
+
+
+class FederatedChildInfo(BaseModel):
+    citizen_id: int
+    citizen_code: str
+    full_name: str
+    date_of_birth: Optional[str] = None
+    relationship: str = "Child"
+    student_id: Optional[str] = None
+    permanent_student_id: Optional[str] = None
+    school_name: Optional[str] = None
+
+
+class FederatedVerifyResponse(BaseModel):
+    valid: bool
+    user_id: Optional[int] = None
+    user_code: Optional[str] = None
+    email: Optional[str] = None
+    phone_number: Optional[str] = None
+    role: Optional[str] = None
+    account_status: Optional[str] = None
+    full_name: Optional[str] = None
+    citizen_code: Optional[str] = None
+    date_of_birth: Optional[str] = None
+    password_hash: Optional[str] = None
+    household_id: Optional[int] = None
+    household_code: Optional[str] = None
+    children: list[FederatedChildInfo] = []
+

@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict X0iMGC9ZMhEjt3ZnPPP1q6zpKfTexqruJeoqcRFJzShFfOrbYpKzFyfwc4rft2e
+\restrict TzIHL7u7nX4ICZebdSigyUc1ocfgKP2IKFqJyBQ4UHIsXieT15SfHkmPRDqhhpb
 
 -- Dumped from database version 16.15
 -- Dumped by pg_dump version 16.15
@@ -18,6 +18,118 @@ SET xmloption = content;
 SET client_min_messages = warning;
 SET row_security = off;
 
+ALTER TABLE IF EXISTS ONLY public.users DROP CONSTRAINT IF EXISTS users_administrative_unit_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.otp_verifications DROP CONSTRAINT IF EXISTS otp_verifications_user_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.medical_records DROP CONSTRAINT IF EXISTS medical_records_citizen_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.land_records DROP CONSTRAINT IF EXISTS land_records_household_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.households DROP CONSTRAINT IF EXISTS households_administrative_unit_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.household_memberships DROP CONSTRAINT IF EXISTS household_memberships_household_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.household_memberships DROP CONSTRAINT IF EXISTS household_memberships_citizen_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.household_link_requests DROP CONSTRAINT IF EXISTS household_link_requests_target_citizen_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.household_link_requests DROP CONSTRAINT IF EXISTS household_link_requests_reviewed_by_admin_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.household_link_requests DROP CONSTRAINT IF EXISTS household_link_requests_requester_citizen_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.household_link_requests DROP CONSTRAINT IF EXISTS household_link_requests_household_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.education_records DROP CONSTRAINT IF EXISTS education_records_citizen_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.citizen_profiles DROP CONSTRAINT IF EXISTS citizen_profiles_user_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.citizen_profiles DROP CONSTRAINT IF EXISTS citizen_profiles_household_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.citizen_profiles DROP CONSTRAINT IF EXISTS citizen_profiles_administrative_unit_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.audit_logs DROP CONSTRAINT IF EXISTS audit_logs_actor_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.administrative_units DROP CONSTRAINT IF EXISTS administrative_units_parent_id_fkey;
+DROP INDEX IF EXISTS public.ix_users_phone_number;
+DROP INDEX IF EXISTS public.ix_users_id;
+DROP INDEX IF EXISTS public.ix_users_email;
+DROP INDEX IF EXISTS public.ix_users_biometric_credential_id;
+DROP INDEX IF EXISTS public.ix_users_administrative_unit_id;
+DROP INDEX IF EXISTS public.ix_outbox_events_id;
+DROP INDEX IF EXISTS public.ix_outbox_events_event_type;
+DROP INDEX IF EXISTS public.ix_outbox_events_event_id;
+DROP INDEX IF EXISTS public.ix_outbox_events_aggregate_type;
+DROP INDEX IF EXISTS public.ix_outbox_events_aggregate_id;
+DROP INDEX IF EXISTS public.ix_otp_verifications_reference_id;
+DROP INDEX IF EXISTS public.ix_otp_verifications_id;
+DROP INDEX IF EXISTS public.ix_medical_records_id;
+DROP INDEX IF EXISTS public.ix_medical_records_citizen_id;
+DROP INDEX IF EXISTS public.ix_land_records_id;
+DROP INDEX IF EXISTS public.ix_land_records_household_id;
+DROP INDEX IF EXISTS public.ix_households_id;
+DROP INDEX IF EXISTS public.ix_households_household_code;
+DROP INDEX IF EXISTS public.ix_households_administrative_unit_id;
+DROP INDEX IF EXISTS public.ix_household_memberships_id;
+DROP INDEX IF EXISTS public.ix_household_memberships_household_id;
+DROP INDEX IF EXISTS public.ix_household_memberships_citizen_id;
+DROP INDEX IF EXISTS public.ix_household_link_requests_target_citizen_id;
+DROP INDEX IF EXISTS public.ix_household_link_requests_status;
+DROP INDEX IF EXISTS public.ix_household_link_requests_requester_citizen_id;
+DROP INDEX IF EXISTS public.ix_household_link_requests_id;
+DROP INDEX IF EXISTS public.ix_household_link_requests_household_id;
+DROP INDEX IF EXISTS public.ix_education_records_id;
+DROP INDEX IF EXISTS public.ix_education_records_citizen_id;
+DROP INDEX IF EXISTS public.ix_citizen_profiles_user_id;
+DROP INDEX IF EXISTS public.ix_citizen_profiles_id;
+DROP INDEX IF EXISTS public.ix_citizen_profiles_household_id;
+DROP INDEX IF EXISTS public.ix_citizen_profiles_citizen_code;
+DROP INDEX IF EXISTS public.ix_citizen_profiles_administrative_unit_id;
+DROP INDEX IF EXISTS public.ix_audit_logs_resource_type;
+DROP INDEX IF EXISTS public.ix_audit_logs_id;
+DROP INDEX IF EXISTS public.ix_audit_logs_created_at;
+DROP INDEX IF EXISTS public.ix_audit_logs_actor_id;
+DROP INDEX IF EXISTS public.ix_audit_logs_action;
+DROP INDEX IF EXISTS public.ix_administrative_units_unit_type;
+DROP INDEX IF EXISTS public.ix_administrative_units_status;
+DROP INDEX IF EXISTS public.ix_administrative_units_parent_id;
+DROP INDEX IF EXISTS public.ix_administrative_units_name;
+DROP INDEX IF EXISTS public.ix_administrative_units_identifier;
+DROP INDEX IF EXISTS public.ix_administrative_units_id;
+DROP INDEX IF EXISTS public.idx_users_user_code;
+DROP INDEX IF EXISTS public.idx_audit_logs_log_code;
+ALTER TABLE IF EXISTS ONLY public.users DROP CONSTRAINT IF EXISTS users_pkey;
+ALTER TABLE IF EXISTS ONLY public.outbox_events DROP CONSTRAINT IF EXISTS outbox_events_pkey;
+ALTER TABLE IF EXISTS ONLY public.otp_verifications DROP CONSTRAINT IF EXISTS otp_verifications_pkey;
+ALTER TABLE IF EXISTS ONLY public.medical_records DROP CONSTRAINT IF EXISTS medical_records_pkey;
+ALTER TABLE IF EXISTS ONLY public.land_records DROP CONSTRAINT IF EXISTS land_records_pkey;
+ALTER TABLE IF EXISTS ONLY public.households DROP CONSTRAINT IF EXISTS households_pkey;
+ALTER TABLE IF EXISTS ONLY public.household_memberships DROP CONSTRAINT IF EXISTS household_memberships_pkey;
+ALTER TABLE IF EXISTS ONLY public.household_link_requests DROP CONSTRAINT IF EXISTS household_link_requests_pkey;
+ALTER TABLE IF EXISTS ONLY public.education_records DROP CONSTRAINT IF EXISTS education_records_pkey;
+ALTER TABLE IF EXISTS ONLY public.citizen_profiles DROP CONSTRAINT IF EXISTS citizen_profiles_pkey;
+ALTER TABLE IF EXISTS ONLY public.audit_logs DROP CONSTRAINT IF EXISTS audit_logs_pkey;
+ALTER TABLE IF EXISTS ONLY public.administrative_units DROP CONSTRAINT IF EXISTS administrative_units_pkey;
+ALTER TABLE IF EXISTS public.users ALTER COLUMN id DROP DEFAULT;
+ALTER TABLE IF EXISTS public.outbox_events ALTER COLUMN id DROP DEFAULT;
+ALTER TABLE IF EXISTS public.otp_verifications ALTER COLUMN id DROP DEFAULT;
+ALTER TABLE IF EXISTS public.medical_records ALTER COLUMN id DROP DEFAULT;
+ALTER TABLE IF EXISTS public.land_records ALTER COLUMN id DROP DEFAULT;
+ALTER TABLE IF EXISTS public.households ALTER COLUMN id DROP DEFAULT;
+ALTER TABLE IF EXISTS public.household_memberships ALTER COLUMN id DROP DEFAULT;
+ALTER TABLE IF EXISTS public.household_link_requests ALTER COLUMN id DROP DEFAULT;
+ALTER TABLE IF EXISTS public.education_records ALTER COLUMN id DROP DEFAULT;
+ALTER TABLE IF EXISTS public.citizen_profiles ALTER COLUMN id DROP DEFAULT;
+ALTER TABLE IF EXISTS public.audit_logs ALTER COLUMN id DROP DEFAULT;
+ALTER TABLE IF EXISTS public.administrative_units ALTER COLUMN id DROP DEFAULT;
+DROP SEQUENCE IF EXISTS public.users_id_seq;
+DROP TABLE IF EXISTS public.users;
+DROP SEQUENCE IF EXISTS public.outbox_events_id_seq;
+DROP TABLE IF EXISTS public.outbox_events;
+DROP SEQUENCE IF EXISTS public.otp_verifications_id_seq;
+DROP TABLE IF EXISTS public.otp_verifications;
+DROP SEQUENCE IF EXISTS public.medical_records_id_seq;
+DROP TABLE IF EXISTS public.medical_records;
+DROP SEQUENCE IF EXISTS public.land_records_id_seq;
+DROP TABLE IF EXISTS public.land_records;
+DROP SEQUENCE IF EXISTS public.households_id_seq;
+DROP TABLE IF EXISTS public.households;
+DROP SEQUENCE IF EXISTS public.household_memberships_id_seq;
+DROP TABLE IF EXISTS public.household_memberships;
+DROP SEQUENCE IF EXISTS public.household_link_requests_id_seq;
+DROP TABLE IF EXISTS public.household_link_requests;
+DROP SEQUENCE IF EXISTS public.education_records_id_seq;
+DROP TABLE IF EXISTS public.education_records;
+DROP SEQUENCE IF EXISTS public.citizen_profiles_id_seq;
+DROP TABLE IF EXISTS public.citizen_profiles;
+DROP SEQUENCE IF EXISTS public.audit_logs_id_seq;
+DROP TABLE IF EXISTS public.audit_logs;
+DROP SEQUENCE IF EXISTS public.administrative_units_id_seq;
+DROP TABLE IF EXISTS public.administrative_units;
 SET default_tablespace = '';
 
 SET default_table_access_method = heap;
@@ -76,7 +188,8 @@ CREATE TABLE public.audit_logs (
     resource_type character varying(50) NOT NULL,
     resource_id character varying(100) NOT NULL,
     details text,
-    created_at timestamp with time zone NOT NULL
+    created_at timestamp with time zone NOT NULL,
+    log_code character varying(50)
 );
 
 
@@ -167,7 +280,10 @@ CREATE TABLE public.education_records (
     literacy_status character varying(100),
     certificate_number character varying(100),
     created_at timestamp with time zone NOT NULL,
-    updated_at timestamp with time zone NOT NULL
+    updated_at timestamp with time zone NOT NULL,
+    student_id character varying(50),
+    permanent_student_id character varying(100),
+    record_code character varying(50)
 );
 
 
@@ -212,7 +328,8 @@ CREATE TABLE public.household_link_requests (
     reviewed_by_admin_id integer,
     reviewed_at timestamp with time zone,
     created_at timestamp with time zone NOT NULL,
-    updated_at timestamp with time zone NOT NULL
+    updated_at timestamp with time zone NOT NULL,
+    request_code character varying(50)
 );
 
 
@@ -254,6 +371,7 @@ CREATE TABLE public.household_memberships (
     status character varying(50) NOT NULL,
     notes character varying(255),
     created_at timestamp with time zone NOT NULL,
+    membership_code character varying(50),
     CONSTRAINT check_valid_membership_status CHECK (((status)::text = ANY ((ARRAY['active'::character varying, 'ended'::character varying])::text[])))
 );
 
@@ -340,7 +458,8 @@ CREATE TABLE public.land_records (
     property_tax_status character varying(50),
     market_valuation_inr double precision,
     created_at timestamp with time zone NOT NULL,
-    updated_at timestamp with time zone NOT NULL
+    updated_at timestamp with time zone NOT NULL,
+    record_code character varying(50)
 );
 
 
@@ -385,7 +504,8 @@ CREATE TABLE public.medical_records (
     emergency_contact_name character varying(150),
     emergency_contact_phone character varying(30),
     created_at timestamp with time zone NOT NULL,
-    updated_at timestamp with time zone NOT NULL
+    updated_at timestamp with time zone NOT NULL,
+    record_code character varying(50)
 );
 
 
@@ -511,6 +631,7 @@ CREATE TABLE public.users (
     face_data text,
     created_at timestamp with time zone NOT NULL,
     updated_at timestamp with time zone NOT NULL,
+    user_code character varying(50),
     CONSTRAINT check_valid_user_role CHECK (((role)::text = ANY ((ARRAY['citizen'::character varying, 'admin'::character varying])::text[]))),
     CONSTRAINT check_valid_user_status CHECK (((account_status)::text = ANY ((ARRAY['active'::character varying, 'suspended'::character varying, 'pending'::character varying])::text[])))
 );
@@ -628,121 +749,105 @@ ALTER TABLE ONLY public.users ALTER COLUMN id SET DEFAULT nextval('public.users_
 -- Data for Name: administrative_units; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY public.administrative_units (id, identifier, name, unit_type, parent_id, status, created_at, updated_at) FROM stdin;
-1	IN	India (National Republic)	country	\N	active	2026-11-16 07:03:31.575486+00	2026-11-16 07:03:31.575489+00
-2	IN-KA	Karnataka	state	1	active	2026-11-16 07:03:31.57713+00	2026-11-16 07:03:31.577132+00
-3	IN-MH	Maharashtra	state	1	active	2026-11-16 07:03:31.578122+00	2026-11-16 07:03:31.578123+00
-4	IN-KA-BLR	Bengaluru Urban	district	2	active	2026-11-16 07:03:31.578853+00	2026-11-16 07:03:31.578854+00
-5	IN-MH-MUM	Mumbai City	district	3	active	2026-11-16 07:03:31.579732+00	2026-11-16 07:03:31.579733+00
-6	IN-KA-BLR-W150	Ward 150 - Bellandur	ward	4	active	2026-11-16 07:03:31.580639+00	2026-11-16 07:03:31.580642+00
-\.
+INSERT INTO public.administrative_units VALUES (1, 'IN', 'India (National Republic)', 'country', NULL, 'active', '2026-11-16 07:03:31.575486+00', '2026-11-16 07:03:31.575489+00');
+INSERT INTO public.administrative_units VALUES (2, 'IN-KA', 'Karnataka', 'state', 1, 'active', '2026-11-16 07:03:31.57713+00', '2026-11-16 07:03:31.577132+00');
+INSERT INTO public.administrative_units VALUES (3, 'IN-MH', 'Maharashtra', 'state', 1, 'active', '2026-11-16 07:03:31.578122+00', '2026-11-16 07:03:31.578123+00');
+INSERT INTO public.administrative_units VALUES (4, 'IN-KA-BLR', 'Bengaluru Urban', 'district', 2, 'active', '2026-11-16 07:03:31.578853+00', '2026-11-16 07:03:31.578854+00');
+INSERT INTO public.administrative_units VALUES (5, 'IN-MH-MUM', 'Mumbai City', 'district', 3, 'active', '2026-11-16 07:03:31.579732+00', '2026-11-16 07:03:31.579733+00');
+INSERT INTO public.administrative_units VALUES (6, 'IN-KA-BLR-W150', 'Ward 150 - Bellandur', 'ward', 4, 'active', '2026-11-16 07:03:31.580639+00', '2026-11-16 07:03:31.580642+00');
 
 
 --
 -- Data for Name: audit_logs; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY public.audit_logs (id, actor_id, actor_email, action, resource_type, resource_id, details, created_at) FROM stdin;
-\.
 
 
 --
 -- Data for Name: citizen_profiles; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY public.citizen_profiles (id, user_id, citizen_code, full_name, date_of_birth, phone_number, preferred_language, profile_status, face_photo, household_id, household_relationship, household_role, assigned_tasks, administrative_unit_id, created_at, updated_at) FROM stdin;
-1	3	CIT-88219011	Aarav Sharma	1991-05-14	+91 98765 43210	en	active	\N	1	Head of Household	MEMBER	[]	6	2026-11-16 07:03:31.709213+00	2026-11-16 07:03:31.709215+00
-2	4	CIT-88219012	Priya Sharma	1993-08-22	+91 98765 43211	en	active	\N	1	Spouse	MEMBER	[]	6	2026-11-16 07:03:31.713371+00	2026-11-16 07:03:31.713374+00
-3	5	CIT-77310045	Rohit Verma	1985-11-03	+91 91234 56789	hi	pending_review	\N	2	Head of Household	MEMBER	[]	4	2026-11-16 07:03:31.715403+00	2026-11-16 07:03:31.715404+00
-4	6	CIT-66421190	Ananya Patil	1998-02-17	+91 99887 76655	mr	pending_review	\N	3	Member	MEMBER	[]	5	2026-11-16 07:03:31.717056+00	2026-11-16 07:03:31.717057+00
-5	7	CIT-55109923	Kavita Deshmukh	1974-12-30	+91 97654 32109	en	active	\N	\N	\N	MEMBER	[]	5	2026-11-16 07:03:31.718579+00	2026-11-16 07:03:31.71858+00
-\.
+INSERT INTO public.citizen_profiles VALUES (1, 3, 'CIT-88219011', 'Aarav Sharma', '1991-05-14', '+91 98765 43210', 'en', 'active', NULL, 1, 'Head of Household', 'MEMBER', '[]', 6, '2026-11-16 07:03:31.709213+00', '2026-11-16 07:03:31.709215+00');
+INSERT INTO public.citizen_profiles VALUES (2, 4, 'CIT-88219012', 'Priya Sharma', '1993-08-22', '+91 98765 43211', 'en', 'active', NULL, 1, 'Spouse', 'MEMBER', '[]', 6, '2026-11-16 07:03:31.713371+00', '2026-11-16 07:03:31.713374+00');
+INSERT INTO public.citizen_profiles VALUES (3, 5, 'CIT-77310045', 'Rohit Verma', '1985-11-03', '+91 91234 56789', 'hi', 'pending_review', NULL, 2, 'Head of Household', 'MEMBER', '[]', 4, '2026-11-16 07:03:31.715403+00', '2026-11-16 07:03:31.715404+00');
+INSERT INTO public.citizen_profiles VALUES (4, 6, 'CIT-66421190', 'Ananya Patil', '1998-02-17', '+91 99887 76655', 'mr', 'pending_review', NULL, 3, 'Member', 'MEMBER', '[]', 5, '2026-11-16 07:03:31.717056+00', '2026-11-16 07:03:31.717057+00');
+INSERT INTO public.citizen_profiles VALUES (5, 7, 'CIT-55109923', 'Kavita Deshmukh', '1974-12-30', '+91 97654 32109', 'en', 'active', NULL, NULL, NULL, 'MEMBER', '[]', 5, '2026-11-16 07:03:31.718579+00', '2026-11-16 07:03:31.71858+00');
+INSERT INTO public.citizen_profiles VALUES (7, NULL, 'CIT-2026-CH001', 'Asha Sharma', '2018-05-10', '+91 98765 43210', 'en', 'active', NULL, 1, 'Daughter', 'MEMBER', '[]', 6, '2026-11-20 19:04:09.892007+00', '2026-11-20 19:04:09.892011+00');
+INSERT INTO public.citizen_profiles VALUES (8, 8, 'CIT-2026-068565FE', 'Suresh Varma', NULL, '+91 98111 22233', 'en', 'pending_review', NULL, NULL, NULL, 'MEMBER', '[]', NULL, '2026-11-20 19:16:59.014061+00', '2026-11-20 19:16:59.014064+00');
 
 
 --
 -- Data for Name: education_records; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY public.education_records (id, citizen_id, highest_qualification, institution_name, specialization, year_of_completion, literacy_status, certificate_number, created_at, updated_at) FROM stdin;
-\.
+INSERT INTO public.education_records VALUES (1, 7, 'Primary (Grade 1)', 'Government Model School, Bengaluru', NULL, NULL, 'Literate', NULL, '2026-11-20 19:04:09.896819+00', '2026-11-20 19:04:09.896822+00', 'SCH01125', 'NS-FB8336A812DE468FB8E475443CF673EB', 'EDU-2026-000001');
+INSERT INTO public.education_records VALUES (2, 8, 'Secondary (10th)', NULL, NULL, NULL, 'Literate', NULL, '2026-11-20 19:16:59.015416+00', '2026-11-20 19:16:59.015418+00', NULL, NULL, 'EDU-2026-9B38C6');
 
 
 --
 -- Data for Name: household_link_requests; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY public.household_link_requests (id, household_id, requester_citizen_id, target_citizen_id, relationship, household_role, assigned_tasks, status, admin_notes, reviewed_by_admin_id, reviewed_at, created_at, updated_at) FROM stdin;
-\.
 
 
 --
 -- Data for Name: household_memberships; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY public.household_memberships (id, household_id, citizen_id, relationship_type, start_date, end_date, status, notes, created_at) FROM stdin;
-1	1	1	Head of Household	2025-01-01	\N	active	Initial census verification registration	2026-11-16 07:03:31.711324+00
-2	1	2	Spouse	2025-01-01	\N	active	Initial census verification registration	2026-11-16 07:03:31.714622+00
-3	2	3	Head of Household	2025-01-01	\N	active	Initial census verification registration	2026-11-16 07:03:31.71633+00
-4	3	4	Member	2025-01-01	\N	active	Initial census verification registration	2026-11-16 07:03:31.717858+00
-\.
+INSERT INTO public.household_memberships VALUES (1, 1, 1, 'Head of Household', '2025-01-01', NULL, 'active', 'Initial census verification registration', '2026-11-16 07:03:31.711324+00', 'HMB-2026-000001');
+INSERT INTO public.household_memberships VALUES (2, 1, 2, 'Spouse', '2025-01-01', NULL, 'active', 'Initial census verification registration', '2026-11-16 07:03:31.714622+00', 'HMB-2026-000002');
+INSERT INTO public.household_memberships VALUES (3, 2, 3, 'Head of Household', '2025-01-01', NULL, 'active', 'Initial census verification registration', '2026-11-16 07:03:31.71633+00', 'HMB-2026-000003');
+INSERT INTO public.household_memberships VALUES (4, 3, 4, 'Member', '2025-01-01', NULL, 'active', 'Initial census verification registration', '2026-11-16 07:03:31.717858+00', 'HMB-2026-000004');
+INSERT INTO public.household_memberships VALUES (5, 1, 7, 'Daughter', '2018-05-10', NULL, 'active', 'Registered child dependent of Aarav & Priya Sharma', '2026-11-20 19:04:09.895073+00', 'HMB-2026-000003');
 
 
 --
 -- Data for Name: households; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY public.households (id, household_code, address_line, locality, city, state, postal_code, administrative_notes, administrative_unit_id, created_at, updated_at) FROM stdin;
-1	HHD-1001-BLR	Flat 402, Green Glen Residency, Outer Ring Road	Bellandur	Bengaluru	Karnataka	560103	Verified municipal address during 2026 census review.	6	2026-11-16 07:03:31.644692+00	2026-11-16 07:03:31.644695+00
-2	HHD-1002-BLR	12/A, 3rd Cross, Indiranagar 1st Stage	Indiranagar	Bengaluru	Karnataka	560038	Pending updated water connection verification.	4	2026-11-16 07:03:31.645833+00	2026-11-16 07:03:31.645835+00
-3	HHD-2001-MUM	B-201, Sunshine Heights, Swami Vivekananda Road	Bandra West	Mumbai	Maharashtra	400050	Legacy household profile from municipal records.	5	2026-11-16 07:03:31.64659+00	2026-11-16 07:03:31.646591+00
-\.
+INSERT INTO public.households VALUES (1, 'HHD-1001-BLR', 'Flat 402, Green Glen Residency, Outer Ring Road', 'Bellandur', 'Bengaluru', 'Karnataka', '560103', 'Verified municipal address during 2026 census review.', 6, '2026-11-16 07:03:31.644692+00', '2026-11-16 07:03:31.644695+00');
+INSERT INTO public.households VALUES (2, 'HHD-1002-BLR', '12/A, 3rd Cross, Indiranagar 1st Stage', 'Indiranagar', 'Bengaluru', 'Karnataka', '560038', 'Pending updated water connection verification.', 4, '2026-11-16 07:03:31.645833+00', '2026-11-16 07:03:31.645835+00');
+INSERT INTO public.households VALUES (3, 'HHD-2001-MUM', 'B-201, Sunshine Heights, Swami Vivekananda Road', 'Bandra West', 'Mumbai', 'Maharashtra', '400050', 'Legacy household profile from municipal records.', 5, '2026-11-16 07:03:31.64659+00', '2026-11-16 07:03:31.646591+00');
 
 
 --
 -- Data for Name: land_records; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY public.land_records (id, household_id, survey_number, land_type, area_measurement, patta_passbook_number, district_sub_registrar, property_tax_status, market_valuation_inr, created_at, updated_at) FROM stdin;
-\.
 
 
 --
 -- Data for Name: medical_records; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY public.medical_records (id, citizen_id, blood_group, chronic_conditions, allergies, vaccination_status, disability_status, abha_id, emergency_hospital, emergency_contact_name, emergency_contact_phone, created_at, updated_at) FROM stdin;
-\.
+INSERT INTO public.medical_records VALUES (1, 7, 'O+', 'None', 'None', 'Fully Vaccinated (Universal Immunization Programme)', 'None', NULL, NULL, NULL, NULL, '2026-11-20 19:04:09.898145+00', '2026-11-20 19:04:09.898146+00', 'MED-2026-000001');
+INSERT INTO public.medical_records VALUES (2, 8, 'Unknown', 'None Reported', 'None', 'Up to date', 'None', NULL, NULL, NULL, NULL, '2026-11-20 19:16:59.017555+00', '2026-11-20 19:16:59.017558+00', 'MED-2026-C1C2C5');
 
 
 --
 -- Data for Name: otp_verifications; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY public.otp_verifications (id, reference_id, user_id, recipient, otp_code, purpose, is_verified, expires_at, created_at) FROM stdin;
-\.
 
 
 --
 -- Data for Name: outbox_events; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY public.outbox_events (id, event_id, event_type, aggregate_type, aggregate_id, payload_json, created_at) FROM stdin;
-\.
 
 
 --
 -- Data for Name: users; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY public.users (id, email, phone_number, password_hash, role, account_status, administrative_unit_id, biometric_credential_id, biometric_public_key, biometric_registered_at, face_data, created_at, updated_at) FROM stdin;
-1	admin@civicportal.gov	\N	$argon2id$v=19$m=65536,t=3,p=4$du7WCV4pTEiWBePAfhm8Zg$IWIwvUbarjxnggYLn2Gqt9ZgbMzYt9YMMDTGEi4DHzA	admin	active	\N	\N	\N	\N	\N	2026-11-16 07:03:21.079213+00	2026-11-16 07:03:21.079217+00
-2	admin.bengaluru@nagriksetu.gov.in	\N	$argon2id$v=19$m=65536,t=3,p=4$AorvkA2TxZT1A0UC8V8k/w$rakOJ40o4l5hyLXUk+iPmqiRKH0l3OFnGXOorpi2On8	admin	active	4	\N	\N	\N	\N	2026-11-16 07:03:31.641498+00	2026-11-16 07:03:31.641501+00
-3	aarav.sharma@example.com	\N	$argon2id$v=19$m=65536,t=3,p=4$un7pRMGEqCXce7gcHjCLGA$/WpXMVzcLemPs9vDGIth0+5aDXFh4V+pfB8yrY2dQHY	citizen	active	6	\N	\N	\N	\N	2026-11-16 07:03:31.707776+00	2026-11-16 07:03:31.70778+00
-4	priya.sharma@example.com	\N	$argon2id$v=19$m=65536,t=3,p=4$un7pRMGEqCXce7gcHjCLGA$/WpXMVzcLemPs9vDGIth0+5aDXFh4V+pfB8yrY2dQHY	citizen	active	6	\N	\N	\N	\N	2026-11-16 07:03:31.71259+00	2026-11-16 07:03:31.712593+00
-5	rohit.verma@example.com	\N	$argon2id$v=19$m=65536,t=3,p=4$un7pRMGEqCXce7gcHjCLGA$/WpXMVzcLemPs9vDGIth0+5aDXFh4V+pfB8yrY2dQHY	citizen	active	4	\N	\N	\N	\N	2026-11-16 07:03:31.714996+00	2026-11-16 07:03:31.714997+00
-6	ananya.patil@example.com	\N	$argon2id$v=19$m=65536,t=3,p=4$un7pRMGEqCXce7gcHjCLGA$/WpXMVzcLemPs9vDGIth0+5aDXFh4V+pfB8yrY2dQHY	citizen	active	5	\N	\N	\N	\N	2026-11-16 07:03:31.716654+00	2026-11-16 07:03:31.716655+00
-7	kavita.deshmukh@example.com	\N	$argon2id$v=19$m=65536,t=3,p=4$un7pRMGEqCXce7gcHjCLGA$/WpXMVzcLemPs9vDGIth0+5aDXFh4V+pfB8yrY2dQHY	citizen	active	5	\N	\N	\N	\N	2026-11-16 07:03:31.718175+00	2026-11-16 07:03:31.718176+00
-\.
+INSERT INTO public.users VALUES (1, 'admin@civicportal.gov', NULL, '$argon2id$v=19$m=65536,t=3,p=4$du7WCV4pTEiWBePAfhm8Zg$IWIwvUbarjxnggYLn2Gqt9ZgbMzYt9YMMDTGEi4DHzA', 'admin', 'active', NULL, NULL, NULL, NULL, NULL, '2026-11-16 07:03:21.079213+00', '2026-11-16 07:03:21.079217+00', 'USR-2026-0001');
+INSERT INTO public.users VALUES (2, 'admin.bengaluru@nagriksetu.gov.in', NULL, '$argon2id$v=19$m=65536,t=3,p=4$AorvkA2TxZT1A0UC8V8k/w$rakOJ40o4l5hyLXUk+iPmqiRKH0l3OFnGXOorpi2On8', 'admin', 'active', 4, NULL, NULL, NULL, NULL, '2026-11-16 07:03:31.641498+00', '2026-11-16 07:03:31.641501+00', 'USR-2026-0002');
+INSERT INTO public.users VALUES (3, 'aarav.sharma@example.com', NULL, '$argon2id$v=19$m=65536,t=3,p=4$un7pRMGEqCXce7gcHjCLGA$/WpXMVzcLemPs9vDGIth0+5aDXFh4V+pfB8yrY2dQHY', 'citizen', 'active', 6, NULL, NULL, NULL, NULL, '2026-11-16 07:03:31.707776+00', '2026-11-16 07:03:31.70778+00', 'USR-2026-0003');
+INSERT INTO public.users VALUES (4, 'priya.sharma@example.com', NULL, '$argon2id$v=19$m=65536,t=3,p=4$un7pRMGEqCXce7gcHjCLGA$/WpXMVzcLemPs9vDGIth0+5aDXFh4V+pfB8yrY2dQHY', 'citizen', 'active', 6, NULL, NULL, NULL, NULL, '2026-11-16 07:03:31.71259+00', '2026-11-16 07:03:31.712593+00', 'USR-2026-0004');
+INSERT INTO public.users VALUES (5, 'rohit.verma@example.com', NULL, '$argon2id$v=19$m=65536,t=3,p=4$un7pRMGEqCXce7gcHjCLGA$/WpXMVzcLemPs9vDGIth0+5aDXFh4V+pfB8yrY2dQHY', 'citizen', 'active', 4, NULL, NULL, NULL, NULL, '2026-11-16 07:03:31.714996+00', '2026-11-16 07:03:31.714997+00', 'USR-2026-0005');
+INSERT INTO public.users VALUES (6, 'ananya.patil@example.com', NULL, '$argon2id$v=19$m=65536,t=3,p=4$un7pRMGEqCXce7gcHjCLGA$/WpXMVzcLemPs9vDGIth0+5aDXFh4V+pfB8yrY2dQHY', 'citizen', 'active', 5, NULL, NULL, NULL, NULL, '2026-11-16 07:03:31.716654+00', '2026-11-16 07:03:31.716655+00', 'USR-2026-0006');
+INSERT INTO public.users VALUES (7, 'kavita.deshmukh@example.com', NULL, '$argon2id$v=19$m=65536,t=3,p=4$un7pRMGEqCXce7gcHjCLGA$/WpXMVzcLemPs9vDGIth0+5aDXFh4V+pfB8yrY2dQHY', 'citizen', 'active', 5, NULL, NULL, NULL, NULL, '2026-11-16 07:03:31.718175+00', '2026-11-16 07:03:31.718176+00', 'USR-2026-0007');
+INSERT INTO public.users VALUES (8, 'citizen.aaf16c@nagriksetu.in', '+91 98111 22233', '$argon2id$v=19$m=65536,t=3,p=4$8YFHRcG7NQexanBEsBtjTw$fRWjclxiX2GHKOoD3q1s5OFquvlTdlfZCsuwG1cIzUU', 'citizen', 'active', NULL, NULL, NULL, NULL, NULL, '2026-11-20 19:16:59.008745+00', '2026-11-20 19:16:59.008748+00', 'USR-2026-F0CD1F');
 
 
 --
@@ -763,14 +868,14 @@ SELECT pg_catalog.setval('public.audit_logs_id_seq', 1, false);
 -- Name: citizen_profiles_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.citizen_profiles_id_seq', 5, true);
+SELECT pg_catalog.setval('public.citizen_profiles_id_seq', 8, true);
 
 
 --
 -- Name: education_records_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.education_records_id_seq', 1, false);
+SELECT pg_catalog.setval('public.education_records_id_seq', 2, true);
 
 
 --
@@ -784,7 +889,7 @@ SELECT pg_catalog.setval('public.household_link_requests_id_seq', 1, false);
 -- Name: household_memberships_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.household_memberships_id_seq', 4, true);
+SELECT pg_catalog.setval('public.household_memberships_id_seq', 5, true);
 
 
 --
@@ -805,7 +910,7 @@ SELECT pg_catalog.setval('public.land_records_id_seq', 1, false);
 -- Name: medical_records_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.medical_records_id_seq', 1, false);
+SELECT pg_catalog.setval('public.medical_records_id_seq', 2, true);
 
 
 --
@@ -826,7 +931,7 @@ SELECT pg_catalog.setval('public.outbox_events_id_seq', 1, false);
 -- Name: users_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.users_id_seq', 7, true);
+SELECT pg_catalog.setval('public.users_id_seq', 8, true);
 
 
 --
@@ -923,6 +1028,20 @@ ALTER TABLE ONLY public.outbox_events
 
 ALTER TABLE ONLY public.users
     ADD CONSTRAINT users_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: idx_audit_logs_log_code; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE UNIQUE INDEX idx_audit_logs_log_code ON public.audit_logs USING btree (log_code);
+
+
+--
+-- Name: idx_users_user_code; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE UNIQUE INDEX idx_users_user_code ON public.users USING btree (user_code);
 
 
 --
@@ -1380,5 +1499,5 @@ ALTER TABLE ONLY public.users
 -- PostgreSQL database dump complete
 --
 
-\unrestrict X0iMGC9ZMhEjt3ZnPPP1q6zpKfTexqruJeoqcRFJzShFfOrbYpKzFyfwc4rft2e
+\unrestrict TzIHL7u7nX4ICZebdSigyUc1ocfgKP2IKFqJyBQ4UHIsXieT15SfHkmPRDqhhpb
 

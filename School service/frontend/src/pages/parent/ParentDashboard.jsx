@@ -48,6 +48,50 @@ export default function ParentDashboard() {
   const [replySubmittingId, setReplySubmittingId] = useState(null)
   const [selectedStage2AppId, setSelectedStage2AppId] = useState(null)
 
+  // Direct Child Profile Edit State (Parent Student Account Management)
+  const [editingChild, setEditingChild] = useState(null)
+  const [editName, setEditName] = useState('')
+  const [editDOB, setEditDOB] = useState('')
+  const [editGender, setEditGender] = useState('Female')
+  const [editLanguage, setEditLanguage] = useState('Kannada')
+  const [editSaving, setEditSaving] = useState(false)
+  const [editMsg, setEditMsg] = useState(null)
+
+  function openEditModal(child) {
+    setEditingChild(child)
+    setEditName(child.student_name || '')
+    setEditDOB(child.date_of_birth || '')
+    setEditGender(child.gender || 'Female')
+    setEditLanguage(child.first_language || 'Kannada')
+    setEditMsg(null)
+  }
+
+  async function handleSaveChildProfile(e) {
+    e.preventDefault()
+    if (!editingChild) return
+    setEditSaving(true)
+    setEditMsg(null)
+    try {
+      await apiPost(
+        `/parent/children/${editingChild.permanent_student_id}/profile`,
+        {
+          student_name: editName,
+          date_of_birth: editDOB,
+          gender: editGender,
+          first_language: editLanguage,
+        },
+        token
+      )
+      setSuccess(`Profile for ${editName} successfully updated in official school records!`)
+      setEditingChild(null)
+      loadParentData()
+    } catch (err) {
+      setEditMsg({ type: 'error', text: err.message || 'Failed to update student profile.' })
+    } finally {
+      setEditSaving(false)
+    }
+  }
+
   // Load parent data
   async function loadAdmissionApps() {
     if (!token) return
@@ -362,37 +406,83 @@ export default function ParentDashboard() {
               </div>
             ) : (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.25rem' }}>
-                {children.map(child => (
-                  <div key={child.permanent_student_id} className="card" style={{ border: '1px solid #d0d5dd', borderRadius: '8px', padding: '1.5rem', background: '#ffffff' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
-                      <span className="badge badge--success">Verified Link</span>
-                      <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#6b7280' }}>
-                        PSID: {child.permanent_student_id}
-                      </span>
-                    </div>
+                {children.map(child => {
+                  const isCentralEligible = child.enrollment_status === 'eligible_for_admission'
+                  return (
+                    <div key={child.permanent_student_id} className="card" style={{ border: '1px solid #d0d5dd', borderRadius: '8px', padding: '1.5rem', background: '#ffffff', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                      <div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
+                          <span className={isCentralEligible ? "badge badge--warning" : "badge badge--success"}>
+                            {isCentralEligible ? '🏛️ Central Citizen Registry' : 'Verified Linked Student'}
+                          </span>
+                          <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#6b7280' }}>
+                            {child.citizen_code ? `Citizen: ${child.citizen_code}` : `PSID: ${child.permanent_student_id}`}
+                          </span>
+                        </div>
 
-                    <h3 style={{ fontSize: '1.25rem', color: '#1a3a6b', margin: '0 0 0.25rem 0' }}>
-                      {child.student_name}
-                    </h3>
-                    <div style={{ color: '#4b5563', fontSize: '0.875rem', marginBottom: '0.75rem' }}>
-                      🏫 {child.school_name || child.school_id}
-                    </div>
+                        <h3 style={{ fontSize: '1.25rem', color: '#1a3a6b', margin: '0 0 0.25rem 0' }}>
+                          {child.student_name}
+                        </h3>
+                        <div style={{ color: '#4b5563', fontSize: '0.875rem', marginBottom: '0.75rem' }}>
+                          🏫 {child.school_name || (child.school_id ? child.school_id : 'Central Household Dependent')}
+                        </div>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.5rem', background: '#f8fafc', padding: '0.75rem', borderRadius: '6px', fontSize: '0.8125rem', marginBottom: '1rem' }}>
-                      <div>Standard: <strong>Class {child.standard}</strong></div>
-                      <div>Section: <strong>{child.section}</strong></div>
-                      <div>Language: <strong>{child.first_language || 'Kannada'}</strong></div>
-                      <div>Status: <strong>{child.enrollment_status || 'Active'}</strong></div>
-                    </div>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.5rem', background: '#f8fafc', padding: '0.75rem', borderRadius: '6px', fontSize: '0.8125rem', marginBottom: '1rem' }}>
+                          <div>Class: <strong>{child.standard ? `Class ${child.standard}` : 'Primary'}</strong></div>
+                          <div>Section: <strong>{child.section || '-'}</strong></div>
+                          <div>Language: <strong>{child.first_language || 'Kannada'}</strong></div>
+                          <div>DOB: <strong>{child.date_of_birth || 'Registered'}</strong></div>
+                          <div style={{ gridColumn: 'span 2' }}>
+                            Status: <strong style={{ color: isCentralEligible ? '#b54708' : '#027a48' }}>
+                              {isCentralEligible ? 'Eligible for School Admission' : (child.enrollment_status || 'Active Enrolled')}
+                            </strong>
+                          </div>
+                        </div>
+                      </div>
 
-                    <button
-                      onClick={() => viewRecords(child)}
-                      className="btn btn--secondary btn--full btn--sm"
-                    >
-                      View Academic Results & Documents →
-                    </button>
-                  </div>
-                ))}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                        {isCentralEligible ? (
+                          <Link
+                            to={`/schools?applicant_name=${encodeURIComponent(child.student_name)}&dob=${encodeURIComponent(child.date_of_birth || '')}`}
+                            className="btn btn--primary btn--full btn--sm"
+                            style={{ textAlign: 'center', textDecoration: 'none' }}
+                          >
+                            🏫 Apply for School Admission →
+                          </Link>
+                        ) : (
+                          <>
+                            <button
+                              onClick={() => viewRecords(child)}
+                              className="btn btn--secondary btn--full btn--sm"
+                            >
+                              📊 View Academic Results & Documents →
+                            </button>
+                            <div style={{ display: 'flex', gap: '0.5rem' }}>
+                              <button
+                                onClick={() => openEditModal(child)}
+                                className="btn btn--outline btn--sm"
+                                style={{ flex: 1, fontSize: '0.75rem' }}
+                              >
+                                ✏️ Edit Profile Details
+                              </button>
+                              <button
+                                onClick={() => {
+                                  setFormStudentRef(child.student_id || child.permanent_student_id)
+                                  setFormSchoolId(child.school_id || '')
+                                  setActiveTab('update-request')
+                                }}
+                                className="btn btn--outline btn--sm"
+                                style={{ flex: 1, fontSize: '0.75rem' }}
+                              >
+                                📝 Field Request
+                              </button>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  )
+                })}
               </div>
             )}
           </div>
@@ -838,6 +928,116 @@ export default function ParentDashboard() {
                 ))}
               </div>
             )}
+          </div>
+        )}
+
+        {/* Modal: Direct Parent Student Profile Edit */}
+        {editingChild && (
+          <div style={{ position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.65)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem', zIndex: 1000, backdropFilter: 'blur(2px)' }}>
+            <div className="card" style={{ maxWidth: '520px', width: '100%', padding: '2rem', border: '1px solid #d0d5dd', borderRadius: '12px', background: '#ffffff', position: 'relative', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #e8eaed', paddingBottom: '0.75rem', marginBottom: '1.25rem' }}>
+                <h3 style={{ margin: 0, color: '#1a3a6b', fontSize: '1.25rem' }}>
+                  ✏️ Edit Student Account Details
+                </h3>
+                <button
+                  onClick={() => setEditingChild(null)}
+                  style={{ background: '#f1f5f9', border: 'none', width: '32px', height: '32px', borderRadius: '16px', fontSize: '1rem', cursor: 'pointer', color: '#475467' }}
+                >
+                  ✕
+                </button>
+              </div>
+
+              {editMsg && (
+                <Alert type={editMsg.type} style={{ marginBottom: '1rem' }}>
+                  {editMsg.text}
+                </Alert>
+              )}
+
+              <p style={{ fontSize: '0.85rem', color: '#475467', marginBottom: '1rem' }}>
+                As a verified parent, changes saved here update your child's student record directly across official education systems.
+              </p>
+
+              <form onSubmit={handleSaveChildProfile}>
+                <div style={{ marginBottom: '1rem' }}>
+                  <label className="form-label" style={{ display: 'block', fontWeight: 600, fontSize: '0.875rem', marginBottom: '0.25rem' }}>
+                    Student Full Name *
+                  </label>
+                  <input
+                    type="text"
+                    className="form-input"
+                    value={editName}
+                    onChange={e => setEditName(e.target.value)}
+                    required
+                    style={{ width: '100%', padding: '0.5rem', border: '1px solid #d0d5dd', borderRadius: '6px' }}
+                  />
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '1rem' }}>
+                  <div>
+                    <label className="form-label" style={{ display: 'block', fontWeight: 600, fontSize: '0.875rem', marginBottom: '0.25rem' }}>
+                      Date of Birth
+                    </label>
+                    <input
+                      type="date"
+                      className="form-input"
+                      value={editDOB}
+                      onChange={e => setEditDOB(e.target.value)}
+                      style={{ width: '100%', padding: '0.5rem', border: '1px solid #d0d5dd', borderRadius: '6px' }}
+                    />
+                  </div>
+                  <div>
+                    <label className="form-label" style={{ display: 'block', fontWeight: 600, fontSize: '0.875rem', marginBottom: '0.25rem' }}>
+                      Gender
+                    </label>
+                    <select
+                      className="form-input"
+                      value={editGender}
+                      onChange={e => setEditGender(e.target.value)}
+                      style={{ width: '100%', padding: '0.5rem', border: '1px solid #d0d5dd', borderRadius: '6px' }}
+                    >
+                      <option value="Female">Female</option>
+                      <option value="Male">Male</option>
+                      <option value="Other">Other</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div style={{ marginBottom: '1.5rem' }}>
+                  <label className="form-label" style={{ display: 'block', fontWeight: 600, fontSize: '0.875rem', marginBottom: '0.25rem' }}>
+                    First Language Preference
+                  </label>
+                  <select
+                    className="form-input"
+                    value={editLanguage}
+                    onChange={e => setEditLanguage(e.target.value)}
+                    style={{ width: '100%', padding: '0.5rem', border: '1px solid #d0d5dd', borderRadius: '6px' }}
+                  >
+                    <option value="Kannada">Kannada</option>
+                    <option value="Hindi">Hindi</option>
+                    <option value="Sanskrit">Sanskrit</option>
+                    <option value="English">English</option>
+                  </select>
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
+                  <button
+                    type="button"
+                    onClick={() => setEditingChild(null)}
+                    className="btn btn--secondary"
+                    disabled={editSaving}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="btn btn--primary"
+                    disabled={editSaving}
+                  >
+                    {editSaving ? 'Saving Changes...' : 'Save Student Changes'}
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
         )}
 

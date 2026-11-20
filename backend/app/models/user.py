@@ -24,6 +24,7 @@ class User(Base):
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    user_code = Column(String(50), unique=True, index=True, nullable=True)
     email = Column(String(255), unique=True, index=True, nullable=False)
     phone_number = Column(String(30), unique=True, index=True, nullable=True)
     password_hash = Column(String(255), nullable=False)
@@ -47,6 +48,12 @@ class User(Base):
     @property
     def has_face_enrolled(self) -> bool:
         return self.face_data is not None
+
+    @property
+    def display_code(self) -> str:
+        if self.user_code:
+            return self.user_code
+        return f"USR-2026-{self.id:04d}" if self.id else f"USR-2026-PENDING"
 
     # Relationships
     citizen_profile = relationship("CitizenProfile", back_populates="user", uselist=False, cascade="all, delete-orphan")

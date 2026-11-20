@@ -1,4 +1,5 @@
 import json
+import uuid
 from typing import Optional, Dict, Any
 from sqlalchemy.orm import Session
 from app.models.audit import AuditLog
@@ -25,6 +26,7 @@ def record_audit_log(
             safe_details[k] = v
 
     log_entry = AuditLog(
+        log_code=f"AUD-2026-{uuid.uuid4().hex[:8].upper()}",
         actor_id=actor.id if actor else None,
         actor_email=actor.email if actor else "system",
         action=action,

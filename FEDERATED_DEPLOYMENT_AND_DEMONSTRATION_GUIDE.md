@@ -221,3 +221,76 @@ Open 3 terminal tabs to show the 3 independent databases:
 - Open: **[https://github.com/VIDYASAGAR08/nagriksetu/actions](https://github.com/VIDYASAGAR08/nagriksetu/actions)**
 - **What to say:**
   > *"We have an enterprise-grade CI/CD pipeline running on GitHub Actions. Every commit automatically builds the TypeScript frontends in parallel, executes 55+ automated pytest tests across PostgreSQL and MySQL service containers, verifies Docker Compose images, and packages release deployment manifests."*
+
+### Step 6: Demonstrate Cross-Service Single Sign-On (SSO)
+Demonstrate that a citizen only registers once, and can access all independent services with the exact same credentials:
+1. **Central Portal (`http://localhost:5173`)**:
+   - Citizen `aarav.sharma@example.com` / `CitizenPass123!@` is registered in Central PostgreSQL registry.
+2. **School Education Portal (`http://localhost:5174/login`)**:
+   - Enter `aarav.sharma@example.com` and `CitizenPass123!@`.
+   - **Click Login**: The School service instantly federates with Central Portal via `/api/v1/auth/federated-verify`, verifies credentials with Argon2, auto-provisions a verified parent account (`PRN-2026-XXXXXX`), links their household children, and logs in directly to the Parent Dashboard!
+3. **Skill Development Portal (`http://localhost:5175/login`)**:
+   - Enter `aarav.sharma@example.com` and `CitizenPass123!@`.
+   - **Click Sign In**: Skill Development service authenticates via Central Portal, provisions the citizen account (`CIT-88219011`), and takes the citizen directly into the vocational skill dashboard!
+
+### Step 7: Demonstrate Parent Student Access & School Applications
+1. On **School Portal (`http://localhost:5174/parent`)**:
+   - Notice the **"My Children"** tab:
+     - Shows **Asha Sharma** (Daughter), linked directly from the Central Citizen Household Registry (`HHD-1001-BLR`)!
+     - Click **"📊 View Academic Results & Documents"**: View real-time marks, attendance, and official report cards.
+     - Click **"✏️ Edit Profile Details"**: Parents can directly update student name, date of birth, gender, and language preference. Changes update school records and write to the audit trail (`AUD-SCH-2026-XXXX`).
+     - Click **"📝 Field Request"**: Submit formal official update requests with supporting certificates.
+   - Go to **"Admissions Desk"** (`/parent?tab=admissions`):
+     - View applications submitted for children (`APP-2026-SCH002-EF1E88`).
+     - Parents can apply for new admissions to any School, PU College, or Polytechnic directly on behalf of their child with one click!
+
+---
+
+## 4. Standardized Domain-Prefixed Business ID Architecture
+
+To satisfy strict enterprise security and government audit standards, **naive integer IDs (`1, 2, 3...`) have been eliminated from all external APIs, interfaces, and primary business identifiers**. Every record uses a domain-prefixed, year-stamped, collision-resistant identifier:
+
+| Microservice | Entity Domain | Professional Business ID Format | Example Identifier |
+| :--- | :--- | :--- | :--- |
+| **Central Portal (Postgres)** | Citizen Registry | `CIT-YYYY-XXXXXX` | `CIT-2026-CH001`, `CIT-88219011` |
+| **Central Portal (Postgres)** | User Accounts | `USR-YYYY-XXXX` | `USR-2026-0003`, `USR-2026-0004` |
+| **Central Portal (Postgres)** | Households | `HHD-YYYY-XXXX` | `HHD-2026-1001BLR`, `HHD-1001-BLR` |
+| **Central Portal (Postgres)** | Memberships | `HMB-YYYY-XXXXXX` | `HMB-2026-000003` |
+| **Central Portal (Postgres)** | Audit Events | `AUD-YYYY-XXXXXX` | `AUD-2026-7A8B9C` |
+| **Central Portal (Postgres)** | Education Record | `EDU-YYYY-XXXXXX` | `EDU-2026-000001` |
+| **School Service (SQLite)** | Institutions | `SCH-XXX` / `SCH-BLR-XXX` | `SCH001`, `SCH002` |
+| **School Service (SQLite)** | Enrolled Students | `STU-YYYY-XXXX` & `NS-XXXX` | `SCH01125`, `NS-FB8336A812DE468FB8E475443CF673EB` |
+| **School Service (SQLite)** | Parents / Guardians | `PRN-YYYY-XXXX` / `GRD-YYYY-XXXX` | `PRN-2026-2F2ED4`, `GRD-2026-A1B2C3` |
+| **School Service (SQLite)** | Student-Parent Link | `SGL-YYYY-XXXX` | `SGL-2026-E5F6G7` |
+| **School Service (SQLite)** | Admission Application | `APP-YYYY-INST-XXXX` | `APP-2026-SCH002-EF1E88` |
+| **School Service (SQLite)** | Update Request | `UPR-YYYY-XXXX` | `UPR-2026-D4E5F6` |
+| **Skill Service (MySQL)** | Citizen Reference | `CIT-YYYY-XXXXXX` | `CIT-000002`, `CIT-2026-000003` |
+| **Skill Service (MySQL)** | Training Program | `PRG-YYYY-XXXX` | `PRG-2026-0001`, `PRG-0001` |
+| **Skill Service (MySQL)** | Training Batch | `BAT-YYYY-XXXX` | `BAT-2026-0001`, `BAT-0001` |
+| **Skill Service (MySQL)** | Enrollment Record | `ENR-YYYY-XXXXXX` | `ENR-2026-000001`, `ENR-000001` |
+| **Skill Service (MySQL)** | Skill Certificate | `CRT-YYYY-XXXXXX` | `CRT-2026-000001`, `CRT-000001` |
+| **Skill Service (MySQL)** | Training Centre | `CTR-YYYY-XXXX` | `CTR-0001`, `CTR-0002` |
+
+---
+
+## 5. How to Open & Show the 3 Independent Databases to Evaluators
+
+Evaluators can inspect the databases in two convenient ways:
+
+### Option A: Open the SQL Dump Files Directly
+Pre-generated standard SQL dump files are ready in the `database_dumps/` directory:
+- [central_civic_portal_postgres.sql](file:///Users/macbookpro/Documents/sad%201/database_dumps/central_civic_portal_postgres.sql) — Full PostgreSQL civic schema, citizen profiles, households, and audit logs.
+- [school_education_service.sql](file:///Users/macbookpro/Documents/sad%201/database_dumps/school_education_service.sql) — Complete SQLite schema, schools, student records, admissions, and parent linkages.
+- [skill_development_service.sql](file:///Users/macbookpro/Documents/sad%201/database_dumps/skill_development_service.sql) — MySQL schema, vocational skills, training programmes, batches, and certificates.
+
+You can double-click or open any of these `.sql` files directly in TablePlus, DBeaver, VS Code, or any text editor to show the teacher the table definitions and row inserts.
+
+### Option B: Live GUI Connection (TablePlus / DBeaver)
+
+| Service | Database Type | Host | Port | Database Name | Username | Password |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **Central Portal** | PostgreSQL | `127.0.0.1` | **5432** | `civicadmin_db` | `postgres` | `postgres` |
+| **School Service** | SQLite 3 | *File Path* | — | `./School service/backend/data/nagriksetu.db` | — | — |
+| **Skill Service** | MySQL 8.4 | `127.0.0.1` | **3308** | `skill_db` | `root` | `root_password_2026` |
+*(Note for TablePlus MySQL connection: Use `127.0.0.1` and port `3308` rather than `localhost` to connect directly over TCP).*
+
