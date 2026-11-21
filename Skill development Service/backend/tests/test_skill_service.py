@@ -95,13 +95,15 @@ def test_auth_and_citizen_isolation():
     token_b = res_b.json()["access_token"]
     citizen_ref_b = res_b.json()["citizen_ref"]
 
-    # Citizen A submits enrolment for program 1 with verified enrolment OTP
+    # Citizen A submits enrolment for first program with verified enrolment OTP
+    available_progs = client.get("/api/programmes").json()
+    prog_1_id = available_progs[0]["id"]
     enrol_otp_ref_a = create_verified_otp(phone_a, "ENROLMENT", citizen_ref_a)
     res_enr = client.post(
         "/api/enrollments",
         headers={"Authorization": f"Bearer {token_a}"},
         json={
-            "program_id": 1,
+            "program_id": prog_1_id,
             "applicant_statement": "Looking forward to training",
             "otp_reference": enrol_otp_ref_a
         }
@@ -141,12 +143,14 @@ def test_duplicate_enrolment_and_batch_capacity():
     citizen_ref = res_user.json()["citizen_ref"]
 
     # First enrolment with verified OTP
+    available_progs = client.get("/api/programmes").json()
+    prog_2_id = available_progs[1]["id"]
     enr_otp_1 = create_verified_otp(phone, "ENROLMENT", citizen_ref)
     res1 = client.post(
         "/api/enrollments",
         headers={"Authorization": f"Bearer {token}"},
         json={
-            "program_id": 2,
+            "program_id": prog_2_id,
             "applicant_statement": "First apply",
             "otp_reference": enr_otp_1
         }
@@ -159,7 +163,7 @@ def test_duplicate_enrolment_and_batch_capacity():
         "/api/enrollments",
         headers={"Authorization": f"Bearer {token}"},
         json={
-            "program_id": 2,
+            "program_id": prog_2_id,
             "applicant_statement": "Duplicate apply",
             "otp_reference": enr_otp_2
         }
@@ -192,13 +196,15 @@ def test_full_training_lifecycle_attendance_modules_assessments_certificate():
     learner_token = learner.json()["access_token"]
     learner_ref = learner.json()["citizen_ref"]
 
-    # 3. Enrol in Program 3
+    # 3. Enrol in active Program
+    available_progs = client.get("/api/programmes").json()
+    prog_3_id = available_progs[2]["id"]
     enr_otp_l = create_verified_otp(phone_learner, "ENROLMENT", learner_ref)
     enr_res = client.post(
         "/api/enrollments",
         headers={"Authorization": f"Bearer {learner_token}"},
         json={
-            "program_id": 3,
+            "program_id": prog_3_id,
             "applicant_statement": "Skill development participant",
             "otp_reference": enr_otp_l
         }
@@ -458,11 +464,12 @@ def test_training_programme_creation_and_discovery():
     admin_token = admin_login.json()["access_token"]
 
     # 1. Create programme (FR-SKL-008)
+    first_skill_id = client.get("/api/skills").json()["items"][0]["id"]
     prg_res = client.post(
         "/api/admin/programmes",
         headers={"Authorization": f"Bearer {admin_token}"},
         json={
-            "skill_id": 1,
+            "skill_id": first_skill_id,
             "title": "Government Accelerated Python Cloud Services Programme",
             "description": "Intensive program covering REST APIs and cloud containerization.",
             "mode": "Hybrid",
