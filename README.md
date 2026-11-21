@@ -1,7 +1,6 @@
 # NagrikSetu (नागरिक सेतु) — Unified Civic & Citizen Services Platform
 
 [![CI Pipeline](https://github.com/VIDYASAGAR08/nagriksetu/actions/workflows/ci.yml/badge.svg)](https://github.com/VIDYASAGAR08/nagriksetu/actions/workflows/ci.yml)
-[![CD Pipeline](https://github.com/VIDYASAGAR08/nagriksetu/actions/workflows/cd.yml/badge.svg)](https://github.com/VIDYASAGAR08/nagriksetu/actions/workflows/cd.yml)
 [![Docker Compose](https://img.shields.io/badge/Docker%20Compose-8%20Containers%20Orchestrated-blue?logo=docker)](https://github.com/VIDYASAGAR08/nagriksetu)
 [![Federated Services](https://img.shields.io/badge/Services-Central%20%7C%20School%20%7C%20Skill-brightgreen)](https://github.com/VIDYASAGAR08/nagriksetu)
 
@@ -292,23 +291,16 @@ npm --prefix "Skill development Service/frontend" run build
 
 ---
 
-## Continuous Integration & Deployment (CI/CD) Pipeline
+## Continuous Integration (CI) Pipeline
 
-NagrikSetu features an automated, enterprise-grade GitHub Actions CI/CD pipeline defined in [`.github/workflows/`](file:///.github/workflows/):
+NagrikSetu features an automated, enterprise-grade GitHub Actions CI pipeline defined in [`.github/workflows/ci.yml`](file:///.github/workflows/ci.yml):
 
-### 1. Continuous Integration (`ci.yml`)
 Triggers automatically on every `push` and `pull_request` targeting the `main` branch:
-- **Frontend Matrix:** Parallel Node.js 20 builds for all 3 portals (`frontend/`, `School service/frontend/`, `Skill development Service/frontend/`) validating TypeScript types and production Vite bundle generation.
+- **Frontend Matrix:** Parallel Node.js 22 (LTS) builds for all 3 portals (`frontend/`, `School service/frontend/`, `Skill development Service/frontend/`) validating TypeScript types and production Vite bundle generation.
 - **Central Backend CI:** Python 3.12 environment executing flake8 syntax analysis and the full 46-test Pytest suite.
 - **Skill Backend CI:** Python 3.11 environment with an automated **MySQL 8.4 service container** executing unit and schema test suites.
 - **Docker Compose Verification:** Validates `docker-compose.yml` syntax (`docker compose config`) and tests parallel builds across all 6 custom application images.
 - **Status Gate:** Acts as the required branch protection gate before code merges.
-
-### 2. Continuous Deployment (`cd.yml`)
-Triggers on merge/push to `main` or via manual `workflow_dispatch`:
-- **Pre-flight Check:** Extracts Git metadata, generates deployment bundle artifacts (`docker-compose.resolved.yml`, `release-metadata.json`), and uploads 14-day retention bundles.
-- **Container Packaging:** Builds and validates production containers ready for registry publication.
-- **Deployment Report:** Automatically posts a structured Markdown deployment manifest to GitHub step summaries detailing all 8 orchestrated services and health ingress.
 
 ---
 
