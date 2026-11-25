@@ -455,3 +455,4 @@ def test_skill_gap_analysis_and_training_mapping():
     # Verify Training Mapping (FR-SKL-023)
     assert len(data["recommended_courses"]) > 0
     assert all("skill_name" in c and "reason" in c for c in data["recommended_courses"])
+# CI trigger timestamp: Wed Nov 25 21:23:16 IST 2026
