@@ -356,7 +356,7 @@ export default function AdmissionDeskTab({ schoolId, permissions = {}, effective
               style={{ padding: '0.45rem 0.75rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.85rem' }}
             >
               <option value="all">All Levels</option>
-              <option value="school">School (K-10)</option>
+              <option value="school">School</option>
               <option value="higher_secondary">Pre-University (PU)</option>
               <option value="diploma">Diploma / Polytechnic</option>
               <option value="undergraduate">Undergraduate Degree</option>

@@ -1,4 +1,3 @@
-
 services:
   skill-backend:
     build: ./backend
@@ -6,8 +5,8 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     environment:
-      DATABASE_URL: mysql+pymysql://${MYSQL_USER:-nagriksetu_skill}:${MYSQL_PASSWORD:-skill-app-pass-2026}@host.docker.internal:3308/${MYSQL_DATABASE:-skill_db}
-      RABBITMQ_URL: amqp://${RABBITMQ_DEFAULT_USER:-nagriksetu}:${RABBITMQ_DEFAULT_PASS:-rabbitmq-pass-2026}@host.docker.internal:5672/
+      DATABASE_URL: mysql+pymysql://${MYSQL_USER:-nagriksetu_skill}:${MYSQL_PASSWORD:-skill-app-pass-2026}@skill-service-db:3306/${MYSQL_DATABASE:-skill_db}
+      RABBITMQ_URL: amqp://${RABBITMQ_DEFAULT_USER:-nagriksetu}:${RABBITMQ_DEFAULT_PASS:-rabbitmq-pass-2026}@skill-rabbitmq:5672/
       JWT_SECRET: ${JWT_SECRET:-nagriksetu-skill-super-secret-key-2026-xyz-32char}
       ADMIN_EMAIL: ${ADMIN_EMAIL:-skill.admin@nagriksetu.local}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:-SkillAdmin@2026!}
@@ -23,6 +22,10 @@ services:
       APP_ENV: ${APP_ENV:-development}
     ports:
       - "${SKILL_BACKEND_PORT:-8003}:8000"
+    networks:
+      - default
+      - db-network
+      - rabbitmq-network
     restart: unless-stopped
 
   skill-frontend:
@@ -32,4 +35,15 @@ services:
       - "${SKILL_FRONTEND_PORT:-5173}:80"
     depends_on:
       - skill-backend
+    networks:
+      - default
     restart: unless-stopped
+
+networks:
+  default:
+  db-network:
+    external: true
+    name: nagriksetu_skill_dev_microservice_default
+  rabbitmq-network:
+    external: true
+    name: nagriksetu_skilldevelopment_final_default

@@ -9,12 +9,31 @@ class Account(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     email = Column(String(190), unique=True, index=True, nullable=False)
     password_hash = Column(String(256), nullable=False)
-    role = Column(String(40), default="CITIZEN", index=True, nullable=False) # CITIZEN, SKILL_DEPARTMENT_ADMIN
+    role = Column(String(40), default="CITIZEN", index=True, nullable=False) # CITIZEN, TRAINING_CENTRE_ADMIN, GOVERNMENT_ADMIN, SKILL_DEPARTMENT_ADMIN
     citizen_ref = Column(String(80), unique=True, index=True, nullable=True) # e.g. CIT-100234
+    student_id = Column(String(36), unique=True, index=True, nullable=True) # Permanent Student ID for enrolled citizens
+    centre_id = Column(Integer, ForeignKey("training_centres.id"), nullable=True) # Assigned centre for TRAINING_CENTRE_ADMIN
     full_name = Column(String(180), nullable=True)
     phone = Column(String(30), nullable=True)
     active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+    centre = relationship("TrainingCentre", foreign_keys=[centre_id], backref="centre_admins")
+    assigned_centres = relationship("AdminCentreAssignment", back_populates="account", cascade="all, delete-orphan")
+
+class AdminCentreAssignment(Base):
+    __tablename__ = "admin_centre_assignments"
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    account_id = Column(Integer, ForeignKey("accounts.id", ondelete="CASCADE"), nullable=False, index=True)
+    centre_id = Column(Integer, ForeignKey("training_centres.id", ondelete="CASCADE"), nullable=False, index=True)
+    assigned_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+    account = relationship("Account", back_populates="assigned_centres")
+    centre = relationship("TrainingCentre", backref="admin_assignments")
+
+    __table_args__ = (
+        UniqueConstraint("account_id", "centre_id", name="uq_admin_centre"),
+    )
 
 class Category(Base):
     __tablename__ = "categories"
@@ -23,6 +42,20 @@ class Category(Base):
     name = Column(String(120), unique=True, index=True, nullable=False)
     description = Column(Text, nullable=True)
     icon_name = Column(String(50), default="BookOpen")
+
+    subcategories = relationship("Subcategory", backref="category", cascade="all, delete-orphan")
+
+class Subcategory(Base):
+    __tablename__ = "subcategories"
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    code = Column(String(24), unique=True, index=True, nullable=False) # SUB-001
+    category_id = Column(Integer, ForeignKey("categories.id", ondelete="CASCADE"), nullable=False)
+    name = Column(String(120), nullable=False)
+    description = Column(Text, nullable=True)
+    icon_name = Column(String(50), default="Folder")
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    skills = relationship("Skill", backref="subcategory")
 
 class TrainingCentre(Base):
     __tablename__ = "training_centres"
@@ -40,6 +73,18 @@ class TrainingCentre(Base):
     latitude = Column(Float, nullable=True)
     longitude = Column(Float, nullable=True)
     active = Column(Boolean, default=True)
+    approval_status = Column(String(40), default="APPROVED", index=True, nullable=False) # APPROVED, PENDING_APPROVAL, REJECTED, SUSPENDED
+    rejection_reason = Column(Text, nullable=True)
+    establishment_year = Column(Integer, nullable=True)
+    website = Column(String(255), nullable=True)
+    description = Column(Text, nullable=True)
+    history = Column(Text, nullable=True)
+    mission_objectives = Column(Text, nullable=True)
+    achievements = Column(Text, nullable=True)
+    certifications = Column(Text, nullable=True)
+    classroom_count = Column(Integer, default=5)
+    lab_details = Column(Text, nullable=True)
+    equipment_details = Column(Text, nullable=True)
 
 class Trainer(Base):
     __tablename__ = "trainers"
@@ -64,6 +109,8 @@ class Skill(Base):
     name = Column(String(180), unique=True, index=True, nullable=False)
     category_id = Column(Integer, ForeignKey("categories.id"), nullable=True)
     category_name = Column(String(120), index=True, nullable=False)
+    subcategory_id = Column(Integer, ForeignKey("subcategories.id"), nullable=True)
+    subcategory_name = Column(String(120), index=True, nullable=True)
     level = Column(String(40), default="Beginner", index=True) # Beginner, Intermediate, Advanced
     duration_weeks = Column(Integer, default=6)
     duration_hours = Column(Integer, default=40)
@@ -174,6 +221,7 @@ class Enrollment(Base):
     __tablename__ = "enrollments"
     id = Column(Integer, primary_key=True, autoincrement=True)
     code = Column(String(28), unique=True, index=True, nullable=False) # ENR-000001
+    student_id = Column(String(36), index=True, nullable=True) # Permanent Student ID (shared across all enrollments of the citizen)
     citizen_ref = Column(String(80), index=True, nullable=False)
     program_id = Column(Integer, ForeignKey("training_programs.id"), nullable=False)
     batch_id = Column(Integer, ForeignKey("batches.id"), nullable=True)
@@ -193,7 +241,13 @@ class Enrollment(Base):
     certificate_issued = Column(Boolean, default=False)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    centre_id = Column(Integer, ForeignKey("training_centres.id"), nullable=True, index=True)
+    rejection_reason = Column(Text, nullable=True)
+    decision_by_admin_id = Column(Integer, nullable=True)
+    decision_timestamp = Column(DateTime, nullable=True)
+    internal_notes = Column(Text, nullable=True) # Private internal review notes for centre admin
 
+    centre = relationship("TrainingCentre", foreign_keys=[centre_id], backref="centre_enrollments")
     program = relationship("TrainingProgram", backref="enrollments")
     batch = relationship("Batch", backref="enrollments")
     history = relationship("EnrollmentStatusHistory", backref="enrollment", cascade="all, delete-orphan")
@@ -343,7 +397,7 @@ class OTPVerificationSession(Base):
     __tablename__ = "otp_verification_sessions"
     id = Column(Integer, primary_key=True, autoincrement=True)
     reference = Column(String(80), unique=True, index=True, nullable=False)
-    phone = Column(String(120), index=True, nullable=False)
+    phone = Column(String(40), index=True, nullable=False)
     citizen_ref = Column(String(80), index=True, nullable=True)
     purpose = Column(String(60), nullable=False) # REGISTRATION, ENROLMENT, PROFILE_PHONE_UPDATE
     provider = Column(String(40), default="OTP.dev")

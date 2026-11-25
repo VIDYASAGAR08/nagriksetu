@@ -83,6 +83,18 @@ def create_tables():
                 "gender": "TEXT",
                 "admission_date": "TEXT",
                 "enrollment_status": "TEXT NOT NULL DEFAULT 'active'",
+                "blood_group": "TEXT",
+                "social_category": "TEXT",
+                "address": "TEXT",
+                "district": "TEXT",
+                "state": "TEXT NOT NULL DEFAULT 'Karnataka'",
+                "pincode": "TEXT",
+                "contact_number": "TEXT",
+                "student_email": "TEXT",
+                "roll_number": "TEXT",
+                "medium_of_instruction": "TEXT",
+                "aadhaar_masked": "TEXT",
+                "is_synthetic_demo": "INTEGER NOT NULL DEFAULT 1",
             }
             for column, definition in student_columns.items():
                 add_column_if_missing(
@@ -569,6 +581,14 @@ def create_tables():
             add_column_if_missing(connection, "academic_results", "percentage", "REAL")
             add_column_if_missing(connection, "academic_results", "recorded_by_user_id", "TEXT")
             add_column_if_missing(connection, "academic_results", "updated_at", "TEXT")
+            connection.execute("""
+                CREATE INDEX IF NOT EXISTS idx_academic_results_perm_id
+                ON academic_results(permanent_student_id)
+            """)
+            connection.execute("""
+                CREATE INDEX IF NOT EXISTS idx_student_documents_perm_id
+                ON student_documents(permanent_student_id)
+            """)
 
             connection.execute("""
                 CREATE TABLE IF NOT EXISTS academic_result_audits (
@@ -707,6 +727,246 @@ def create_tables():
                 CREATE INDEX IF NOT EXISTS idx_email_otps_lookup
                 ON email_otps(email, purpose, is_used)
             """)
+
+            # AI Question Bank table for NagrikSetu AI Assistant
+            connection.execute("""
+                CREATE TABLE IF NOT EXISTS ai_question_bank (
+                    id TEXT PRIMARY KEY,
+                    question_code TEXT UNIQUE NOT NULL,
+                    question_text TEXT NOT NULL,
+                    category TEXT NOT NULL,
+                    intended_role TEXT NOT NULL,
+                    intent TEXT NOT NULL,
+                    required_information TEXT,
+                    data_source TEXT,
+                    answer_method TEXT NOT NULL,
+                    expected_answer TEXT,
+                    is_active INTEGER NOT NULL DEFAULT 1,
+                    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+            connection.execute("""
+                CREATE UNIQUE INDEX IF NOT EXISTS idx_ai_question_bank_code
+                ON ai_question_bank(question_code)
+            """)
+            connection.execute("""
+                CREATE INDEX IF NOT EXISTS idx_ai_question_bank_category
+                ON ai_question_bank(category)
+            """)
+            connection.execute("""
+                CREATE INDEX IF NOT EXISTS idx_ai_question_bank_role
+                ON ai_question_bank(intended_role)
+            """)
+            connection.execute("""
+                CREATE INDEX IF NOT EXISTS idx_ai_question_bank_active
+                ON ai_question_bank(is_active)
+            """)
+            # Institution Registration Applications table
+            connection.execute("""
+                CREATE TABLE IF NOT EXISTS institution_applications (
+                    application_id TEXT PRIMARY KEY,
+                    application_ref TEXT UNIQUE NOT NULL,
+                    institution_id TEXT NOT NULL,
+                    institution_name TEXT NOT NULL,
+                    institution_type TEXT NOT NULL,
+                    institution_category TEXT NOT NULL,
+                    established_year INTEGER,
+                    affiliation TEXT,
+                    recognition TEXT,
+                    address_line1 TEXT,
+                    address_line2 TEXT,
+                    city TEXT,
+                    district TEXT NOT NULL,
+                    state TEXT NOT NULL DEFAULT 'Karnataka',
+                    pincode TEXT,
+                    country TEXT NOT NULL DEFAULT 'India',
+                    official_email TEXT NOT NULL,
+                    official_phone TEXT NOT NULL,
+                    website TEXT,
+                    academic_info_json TEXT,
+                    applicant_name TEXT NOT NULL,
+                    applicant_designation TEXT NOT NULL,
+                    applicant_email TEXT NOT NULL,
+                    applicant_phone TEXT NOT NULL,
+                    password_hash TEXT NOT NULL,
+                    status TEXT NOT NULL DEFAULT 'pending',
+                    review_comments TEXT,
+                    reviewed_by TEXT,
+                    reviewed_at TEXT,
+                    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+            connection.execute("""
+                CREATE INDEX IF NOT EXISTS idx_inst_app_status
+                ON institution_applications(status)
+            """)
+            connection.execute("""
+                CREATE INDEX IF NOT EXISTS idx_inst_app_inst_id
+                ON institution_applications(institution_id)
+            """)
+
+            # Institution-Issued Student Linking Codes table
+            connection.execute("""
+                CREATE TABLE IF NOT EXISTS institution_linking_codes (
+                    code_id TEXT PRIMARY KEY,
+                    permanent_student_id TEXT NOT NULL,
+                    student_id TEXT NOT NULL,
+                    institution_id TEXT NOT NULL,
+                    parent_user_id TEXT,
+                    code_hash TEXT NOT NULL,
+                    plain_code TEXT,
+                    attempts INTEGER NOT NULL DEFAULT 0,
+                    max_attempts INTEGER NOT NULL DEFAULT 5,
+                    is_used INTEGER NOT NULL DEFAULT 0,
+                    expires_at TEXT NOT NULL,
+                    created_at TEXT NOT NULL,
+                    FOREIGN KEY (permanent_student_id) REFERENCES students(permanent_student_id),
+                    FOREIGN KEY (institution_id) REFERENCES schools(school_id)
+                )
+            """)
+            connection.execute("""
+                CREATE INDEX IF NOT EXISTS idx_inst_linking_codes_student
+                ON institution_linking_codes(permanent_student_id, is_used)
+            """)
+            connection.execute("""
+                CREATE INDEX IF NOT EXISTS idx_inst_linking_codes_parent
+                ON institution_linking_codes(parent_user_id, is_used)
+            """)
+
+
+            # Centralized Service Requests & Correction Management System
+            connection.execute("""
+                CREATE TABLE IF NOT EXISTS service_requests (
+                    request_id TEXT PRIMARY KEY,
+                    tracking_number TEXT UNIQUE,
+                    title TEXT NOT NULL,
+                    category TEXT NOT NULL,
+                    description TEXT NOT NULL,
+                    priority TEXT DEFAULT 'medium',
+                    requester_user_id TEXT NOT NULL,
+                    requester_role TEXT NOT NULL,
+                    requester_name TEXT,
+                    requester_email TEXT,
+                    requester_phone TEXT,
+                    affected_person_type TEXT DEFAULT 'self',
+                    affected_student_id TEXT,
+                    permanent_student_id TEXT,
+                    affected_person_name TEXT,
+                    institution_id TEXT,
+                    target_module TEXT,
+                    target_record_id TEXT,
+                    field_name TEXT,
+                    current_value TEXT,
+                    requested_value TEXT,
+                    status TEXT NOT NULL DEFAULT 'SUBMITTED',
+                    routing_tier TEXT NOT NULL DEFAULT 'institution',
+                    assigned_institution_id TEXT,
+                    assigned_to_user_id TEXT,
+                    rejection_reason TEXT,
+                    clarification_prompt TEXT,
+                    requester_response TEXT,
+                    is_escalated INTEGER DEFAULT 0,
+                    escalated_to TEXT,
+                    escalated_at TEXT,
+                    submitted_at TEXT DEFAULT (DATETIME('now', 'localtime')),
+                    updated_at TEXT DEFAULT (DATETIME('now', 'localtime')),
+                    resolved_at TEXT,
+                    closed_at TEXT
+                )
+            """)
+            connection.execute("CREATE INDEX IF NOT EXISTS idx_sr_requester ON service_requests(requester_user_id)")
+            connection.execute("CREATE INDEX IF NOT EXISTS idx_sr_inst ON service_requests(assigned_institution_id)")
+            connection.execute("CREATE INDEX IF NOT EXISTS idx_sr_status ON service_requests(status)")
+            connection.execute("CREATE INDEX IF NOT EXISTS idx_sr_student ON service_requests(permanent_student_id)")
+            connection.execute("CREATE INDEX IF NOT EXISTS idx_sr_st_id ON service_requests(affected_student_id)")
+
+            connection.execute("""
+                CREATE TABLE IF NOT EXISTS request_attachments (
+                    attachment_id TEXT PRIMARY KEY,
+                    request_id TEXT NOT NULL,
+                    uploaded_by_user_id TEXT NOT NULL,
+                    file_name TEXT NOT NULL,
+                    file_type TEXT,
+                    file_size INTEGER,
+                    file_url_or_path TEXT,
+                    purpose TEXT DEFAULT 'supporting_document',
+                    created_at TEXT DEFAULT (DATETIME('now', 'localtime')),
+                    FOREIGN KEY (request_id) REFERENCES service_requests(request_id) ON DELETE CASCADE
+                )
+            """)
+            connection.execute("CREATE INDEX IF NOT EXISTS idx_ra_req ON request_attachments(request_id)")
+
+            connection.execute("""
+                CREATE TABLE IF NOT EXISTS request_remarks (
+                    remark_id TEXT PRIMARY KEY,
+                    request_id TEXT NOT NULL,
+                    author_user_id TEXT NOT NULL,
+                    author_name TEXT NOT NULL,
+                    author_role TEXT NOT NULL,
+                    message TEXT NOT NULL,
+                    visibility TEXT NOT NULL DEFAULT 'requester_visible',
+                    created_at TEXT DEFAULT (DATETIME('now', 'localtime')),
+                    FOREIGN KEY (request_id) REFERENCES service_requests(request_id) ON DELETE CASCADE
+                )
+            """)
+            connection.execute("CREATE INDEX IF NOT EXISTS idx_rr_req ON request_remarks(request_id)")
+
+            connection.execute("""
+                CREATE TABLE IF NOT EXISTS request_status_history (
+                    history_id TEXT PRIMARY KEY,
+                    request_id TEXT NOT NULL,
+                    from_status TEXT,
+                    to_status TEXT NOT NULL,
+                    action TEXT NOT NULL,
+                    actor_user_id TEXT NOT NULL,
+                    actor_name TEXT,
+                    actor_role TEXT,
+                    notes TEXT,
+                    created_at TEXT DEFAULT (DATETIME('now', 'localtime')),
+                    FOREIGN KEY (request_id) REFERENCES service_requests(request_id) ON DELETE CASCADE
+                )
+            """)
+            connection.execute("CREATE INDEX IF NOT EXISTS idx_rsh_req ON request_status_history(request_id)")
+
+            connection.execute("""
+                CREATE TABLE IF NOT EXISTS request_corrections (
+                    correction_id TEXT PRIMARY KEY,
+                    request_id TEXT NOT NULL,
+                    target_table TEXT NOT NULL,
+                    target_record_id TEXT NOT NULL,
+                    field_name TEXT NOT NULL,
+                    previous_value TEXT,
+                    corrected_value TEXT NOT NULL,
+                    correction_reason TEXT NOT NULL,
+                    administrator_id TEXT NOT NULL,
+                    administrator_name TEXT,
+                    administrator_role TEXT,
+                    verification_status TEXT NOT NULL DEFAULT 'VERIFIED',
+                    verified_by_user_id TEXT,
+                    verified_at TEXT,
+                    created_at TEXT DEFAULT (DATETIME('now', 'localtime')),
+                    FOREIGN KEY (request_id) REFERENCES service_requests(request_id) ON DELETE CASCADE
+                )
+            """)
+            connection.execute("CREATE INDEX IF NOT EXISTS idx_rc_req ON request_corrections(request_id)")
+
+            connection.execute("""
+                CREATE TABLE IF NOT EXISTS request_audit_logs (
+                    audit_id TEXT PRIMARY KEY,
+                    request_id TEXT,
+                    actor_user_id TEXT,
+                    actor_role TEXT,
+                    action TEXT NOT NULL,
+                    entity_type TEXT NOT NULL,
+                    entity_id TEXT,
+                    school_id TEXT,
+                    details_json TEXT,
+                    created_at TEXT DEFAULT (DATETIME('now', 'localtime'))
+                )
+            """)
+            connection.execute("CREATE INDEX IF NOT EXISTS idx_ral_req ON request_audit_logs(request_id)")
 
     finally:
         connection.close()

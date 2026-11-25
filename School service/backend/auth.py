@@ -27,8 +27,8 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
 
 def hash_password(password: str) -> str:
-    if len(password) < 8:
-        raise ValueError("Password must contain at least 8 characters.")
+    if len(password) < 6:
+        raise ValueError("Password must contain at least 6 characters.")
     return password_hash.hash(password)
 
 

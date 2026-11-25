@@ -11,9 +11,10 @@ export default function InstitutionAcademics({
   const isUniv = category === 'Universities' || schoolType === 'University'
   const isCollege = category === 'Degree Colleges' || schoolType === 'Degree College'
   const isPU = category === 'PU Colleges (11-12)' ||
+               category === 'PU Colleges' ||
                schoolType === 'PU College' ||
                (programs && programs.length > 0 && programs.every(p => p.education_level === 'higher_secondary'))
-  const isSchool = category === 'Schools (K-10)' || schoolType === 'School'
+  const isSchool = category === 'Schools (K-10)' || category === 'Schools' || schoolType === 'School'
 
   const [selectedLevel, setSelectedLevel] = useState('ALL')
   const [selectedFaculty, setSelectedFaculty] = useState('ALL')

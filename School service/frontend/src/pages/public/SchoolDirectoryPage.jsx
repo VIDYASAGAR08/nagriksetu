@@ -97,9 +97,9 @@ export default function SchoolDirectoryPage() {
     for (const inst of institutions) {
       const cat = inst.category || ''
       const type = (inst.school_type || '').toLowerCase()
-      if (cat === 'Schools (K-10)' || type === 'school') {
+      if (cat === 'Schools (K-10)' || cat === 'Schools' || type === 'school') {
         c.schools++
-      } else if (cat === 'PU Colleges (11-12)' || type.includes('pu') || type.includes('pre-university')) {
+      } else if (cat === 'PU Colleges (11-12)' || cat === 'PU Colleges' || type.includes('pu') || type.includes('pre-university')) {
         c.pu++
       } else if (cat === 'Degree Colleges' || type === 'degree college' || (type.includes('engineering') && !type.includes('university') && cat !== 'Universities')) {
         c.degree++
@@ -128,9 +128,9 @@ export default function SchoolDirectoryPage() {
       const cat = s.category || ''
       const type = (s.school_type || '').toLowerCase()
       if (categoryFilter === 'SCHOOLS') {
-        matchesCat = cat === 'Schools (K-10)' || type === 'school'
+        matchesCat = cat === 'Schools (K-10)' || cat === 'Schools' || type === 'school'
       } else if (categoryFilter === 'PU') {
-        matchesCat = cat === 'PU Colleges (11-12)' || type.includes('pu') || type.includes('pre-university')
+        matchesCat = cat === 'PU Colleges (11-12)' || cat === 'PU Colleges' || type.includes('pu') || type.includes('pre-university')
       } else if (categoryFilter === 'DEGREE') {
         matchesCat = cat === 'Degree Colleges' || type === 'degree college' || (type.includes('engineering') && !type.includes('university') && cat !== 'Universities')
       } else if (categoryFilter === 'UNIVERSITY') {
@@ -174,36 +174,12 @@ export default function SchoolDirectoryPage() {
           marginBottom: '2rem'
         }}>
           <div>
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.25rem 0.75rem', borderRadius: '20px', background: 'rgba(255, 153, 51, 0.12)', border: '1px solid rgba(255, 153, 51, 0.3)', color: '#b45309', fontSize: '0.75rem', fontWeight: 700, marginBottom: '0.6rem' }}>
-              <span>🇮🇳 Department of Higher & School Education · Government of Karnataka</span>
-            </div>
-            <h1 style={{ fontSize: '2.25rem', fontWeight: 900, color: '#081c33', margin: '0 0 0.4rem 0', letterSpacing: '-0.02em' }}>
+            <h1 style={{ fontSize: '2.25rem', fontWeight: 800, color: '#102B46', margin: '0 0 0.4rem 0' }}>
               Educational Institutions Directory
             </h1>
             <p style={{ color: '#475467', margin: 0, fontSize: '1.05rem' }}>
               Discover authorized schools, PU colleges, degree colleges, and universities across Karnataka with live seat quotas.
             </p>
-          </div>
-          <div>
-            <a
-              href="http://localhost:5173"
-              style={{
-                background: '#081c33',
-                color: '#ffffff',
-                border: '1px solid #1e293b',
-                padding: '0.55rem 1.15rem',
-                borderRadius: '10px',
-                textDecoration: 'none',
-                fontWeight: 700,
-                fontSize: '0.85rem',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                boxShadow: '0 2px 4px rgba(8,28,51,0.1)'
-              }}
-            >
-              ← Back to Central Portal
-            </a>
           </div>
         </div>
 
@@ -291,8 +267,8 @@ export default function SchoolDirectoryPage() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
                 {[
                   { id: 'ALL', label: 'All Institutions', count: counts.all },
-                  { id: 'SCHOOLS', label: 'Schools (K-10)', count: counts.schools },
-                  { id: 'PU', label: 'PU Colleges (11-12)', count: counts.pu },
+                  { id: 'SCHOOLS', label: 'Schools', count: counts.schools },
+                  { id: 'PU', label: 'PU Colleges', count: counts.pu },
                   { id: 'DEGREE', label: 'Degree Colleges', count: counts.degree },
                   { id: 'UNIVERSITY', label: 'Universities', count: counts.universities }
                 ].map((item) => (
@@ -571,12 +547,12 @@ export default function SchoolDirectoryPage() {
                             fontWeight: 700,
                             background: (inst.category === 'Universities' || inst.school_type === 'University') ? '#444CE7' :
                                         (inst.category === 'Degree Colleges' || inst.school_type === 'Degree College') ? '#155EEF' :
-                                        (inst.category === 'PU Colleges (11-12)' || inst.school_type === 'PU College') ? '#C11574' : '#12B76A',
+                                        (inst.category === 'PU Colleges (11-12)' || inst.category === 'PU Colleges' || inst.school_type === 'PU College') ? '#C11574' : '#12B76A',
                             color: '#FFFFFF',
                             padding: '0.2rem 0.5rem',
                             borderRadius: '4px'
                           }}>
-                            {inst.category || inst.school_type}
+                            {(inst.category || inst.school_type || '').replace(/\s*\([Kk][-–—]?10\)/gi, '').replace(/\s*\(11[-–—]?12\)/gi, '')}
                           </span>
                         </div>
                       </div>

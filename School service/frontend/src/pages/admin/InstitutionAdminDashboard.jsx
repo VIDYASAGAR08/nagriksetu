@@ -10,6 +10,7 @@ import InstitutionAdminAcademicDesk from '../../components/academic/InstitutionA
 import InstitutionStudentManagementDesk from '../../components/admin/InstitutionStudentManagementDesk.jsx'
 import InstitutionParentRequestsDesk from '../../components/admin/InstitutionParentRequestsDesk.jsx'
 import InstitutionParentsDirectory from '../../components/admin/InstitutionParentsDirectory.jsx'
+import InstitutionRequestsDesk from '../../components/requests/InstitutionRequestsDesk.jsx'
 
 export default function InstitutionAdminDashboard() {
   const { user, token, isAuthenticated, logout } = useAuth()
@@ -1010,10 +1011,11 @@ export default function InstitutionAdminDashboard() {
         }}>
           {[
             { id: 'overview', label: 'Overview', icon: '🏛️' },
-            { id: 'students', label: 'Student Management', icon: '👨‍🎓' },
+            { id: 'students', label: 'Student Records Management', icon: '👨‍🎓' },
             { id: 'parents', label: 'Parent Management', icon: '👨‍👩‍👧' },
             { id: 'applications', label: 'Admission Management', icon: '📋', count: overview?.pending_admission_reviews ?? applications.length },
             { id: 'parent_requests', label: 'Parent Requests', icon: '⚖️', count: overview?.pending_parent_requests },
+            { id: 'requests', label: 'Requests & Record Corrections', icon: '🛡️' },
             { id: 'academics', label: 'Academic Management', icon: '📚' },
             { id: 'attendance', label: 'Attendance', icon: '📅' },
             { id: 'examinations', label: 'Examination & Results', icon: '📝' },
@@ -1362,7 +1364,7 @@ export default function InstitutionAdminDashboard() {
             token={token}
             institutionId={user?.school_id || overview?.institution_id || institutionId}
             institutionName={overview?.institution_name || 'Ballari Education School'}
-            institutionCategory={overview?.category || 'Schools (K-10)'}
+            institutionCategory={(overview?.category || 'Schools').replace(/\s*\([Kk][-–—]?10\)/gi, '').replace(/\s*\(11[-–—]?12\)/gi, '')}
           />
         )}
 
@@ -1383,6 +1385,17 @@ export default function InstitutionAdminDashboard() {
           <InstitutionParentRequestsDesk
             token={token}
             institutionId={user?.school_id || overview?.institution_id || institutionId}
+          />
+        )}
+
+        {/* =================================================================
+            TAB: REQUESTS, COMPLAINTS & RECORD CORRECTIONS DESK
+            ================================================================= */}
+        {mainTab === 'requests' && (
+          <InstitutionRequestsDesk
+            token={token}
+            institutionId={user?.school_id || overview?.institution_id || institutionId}
+            institutionName={overview?.institution_name || 'Educational Institution'}
           />
         )}
 
@@ -1429,7 +1442,9 @@ export default function InstitutionAdminDashboard() {
               </div>
               <div style={{ background: '#F8FAFC', padding: '1rem', borderRadius: '8px', border: '1px solid #E2E8F0' }}>
                 <div style={{ fontSize: '0.75rem', color: '#667085', fontWeight: 600 }}>Category</div>
-                <div style={{ fontSize: '1rem', fontWeight: 700, color: '#102B46', marginTop: '0.2rem' }}>{overview?.category || 'Schools (K-10)'}</div>
+                <div style={{ fontSize: '1rem', fontWeight: 700, color: '#102B46', marginTop: '0.2rem' }}>
+                  {(overview?.category || 'Schools').replace(/\s*\([Kk][-–—]?10\)/gi, '').replace(/\s*\(11[-–—]?12\)/gi, '')}
+                </div>
               </div>
               <div style={{ background: '#F8FAFC', padding: '1rem', borderRadius: '8px', border: '1px solid #E2E8F0' }}>
                 <div style={{ fontSize: '0.75rem', color: '#667085', fontWeight: 600 }}>District & State</div>

@@ -14,7 +14,8 @@
     "admin_portal": "Admin Portal",
     "sign_in": "Sign In",
     "register": "Registration",
-    "logout": "Log Out"
+    "logout": "Log Out",
+    "all_courses": "All Courses"
   },
   "hero": {
     "badge": "NATIONAL DIGITAL GOVERNANCE INITIATIVE",

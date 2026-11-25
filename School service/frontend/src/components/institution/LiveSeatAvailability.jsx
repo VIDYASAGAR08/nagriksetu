@@ -44,8 +44,10 @@ export default function LiveSeatAvailability({ schoolId, schoolName, onApplyClic
                     data?.school_type === 'Degree College'
 
   const isPU = category === 'PU Colleges (11-12)' ||
+               category === 'PU Colleges' ||
                schoolType === 'PU College' ||
                data?.category === 'PU Colleges (11-12)' ||
+               data?.category === 'PU Colleges' ||
                data?.school_type === 'PU College' ||
                (schoolName && schoolName.toLowerCase().includes('pre-university'))
 

@@ -1,0 +1,15 @@
+{
+  "overall_pass": true,
+  "details": {
+    "frontend_gateway": true,
+    "public_register_masked": true,
+    "project_owner_auth": true,
+    "authenticated_unmasking": true,
+    "reset_requires_bearer": true,
+    "admin_read_only": true,
+    "all_10_centres": true,
+    "representative_password_change": true,
+    "citizen_smtp_configured": true,
+    "audit_logs": true
+  }
+}

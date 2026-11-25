@@ -1,0 +1,1202 @@
+[
+  {
+    "centre_id": 1,
+    "centre_code": "CTR-0001",
+    "centre_name": "Bengaluru Central Skill Hub (Rajajinagar)",
+    "district": "Bengaluru Urban",
+    "location": "Dr. Rajkumar Road, Rajajinagar, Bengaluru",
+    "programme_count": 13,
+    "batch_count": 24,
+    "total_seats": 655,
+    "available_seats": 596,
+    "categories": [
+      "Business & Commerce",
+      "Computer Science & Information Technology",
+      "Engineering & Technical Trades",
+      "Media & Communication"
+    ],
+    "subcategories": [
+      "Accounting & Financial Taxation",
+      "Cloud Computing & DevOps",
+      "Construction, Plumbing & Industrial Safety",
+      "Cybersecurity & Network Systems",
+      "Programming & Software Development",
+      "Software Quality Assurance & Testing",
+      "Visual Design & UI/UX Experience"
+    ],
+    "skills_count": 11,
+    "skills": [
+      "Apparel Manufacturing & Industrial Tailoring",
+      "DevOps Monitoring with Prometheus & Grafana",
+      "Docker & Containerization",
+      "Financial Accounting & Bookkeeping",
+      "Masonry & Construction Fundamentals",
+      "Modern C++ & STL",
+      "Plumbing Technician & Pipe Fitting",
+      "Python Programming",
+      "SOC Analyst & Incident Response",
+      "Selenium WebDriver with Java",
+      "UI/UX Design with Figma"
+    ],
+    "programmes": [
+      {
+        "code": "PRG-0001",
+        "title": "National Skilling Mission: Python Programming",
+        "mode": "Hybrid",
+        "skill": "Python Programming"
+      },
+      {
+        "code": "PRG-0006",
+        "title": "National Skilling Mission: Modern C++ & STL",
+        "mode": "Online",
+        "skill": "Modern C++ & STL"
+      },
+      {
+        "code": "PRG-0037",
+        "title": "National Skilling Mission: Docker & Containerization",
+        "mode": "Hybrid",
+        "skill": "Docker & Containerization"
+      },
+      {
+        "code": "PRG-0041",
+        "title": "National Skilling Mission: DevOps Monitoring with Prometheus & Grafana",
+        "mode": "Classroom",
+        "skill": "DevOps Monitoring with Prometheus & Grafana"
+      },
+      {
+        "code": "PRG-0048",
+        "title": "National Skilling Mission: SOC Analyst & Incident Response",
+        "mode": "Online",
+        "skill": "SOC Analyst & Incident Response"
+      },
+      {
+        "code": "PRG-0051",
+        "title": "National Skilling Mission: Selenium WebDriver with Java",
+        "mode": "Online",
+        "skill": "Selenium WebDriver with Java"
+      },
+      {
+        "code": "PRG-0059",
+        "title": "National Skilling Mission: Financial Accounting & Bookkeeping",
+        "mode": "Classroom",
+        "skill": "Financial Accounting & Bookkeeping"
+      },
+      {
+        "code": "PRG-0069",
+        "title": "National Skilling Mission: UI/UX Design with Figma",
+        "mode": "Online",
+        "skill": "UI/UX Design with Figma"
+      },
+      {
+        "code": "PRG-0079",
+        "title": "National Skilling Mission: Plumbing Technician & Pipe Fitting",
+        "mode": "Hybrid",
+        "skill": "Plumbing Technician & Pipe Fitting"
+      },
+      {
+        "code": "PRG-0090",
+        "title": "National Skilling Mission: Apparel Manufacturing & Industrial Tailoring",
+        "mode": "Online",
+        "skill": "Apparel Manufacturing & Industrial Tailoring"
+      },
+      {
+        "code": "PRG-0100",
+        "title": "National Skilling Mission: Masonry & Construction Fundamentals",
+        "mode": "Hybrid",
+        "skill": "Masonry & Construction Fundamentals"
+      },
+      {
+        "code": "PRG-0111",
+        "title": "Government Accelerated Python Cloud Services Programme",
+        "mode": "Hybrid",
+        "skill": "Python Programming"
+      },
+      {
+        "code": "PRG-0121",
+        "title": "Government Accelerated Python Cloud Services Programme",
+        "mode": "Hybrid",
+        "skill": "Python Programming"
+      }
+    ]
+  },
+  {
+    "centre_id": 2,
+    "centre_code": "CTR-0002",
+    "centre_name": "Mysuru Regional Skilling Institute",
+    "district": "Mysuru",
+    "location": "Vijayanagar 2nd Stage, Mysuru",
+    "programme_count": 13,
+    "batch_count": 24,
+    "total_seats": 655,
+    "available_seats": 597,
+    "categories": [
+      "Business & Commerce",
+      "Computer Science & Information Technology",
+      "Engineering & Technical Trades",
+      "Hospitality & Tourism",
+      "Media & Communication"
+    ],
+    "subcategories": [
+      "Banking & Financial Services",
+      "Cloud Computing & DevOps",
+      "Construction, Plumbing & Industrial Safety",
+      "Cybersecurity & Network Systems",
+      "Front Office & Guest Services",
+      "Programming & Software Development",
+      "Retail Management & Merchandising",
+      "Visual Design & UI/UX Experience",
+      "Web & Full Stack Engineering"
+    ],
+    "skills_count": 12,
+    "skills": [
+      "Advanced Python & Concurrency",
+      "Banking Operations & Retail Services",
+      "Beauty & Wellness Professional",
+      "C# and .NET Core Development",
+      "Graphic Design for Public Communication",
+      "HTML5 & Modern CSS3",
+      "Information Security Auditing (ISO 27001)",
+      "Kubernetes Administration (CKA Prep)",
+      "Mechatronics & Industrial Automation",
+      "Node.js & Express API Engineering",
+      "Python Programming",
+      "Retail Store Operations & Inventory"
+    ],
+    "programmes": [
+      {
+        "code": "PRG-0002",
+        "title": "National Skilling Mission: Advanced Python & Concurrency",
+        "mode": "Classroom",
+        "skill": "Advanced Python & Concurrency"
+      },
+      {
+        "code": "PRG-0007",
+        "title": "National Skilling Mission: C# and .NET Core Development",
+        "mode": "Hybrid",
+        "skill": "C# and .NET Core Development"
+      },
+      {
+        "code": "PRG-0012",
+        "title": "National Skilling Mission: HTML5 & Modern CSS3",
+        "mode": "Online",
+        "skill": "HTML5 & Modern CSS3"
+      },
+      {
+        "code": "PRG-0017",
+        "title": "National Skilling Mission: Node.js & Express API Engineering",
+        "mode": "Classroom",
+        "skill": "Node.js & Express API Engineering"
+      },
+      {
+        "code": "PRG-0038",
+        "title": "National Skilling Mission: Kubernetes Administration (CKA Prep)",
+        "mode": "Classroom",
+        "skill": "Kubernetes Administration (CKA Prep)"
+      },
+      {
+        "code": "PRG-0049",
+        "title": "National Skilling Mission: Information Security Auditing (ISO 27001)",
+        "mode": "Hybrid",
+        "skill": "Information Security Auditing (ISO 27001)"
+      },
+      {
+        "code": "PRG-0060",
+        "title": "National Skilling Mission: Banking Operations & Retail Services",
+        "mode": "Online",
+        "skill": "Banking Operations & Retail Services"
+      },
+      {
+        "code": "PRG-0070",
+        "title": "National Skilling Mission: Graphic Design for Public Communication",
+        "mode": "Hybrid",
+        "skill": "Graphic Design for Public Communication"
+      },
+      {
+        "code": "PRG-0080",
+        "title": "National Skilling Mission: Mechatronics & Industrial Automation",
+        "mode": "Classroom",
+        "skill": "Mechatronics & Industrial Automation"
+      },
+      {
+        "code": "PRG-0091",
+        "title": "National Skilling Mission: Beauty & Wellness Professional",
+        "mode": "Hybrid",
+        "skill": "Beauty & Wellness Professional"
+      },
+      {
+        "code": "PRG-0101",
+        "title": "National Skilling Mission: Retail Store Operations & Inventory",
+        "mode": "Classroom",
+        "skill": "Retail Store Operations & Inventory"
+      },
+      {
+        "code": "PRG-0112",
+        "title": "Government Accelerated Python Cloud Services Programme",
+        "mode": "Hybrid",
+        "skill": "Python Programming"
+      },
+      {
+        "code": "PRG-0122",
+        "title": "Government Accelerated Python Cloud Services Programme",
+        "mode": "Hybrid",
+        "skill": "Python Programming"
+      }
+    ]
+  },
+  {
+    "centre_id": 3,
+    "centre_code": "CTR-0003",
+    "centre_name": "Hubballi-Dharwad Tech Development Centre",
+    "district": "Dharwad",
+    "location": "Gokul Road, Hubballi",
+    "programme_count": 13,
+    "batch_count": 24,
+    "total_seats": 655,
+    "available_seats": 599,
+    "categories": [
+      "Business & Commerce",
+      "Computer Science & Information Technology",
+      "Healthcare",
+      "Media & Communication"
+    ],
+    "subcategories": [
+      "Audio-Visual Production & Editing",
+      "Banking & Financial Services",
+      "Cloud Computing & DevOps",
+      "Data Science & Artificial Intelligence",
+      "Emergency Medical Services",
+      "Medical Records & Health Informatics",
+      "Nursing & Patient Assistance",
+      "Programming & Software Development",
+      "Retail Management & Merchandising",
+      "Software Quality Assurance & Testing",
+      "Web & Full Stack Engineering"
+    ],
+    "skills_count": 12,
+    "skills": [
+      "CI/CD Automation with GitHub Actions",
+      "Corporate Financial Modeling",
+      "Emergency Medical Technician (EMT Basic)",
+      "General Duty Assistant (Healthcare)",
+      "Java Development Fundamentals",
+      "Manual Software Testing Foundations",
+      "Medical Records & Billing Specialist",
+      "Python Programming",
+      "Supply Chain & Warehouse Operations",
+      "Tailwind CSS & Design Systems",
+      "Time Series Forecasting",
+      "Video Editing & Mobile Content Creation"
+    ],
+    "programmes": [
+      {
+        "code": "PRG-0003",
+        "title": "National Skilling Mission: Java Development Fundamentals",
+        "mode": "Online",
+        "skill": "Java Development Fundamentals"
+      },
+      {
+        "code": "PRG-0021",
+        "title": "National Skilling Mission: Tailwind CSS & Design Systems",
+        "mode": "Online",
+        "skill": "Tailwind CSS & Design Systems"
+      },
+      {
+        "code": "PRG-0029",
+        "title": "National Skilling Mission: Time Series Forecasting",
+        "mode": "Classroom",
+        "skill": "Time Series Forecasting"
+      },
+      {
+        "code": "PRG-0039",
+        "title": "National Skilling Mission: CI/CD Automation with GitHub Actions",
+        "mode": "Online",
+        "skill": "CI/CD Automation with GitHub Actions"
+      },
+      {
+        "code": "PRG-0050",
+        "title": "National Skilling Mission: Manual Software Testing Foundations",
+        "mode": "Classroom",
+        "skill": "Manual Software Testing Foundations"
+      },
+      {
+        "code": "PRG-0061",
+        "title": "National Skilling Mission: Corporate Financial Modeling",
+        "mode": "Hybrid",
+        "skill": "Corporate Financial Modeling"
+      },
+      {
+        "code": "PRG-0071",
+        "title": "National Skilling Mission: Video Editing & Mobile Content Creation",
+        "mode": "Classroom",
+        "skill": "Video Editing & Mobile Content Creation"
+      },
+      {
+        "code": "PRG-0081",
+        "title": "National Skilling Mission: General Duty Assistant (Healthcare)",
+        "mode": "Online",
+        "skill": "General Duty Assistant (Healthcare)"
+      },
+      {
+        "code": "PRG-0083",
+        "title": "National Skilling Mission: Emergency Medical Technician (EMT Basic)",
+        "mode": "Classroom",
+        "skill": "Emergency Medical Technician (EMT Basic)"
+      },
+      {
+        "code": "PRG-0092",
+        "title": "National Skilling Mission: Supply Chain & Warehouse Operations",
+        "mode": "Classroom",
+        "skill": "Supply Chain & Warehouse Operations"
+      },
+      {
+        "code": "PRG-0102",
+        "title": "National Skilling Mission: Medical Records & Billing Specialist",
+        "mode": "Online",
+        "skill": "Medical Records & Billing Specialist"
+      },
+      {
+        "code": "PRG-0113",
+        "title": "Government Accelerated Python Cloud Services Programme",
+        "mode": "Hybrid",
+        "skill": "Python Programming"
+      },
+      {
+        "code": "PRG-0123",
+        "title": "Government Accelerated Python Cloud Services Programme",
+        "mode": "Hybrid",
+        "skill": "Python Programming"
+      }
+    ]
+  },
+  {
+    "centre_id": 4,
+    "centre_code": "CTR-0004",
+    "centre_name": "Mangaluru Coastal Skill Academy",
+    "district": "Dakshina Kannada",
+    "location": "Kadri Hills, Mangaluru",
+    "programme_count": 13,
+    "batch_count": 24,
+    "total_seats": 655,
+    "available_seats": 597,
+    "categories": [
+      "Agriculture & Allied Skills",
+      "Business & Commerce",
+      "Computer Science & Information Technology",
+      "Engineering & Technical Trades",
+      "Healthcare"
+    ],
+    "subcategories": [
+      "Automotive Engineering & Fleet Maintenance",
+      "Cloud Computing & DevOps",
+      "Construction, Plumbing & Industrial Safety",
+      "Data Science & Artificial Intelligence",
+      "Electrical & Renewable Power Systems",
+      "Entrepreneurship & Small Business",
+      "Pharmacy Support & Dispensing",
+      "Precision Irrigation & Water Technologies",
+      "Programming & Software Development",
+      "Software Quality Assurance & Testing"
+    ],
+    "skills_count": 12,
+    "skills": [
+      "Big Data Processing with Apache Spark",
+      "Commercial Vehicle Driving & Fleet Safety",
+      "Data Analysis with Python (Pandas/NumPy)",
+      "Domestic Electrician & Home Wiring",
+      "Drip Irrigation Installation & Maintenance",
+      "Enterprise Java & Spring Boot",
+      "Entrepreneurship & Small Business Setup",
+      "Industrial Safety & OSHA Standards",
+      "Infrastructure as Code with Terraform",
+      "Pharmacy Assistant Training",
+      "Python Programming",
+      "Selenium WebDriver with Python"
+    ],
+    "programmes": [
+      {
+        "code": "PRG-0004",
+        "title": "National Skilling Mission: Enterprise Java & Spring Boot",
+        "mode": "Hybrid",
+        "skill": "Enterprise Java & Spring Boot"
+      },
+      {
+        "code": "PRG-0022",
+        "title": "National Skilling Mission: Data Analysis with Python (Pandas/NumPy)",
+        "mode": "Hybrid",
+        "skill": "Data Analysis with Python (Pandas/NumPy)"
+      },
+      {
+        "code": "PRG-0030",
+        "title": "National Skilling Mission: Big Data Processing with Apache Spark",
+        "mode": "Online",
+        "skill": "Big Data Processing with Apache Spark"
+      },
+      {
+        "code": "PRG-0040",
+        "title": "National Skilling Mission: Infrastructure as Code with Terraform",
+        "mode": "Hybrid",
+        "skill": "Infrastructure as Code with Terraform"
+      },
+      {
+        "code": "PRG-0052",
+        "title": "National Skilling Mission: Selenium WebDriver with Python",
+        "mode": "Hybrid",
+        "skill": "Selenium WebDriver with Python"
+      },
+      {
+        "code": "PRG-0062",
+        "title": "National Skilling Mission: Entrepreneurship & Small Business Setup",
+        "mode": "Classroom",
+        "skill": "Entrepreneurship & Small Business Setup"
+      },
+      {
+        "code": "PRG-0072",
+        "title": "National Skilling Mission: Domestic Electrician & Home Wiring",
+        "mode": "Online",
+        "skill": "Domestic Electrician & Home Wiring"
+      },
+      {
+        "code": "PRG-0082",
+        "title": "National Skilling Mission: Pharmacy Assistant Training",
+        "mode": "Hybrid",
+        "skill": "Pharmacy Assistant Training"
+      },
+      {
+        "code": "PRG-0093",
+        "title": "National Skilling Mission: Commercial Vehicle Driving & Fleet Safety",
+        "mode": "Online",
+        "skill": "Commercial Vehicle Driving & Fleet Safety"
+      },
+      {
+        "code": "PRG-0103",
+        "title": "National Skilling Mission: Drip Irrigation Installation & Maintenance",
+        "mode": "Hybrid",
+        "skill": "Drip Irrigation Installation & Maintenance"
+      },
+      {
+        "code": "PRG-0104",
+        "title": "National Skilling Mission: Industrial Safety & OSHA Standards",
+        "mode": "Classroom",
+        "skill": "Industrial Safety & OSHA Standards"
+      },
+      {
+        "code": "PRG-0114",
+        "title": "Government Accelerated Python Cloud Services Programme",
+        "mode": "Hybrid",
+        "skill": "Python Programming"
+      },
+      {
+        "code": "PRG-0124",
+        "title": "Government Accelerated Python Cloud Services Programme",
+        "mode": "Hybrid",
+        "skill": "Python Programming"
+      }
+    ]
+  },
+  {
+    "centre_id": 5,
+    "centre_code": "CTR-0005",
+    "centre_name": "NagrikSetu Virtual Learning Portal",
+    "district": "Pan-India",
+    "location": "National Digital Platform (Online)",
+    "programme_count": 13,
+    "batch_count": 23,
+    "total_seats": 625,
+    "available_seats": 572,
+    "categories": [
+      "Agriculture & Allied Skills",
+      "Business & Commerce",
+      "Computer Science & Information Technology",
+      "Engineering & Technical Trades"
+    ],
+    "subcategories": [
+      "Cloud Computing & DevOps",
+      "Data Science & Artificial Intelligence",
+      "Electrical & Renewable Power Systems",
+      "Organic Agronomy & Soil Management",
+      "Programming & Software Development",
+      "Project Management & Agile Operations",
+      "Software Quality Assurance & Testing",
+      "Web & Full Stack Engineering"
+    ],
+    "skills_count": 11,
+    "skills": [
+      "API Testing with Postman & Newman",
+      "Agile & Scrum Project Management",
+      "Bash Shell Scripting & Linux Command Line",
+      "Business Intelligence with Power BI",
+      "Data Visualisation (Matplotlib & Seaborn)",
+      "Drone Pilot Operations (DGCA Compliant)",
+      "Full Stack MERN Development",
+      "Organic Farming & Soil Health Management",
+      "Python Programming",
+      "Site Reliability Engineering (SRE) Principles",
+      "Solar PV Rooftop System Installation"
+    ],
+    "programmes": [
+      {
+        "code": "PRG-0010",
+        "title": "National Skilling Mission: Bash Shell Scripting & Linux Command Line",
+        "mode": "Hybrid",
+        "skill": "Bash Shell Scripting & Linux Command Line"
+      },
+      {
+        "code": "PRG-0020",
+        "title": "National Skilling Mission: Full Stack MERN Development",
+        "mode": "Classroom",
+        "skill": "Full Stack MERN Development"
+      },
+      {
+        "code": "PRG-0023",
+        "title": "National Skilling Mission: Data Visualisation (Matplotlib & Seaborn)",
+        "mode": "Classroom",
+        "skill": "Data Visualisation (Matplotlib & Seaborn)"
+      },
+      {
+        "code": "PRG-0031",
+        "title": "National Skilling Mission: Business Intelligence with Power BI",
+        "mode": "Hybrid",
+        "skill": "Business Intelligence with Power BI"
+      },
+      {
+        "code": "PRG-0042",
+        "title": "National Skilling Mission: Site Reliability Engineering (SRE) Principles",
+        "mode": "Online",
+        "skill": "Site Reliability Engineering (SRE) Principles"
+      },
+      {
+        "code": "PRG-0053",
+        "title": "National Skilling Mission: API Testing with Postman & Newman",
+        "mode": "Classroom",
+        "skill": "API Testing with Postman & Newman"
+      },
+      {
+        "code": "PRG-0063",
+        "title": "National Skilling Mission: Agile & Scrum Project Management",
+        "mode": "Online",
+        "skill": "Agile & Scrum Project Management"
+      },
+      {
+        "code": "PRG-0073",
+        "title": "National Skilling Mission: Solar PV Rooftop System Installation",
+        "mode": "Hybrid",
+        "skill": "Solar PV Rooftop System Installation"
+      },
+      {
+        "code": "PRG-0084",
+        "title": "National Skilling Mission: Organic Farming & Soil Health Management",
+        "mode": "Online",
+        "skill": "Organic Farming & Soil Health Management"
+      },
+      {
+        "code": "PRG-0094",
+        "title": "National Skilling Mission: Drone Pilot Operations (DGCA Compliant)",
+        "mode": "Hybrid",
+        "skill": "Drone Pilot Operations (DGCA Compliant)"
+      },
+      {
+        "code": "PRG-0105",
+        "title": "Government Accelerated Python Cloud Services Programme",
+        "mode": "Hybrid",
+        "skill": "Python Programming"
+      },
+      {
+        "code": "PRG-0115",
+        "title": "Government Accelerated Python Cloud Services Programme",
+        "mode": "Hybrid",
+        "skill": "Python Programming"
+      },
+      {
+        "code": "PRG-0125",
+        "title": "Government Accelerated Python Cloud Services Programme",
+        "mode": "Hybrid",
+        "skill": "Python Programming"
+      }
+    ]
+  },
+  {
+    "centre_id": 6,
+    "centre_code": "CTR-0006",
+    "centre_name": "Dharwad Innovation & Regional Skilling Centre",
+    "district": "Dharwad",
+    "location": "Dharwad",
+    "programme_count": 12,
+    "batch_count": 22,
+    "total_seats": 600,
+    "available_seats": 550,
+    "categories": [
+      "Agriculture & Allied Skills",
+      "Business & Commerce",
+      "Computer Science & Information Technology",
+      "Engineering & Technical Trades"
+    ],
+    "subcategories": [
+      "Cybersecurity & Network Systems",
+      "Data Science & Artificial Intelligence",
+      "Mechanical Precision & CNC Machining",
+      "Precision Irrigation & Water Technologies",
+      "Programming & Software Development",
+      "Project Management & Agile Operations",
+      "Software Quality Assurance & Testing",
+      "Web & Full Stack Engineering"
+    ],
+    "skills_count": 11,
+    "skills": [
+      "3D Printing & Additive Manufacturing",
+      "Applied Machine Learning with Scikit-Learn",
+      "Business Analysis Fundamentals",
+      "C Programming Foundations",
+      "CNC Machine Operation & Programming",
+      "Cybersecurity Fundamentals",
+      "Data Storytelling with Tableau",
+      "Micro-Irrigation & Drip Irrigation Systems",
+      "Performance Testing with Apache JMeter",
+      "Python Programming",
+      "TypeScript for Modern Applications"
+    ],
+    "programmes": [
+      {
+        "code": "PRG-0005",
+        "title": "National Skilling Mission: C Programming Foundations",
+        "mode": "Classroom",
+        "skill": "C Programming Foundations"
+      },
+      {
+        "code": "PRG-0014",
+        "title": "National Skilling Mission: TypeScript for Modern Applications",
+        "mode": "Classroom",
+        "skill": "TypeScript for Modern Applications"
+      },
+      {
+        "code": "PRG-0024",
+        "title": "National Skilling Mission: Applied Machine Learning with Scikit-Learn",
+        "mode": "Online",
+        "skill": "Applied Machine Learning with Scikit-Learn"
+      },
+      {
+        "code": "PRG-0032",
+        "title": "National Skilling Mission: Data Storytelling with Tableau",
+        "mode": "Classroom",
+        "skill": "Data Storytelling with Tableau"
+      },
+      {
+        "code": "PRG-0043",
+        "title": "National Skilling Mission: Cybersecurity Fundamentals",
+        "mode": "Hybrid",
+        "skill": "Cybersecurity Fundamentals"
+      },
+      {
+        "code": "PRG-0054",
+        "title": "National Skilling Mission: Performance Testing with Apache JMeter",
+        "mode": "Online",
+        "skill": "Performance Testing with Apache JMeter"
+      },
+      {
+        "code": "PRG-0064",
+        "title": "National Skilling Mission: Business Analysis Fundamentals",
+        "mode": "Hybrid",
+        "skill": "Business Analysis Fundamentals"
+      },
+      {
+        "code": "PRG-0074",
+        "title": "National Skilling Mission: CNC Machine Operation & Programming",
+        "mode": "Classroom",
+        "skill": "CNC Machine Operation & Programming"
+      },
+      {
+        "code": "PRG-0085",
+        "title": "National Skilling Mission: Micro-Irrigation & Drip Irrigation Systems",
+        "mode": "Hybrid",
+        "skill": "Micro-Irrigation & Drip Irrigation Systems"
+      },
+      {
+        "code": "PRG-0095",
+        "title": "National Skilling Mission: 3D Printing & Additive Manufacturing",
+        "mode": "Classroom",
+        "skill": "3D Printing & Additive Manufacturing"
+      },
+      {
+        "code": "PRG-0106",
+        "title": "Government Accelerated Python Cloud Services Programme",
+        "mode": "Hybrid",
+        "skill": "Python Programming"
+      },
+      {
+        "code": "PRG-0116",
+        "title": "Government Accelerated Python Cloud Services Programme",
+        "mode": "Hybrid",
+        "skill": "Python Programming"
+      }
+    ]
+  },
+  {
+    "centre_id": 8,
+    "centre_code": "CTR-0007",
+    "centre_name": "Belagavi Regional Skilling Hub",
+    "district": "Belagavi",
+    "location": "Club Road, Camp, Belagavi",
+    "programme_count": 12,
+    "batch_count": 22,
+    "total_seats": 600,
+    "available_seats": 550,
+    "categories": [
+      "Agriculture & Allied Skills",
+      "Computer Science & Information Technology",
+      "Engineering & Technical Trades",
+      "Media & Communication"
+    ],
+    "subcategories": [
+      "Animal Husbandry & Dairy Management",
+      "Cloud Computing & DevOps",
+      "Cybersecurity & Network Systems",
+      "Data Science & Artificial Intelligence",
+      "Digital Marketing & Growth Strategy",
+      "HVAC, Fabrication & Welding Trades",
+      "Professional Languages & Workplace Communication",
+      "Programming & Software Development",
+      "Software Quality Assurance & Testing",
+      "Web & Full Stack Engineering"
+    ],
+    "skills_count": 11,
+    "skills": [
+      "AWS Cloud Practitioner Essentials",
+      "Cypress Modern Web Automation",
+      "Dairy Farming & Livestock Management",
+      "Deep Learning & Neural Networks with PyTorch",
+      "Digital Marketing Fundamentals",
+      "Ethical Hacking & Penetration Testing",
+      "Go (Golang) Microservices",
+      "Manual Metal Arc & TIG Welding",
+      "Python Programming",
+      "React.js Frontend Development",
+      "Spoken English for Professional Careers"
+    ],
+    "programmes": [
+      {
+        "code": "PRG-0008",
+        "title": "National Skilling Mission: Go (Golang) Microservices",
+        "mode": "Classroom",
+        "skill": "Go (Golang) Microservices"
+      },
+      {
+        "code": "PRG-0015",
+        "title": "National Skilling Mission: React.js Frontend Development",
+        "mode": "Online",
+        "skill": "React.js Frontend Development"
+      },
+      {
+        "code": "PRG-0025",
+        "title": "National Skilling Mission: Deep Learning & Neural Networks with PyTorch",
+        "mode": "Hybrid",
+        "skill": "Deep Learning & Neural Networks with PyTorch"
+      },
+      {
+        "code": "PRG-0033",
+        "title": "National Skilling Mission: AWS Cloud Practitioner Essentials",
+        "mode": "Online",
+        "skill": "AWS Cloud Practitioner Essentials"
+      },
+      {
+        "code": "PRG-0044",
+        "title": "National Skilling Mission: Ethical Hacking & Penetration Testing",
+        "mode": "Classroom",
+        "skill": "Ethical Hacking & Penetration Testing"
+      },
+      {
+        "code": "PRG-0055",
+        "title": "National Skilling Mission: Cypress Modern Web Automation",
+        "mode": "Hybrid",
+        "skill": "Cypress Modern Web Automation"
+      },
+      {
+        "code": "PRG-0065",
+        "title": "National Skilling Mission: Digital Marketing Fundamentals",
+        "mode": "Classroom",
+        "skill": "Digital Marketing Fundamentals"
+      },
+      {
+        "code": "PRG-0075",
+        "title": "National Skilling Mission: Manual Metal Arc & TIG Welding",
+        "mode": "Online",
+        "skill": "Manual Metal Arc & TIG Welding"
+      },
+      {
+        "code": "PRG-0086",
+        "title": "National Skilling Mission: Dairy Farming & Livestock Management",
+        "mode": "Classroom",
+        "skill": "Dairy Farming & Livestock Management"
+      },
+      {
+        "code": "PRG-0096",
+        "title": "National Skilling Mission: Spoken English for Professional Careers",
+        "mode": "Online",
+        "skill": "Spoken English for Professional Careers"
+      },
+      {
+        "code": "PRG-0107",
+        "title": "Government Accelerated Python Cloud Services Programme",
+        "mode": "Hybrid",
+        "skill": "Python Programming"
+      },
+      {
+        "code": "PRG-0117",
+        "title": "Government Accelerated Python Cloud Services Programme",
+        "mode": "Hybrid",
+        "skill": "Python Programming"
+      }
+    ]
+  },
+  {
+    "centre_id": 9,
+    "centre_code": "CTR-0008",
+    "centre_name": "Davanagere Vocational & Technical Institute",
+    "district": "Davanagere",
+    "location": "PB Road, Near Bapuji Hospital, Davanagere",
+    "programme_count": 12,
+    "batch_count": 22,
+    "total_seats": 600,
+    "available_seats": 550,
+    "categories": [
+      "Computer Science & Information Technology",
+      "Engineering & Technical Trades",
+      "Hospitality & Tourism",
+      "Media & Communication"
+    ],
+    "subcategories": [
+      "Automotive Engineering & Fleet Maintenance",
+      "Cloud Computing & DevOps",
+      "Cybersecurity & Network Systems",
+      "Data Science & Artificial Intelligence",
+      "Digital Marketing & Growth Strategy",
+      "Front Office & Guest Services",
+      "Professional Languages & Workplace Communication",
+      "Programming & Software Development",
+      "Software Quality Assurance & Testing",
+      "Web & Full Stack Engineering"
+    ],
+    "skills_count": 11,
+    "skills": [
+      "AWS Solutions Architect Associate Track",
+      "Automotive Two-Wheeler Technician",
+      "Hospitality Front Office Operations",
+      "Mobile App Testing with Appium",
+      "Natural Language Processing (NLP)",
+      "Next.js & Server-Side Rendering",
+      "Python Programming",
+      "Rust Systems Programming",
+      "Search Engine Optimization (SEO)",
+      "Spoken Kannada for Workplace & Community",
+      "Web Application Security (OWASP Top 10)"
+    ],
+    "programmes": [
+      {
+        "code": "PRG-0009",
+        "title": "National Skilling Mission: Rust Systems Programming",
+        "mode": "Online",
+        "skill": "Rust Systems Programming"
+      },
+      {
+        "code": "PRG-0016",
+        "title": "National Skilling Mission: Next.js & Server-Side Rendering",
+        "mode": "Hybrid",
+        "skill": "Next.js & Server-Side Rendering"
+      },
+      {
+        "code": "PRG-0026",
+        "title": "National Skilling Mission: Natural Language Processing (NLP)",
+        "mode": "Classroom",
+        "skill": "Natural Language Processing (NLP)"
+      },
+      {
+        "code": "PRG-0034",
+        "title": "National Skilling Mission: AWS Solutions Architect Associate Track",
+        "mode": "Hybrid",
+        "skill": "AWS Solutions Architect Associate Track"
+      },
+      {
+        "code": "PRG-0045",
+        "title": "National Skilling Mission: Web Application Security (OWASP Top 10)",
+        "mode": "Online",
+        "skill": "Web Application Security (OWASP Top 10)"
+      },
+      {
+        "code": "PRG-0056",
+        "title": "National Skilling Mission: Mobile App Testing with Appium",
+        "mode": "Classroom",
+        "skill": "Mobile App Testing with Appium"
+      },
+      {
+        "code": "PRG-0066",
+        "title": "National Skilling Mission: Search Engine Optimization (SEO)",
+        "mode": "Online",
+        "skill": "Search Engine Optimization (SEO)"
+      },
+      {
+        "code": "PRG-0076",
+        "title": "National Skilling Mission: Automotive Two-Wheeler Technician",
+        "mode": "Hybrid",
+        "skill": "Automotive Two-Wheeler Technician"
+      },
+      {
+        "code": "PRG-0087",
+        "title": "National Skilling Mission: Hospitality Front Office Operations",
+        "mode": "Online",
+        "skill": "Hospitality Front Office Operations"
+      },
+      {
+        "code": "PRG-0097",
+        "title": "National Skilling Mission: Spoken Kannada for Workplace & Community",
+        "mode": "Hybrid",
+        "skill": "Spoken Kannada for Workplace & Community"
+      },
+      {
+        "code": "PRG-0108",
+        "title": "Government Accelerated Python Cloud Services Programme",
+        "mode": "Hybrid",
+        "skill": "Python Programming"
+      },
+      {
+        "code": "PRG-0118",
+        "title": "Government Accelerated Python Cloud Services Programme",
+        "mode": "Hybrid",
+        "skill": "Python Programming"
+      }
+    ]
+  },
+  {
+    "centre_id": 10,
+    "centre_code": "CTR-0009",
+    "centre_name": "Kalaburagi Regional Skill Development Centre",
+    "district": "Kalaburagi",
+    "location": "Sedam Road, Kalaburagi",
+    "programme_count": 12,
+    "batch_count": 22,
+    "total_seats": 600,
+    "available_seats": 548,
+    "categories": [
+      "Business & Commerce",
+      "Computer Science & Information Technology",
+      "Engineering & Technical Trades",
+      "Hospitality & Tourism",
+      "Media & Communication"
+    ],
+    "subcategories": [
+      "Accounting & Financial Taxation",
+      "Automotive Engineering & Fleet Maintenance",
+      "Cloud Computing & DevOps",
+      "Cybersecurity & Network Systems",
+      "Data Science & Artificial Intelligence",
+      "Digital Marketing & Growth Strategy",
+      "Food Safety, Hygiene & FSSAI Standards",
+      "Professional Languages & Workplace Communication",
+      "Programming & Software Development",
+      "Web & Full Stack Engineering"
+    ],
+    "skills_count": 11,
+    "skills": [
+      "Automotive Four-Wheeler Maintenance",
+      "CompTIA Network+ / Computer Networking",
+      "FastAPI Python Backend Development",
+      "Food Safety, Hygiene & FSSAI Standards",
+      "Generative AI & LLM Prompt Engineering",
+      "Google Ads & Performance Marketing",
+      "Hindi for Workplace Communication",
+      "Kotlin for Android & Backend",
+      "Microsoft Azure Fundamentals (AZ-900)",
+      "Python Programming",
+      "Tally Prime with GST & E-Way Bills"
+    ],
+    "programmes": [
+      {
+        "code": "PRG-0011",
+        "title": "National Skilling Mission: Kotlin for Android & Backend",
+        "mode": "Classroom",
+        "skill": "Kotlin for Android & Backend"
+      },
+      {
+        "code": "PRG-0018",
+        "title": "National Skilling Mission: FastAPI Python Backend Development",
+        "mode": "Online",
+        "skill": "FastAPI Python Backend Development"
+      },
+      {
+        "code": "PRG-0027",
+        "title": "National Skilling Mission: Generative AI & LLM Prompt Engineering",
+        "mode": "Online",
+        "skill": "Generative AI & LLM Prompt Engineering"
+      },
+      {
+        "code": "PRG-0035",
+        "title": "National Skilling Mission: Microsoft Azure Fundamentals (AZ-900)",
+        "mode": "Classroom",
+        "skill": "Microsoft Azure Fundamentals (AZ-900)"
+      },
+      {
+        "code": "PRG-0046",
+        "title": "National Skilling Mission: CompTIA Network+ / Computer Networking",
+        "mode": "Hybrid",
+        "skill": "CompTIA Network+ / Computer Networking"
+      },
+      {
+        "code": "PRG-0057",
+        "title": "National Skilling Mission: Tally Prime with GST & E-Way Bills",
+        "mode": "Online",
+        "skill": "Tally Prime with GST & E-Way Bills"
+      },
+      {
+        "code": "PRG-0067",
+        "title": "National Skilling Mission: Google Ads & Performance Marketing",
+        "mode": "Hybrid",
+        "skill": "Google Ads & Performance Marketing"
+      },
+      {
+        "code": "PRG-0077",
+        "title": "National Skilling Mission: Automotive Four-Wheeler Maintenance",
+        "mode": "Classroom",
+        "skill": "Automotive Four-Wheeler Maintenance"
+      },
+      {
+        "code": "PRG-0088",
+        "title": "National Skilling Mission: Food Safety, Hygiene & FSSAI Standards",
+        "mode": "Hybrid",
+        "skill": "Food Safety, Hygiene & FSSAI Standards"
+      },
+      {
+        "code": "PRG-0098",
+        "title": "National Skilling Mission: Hindi for Workplace Communication",
+        "mode": "Classroom",
+        "skill": "Hindi for Workplace Communication"
+      },
+      {
+        "code": "PRG-0109",
+        "title": "Government Accelerated Python Cloud Services Programme",
+        "mode": "Hybrid",
+        "skill": "Python Programming"
+      },
+      {
+        "code": "PRG-0119",
+        "title": "Government Accelerated Python Cloud Services Programme",
+        "mode": "Hybrid",
+        "skill": "Python Programming"
+      }
+    ]
+  },
+  {
+    "centre_id": 11,
+    "centre_code": "CTR-0010",
+    "centre_name": "Shivamogga Malnad Skill Development Centre",
+    "district": "Shivamogga",
+    "location": "Savalanga Road, Shivamogga",
+    "programme_count": 12,
+    "batch_count": 22,
+    "total_seats": 600,
+    "available_seats": 546,
+    "categories": [
+      "Business & Commerce",
+      "Computer Science & Information Technology",
+      "Engineering & Technical Trades",
+      "Hospitality & Tourism",
+      "Media & Communication"
+    ],
+    "subcategories": [
+      "Banking & Financial Services",
+      "Cloud Computing & DevOps",
+      "Construction, Plumbing & Industrial Safety",
+      "Culinary Arts & Commercial Bakery",
+      "Cybersecurity & Network Systems",
+      "Data Science & Artificial Intelligence",
+      "Digital Marketing & Growth Strategy",
+      "HVAC, Fabrication & Welding Trades",
+      "Programming & Software Development",
+      "Web & Full Stack Engineering"
+    ],
+    "skills_count": 11,
+    "skills": [
+      "Advanced Excel for Business Analytics",
+      "Carpentry & Architectural Woodwork",
+      "Cisco CCNA Routing & Switching",
+      "Commercial Baking & Confectionery",
+      "Computer Vision with OpenCV",
+      "Django Enterprise Web Framework",
+      "Google Cloud Platform (GCP) Fundamentals",
+      "JavaScript Deep Dive (ES6+)",
+      "Python Programming",
+      "Refrigeration & Air Conditioning (HVAC)",
+      "Social Media Marketing & Brand Building"
+    ],
+    "programmes": [
+      {
+        "code": "PRG-0013",
+        "title": "National Skilling Mission: JavaScript Deep Dive (ES6+)",
+        "mode": "Hybrid",
+        "skill": "JavaScript Deep Dive (ES6+)"
+      },
+      {
+        "code": "PRG-0019",
+        "title": "National Skilling Mission: Django Enterprise Web Framework",
+        "mode": "Hybrid",
+        "skill": "Django Enterprise Web Framework"
+      },
+      {
+        "code": "PRG-0028",
+        "title": "National Skilling Mission: Computer Vision with OpenCV",
+        "mode": "Hybrid",
+        "skill": "Computer Vision with OpenCV"
+      },
+      {
+        "code": "PRG-0036",
+        "title": "National Skilling Mission: Google Cloud Platform (GCP) Fundamentals",
+        "mode": "Online",
+        "skill": "Google Cloud Platform (GCP) Fundamentals"
+      },
+      {
+        "code": "PRG-0047",
+        "title": "National Skilling Mission: Cisco CCNA Routing & Switching",
+        "mode": "Classroom",
+        "skill": "Cisco CCNA Routing & Switching"
+      },
+      {
+        "code": "PRG-0058",
+        "title": "National Skilling Mission: Advanced Excel for Business Analytics",
+        "mode": "Hybrid",
+        "skill": "Advanced Excel for Business Analytics"
+      },
+      {
+        "code": "PRG-0068",
+        "title": "National Skilling Mission: Social Media Marketing & Brand Building",
+        "mode": "Classroom",
+        "skill": "Social Media Marketing & Brand Building"
+      },
+      {
+        "code": "PRG-0078",
+        "title": "National Skilling Mission: Refrigeration & Air Conditioning (HVAC)",
+        "mode": "Online",
+        "skill": "Refrigeration & Air Conditioning (HVAC)"
+      },
+      {
+        "code": "PRG-0089",
+        "title": "National Skilling Mission: Commercial Baking & Confectionery",
+        "mode": "Classroom",
+        "skill": "Commercial Baking & Confectionery"
+      },
+      {
+        "code": "PRG-0099",
+        "title": "National Skilling Mission: Carpentry & Architectural Woodwork",
+        "mode": "Online",
+        "skill": "Carpentry & Architectural Woodwork"
+      },
+      {
+        "code": "PRG-0110",
+        "title": "Government Accelerated Python Cloud Services Programme",
+        "mode": "Hybrid",
+        "skill": "Python Programming"
+      },
+      {
+        "code": "PRG-0120",
+        "title": "Government Accelerated Python Cloud Services Programme",
+        "mode": "Hybrid",
+        "skill": "Python Programming"
+      }
+    ]
+  }
+]

@@ -66,13 +66,13 @@ export default function Stage1AdmissionModal({ institutionId, institutionName, i
         const res = await apiGet(`/admissions/form-config/${institutionId}`)
         if (isMounted) {
           setConfig(res)
-          const isSch = res.is_school || res.category === 'Schools (K-10)' || res.school_type === 'School'
-          const isPUInst = res.category === 'PU Colleges (11-12)' || (res.school_type && res.school_type.includes('PU'))
+          const isSch = res.is_school || res.category === 'Schools (K-10)' || res.category === 'Schools' || res.school_type === 'School'
+          const isPUInst = res.category === 'PU Colleges (11-12)' || res.category === 'PU Colleges' || (res.school_type && res.school_type.includes('PU'))
 
           const urlParams = new URLSearchParams(window.location.search)
           const requestedProgId = urlParams.get('program_id')
           if (isSch) {
-            // Strictly lock to School Education (K-10)
+            // Strictly lock to School Education
             setEducationLevel('school')
             if (res.school_config?.standards?.length > 0) {
               setStandardApplied(String(res.school_config.standards[0]))
@@ -126,8 +126,8 @@ export default function Stage1AdmissionModal({ institutionId, institutionName, i
 
   if (!isOpen) return null
 
-  const isSchool = config?.is_school || config?.category === 'Schools (K-10)' || config?.school_type === 'School'
-  const isPU = !isSchool && (config?.category === 'PU Colleges (11-12)' || (config?.school_type && config?.school_type.includes('PU')) || educationLevel === 'higher_secondary')
+  const isSchool = config?.is_school || config?.category === 'Schools (K-10)' || config?.category === 'Schools' || config?.school_type === 'School'
+  const isPU = !isSchool && (config?.category === 'PU Colleges (11-12)' || config?.category === 'PU Colleges' || (config?.school_type && config?.school_type.includes('PU')) || educationLevel === 'higher_secondary')
   const offeredLevels = isSchool ? ['school'] : (config?.offered_levels || [])
 
   const availableCombinations = (config?.pu_config?.combinations || []).filter(c => !puStream || c.stream === puStream)
@@ -351,7 +351,7 @@ export default function Stage1AdmissionModal({ institutionId, institutionName, i
                     Available programmes are synchronized live from institutional approvals in the official registry.
                   </p>
 
-                  {/* Level Display: FOR SCHOOLS, STRICTLY SHOW ONLY SCHOOL EDUCATION (K-10) WITHOUT TOGGLE */}
+                  {/* Level Display: FOR SCHOOLS, STRICTLY SHOW ONLY SCHOOL EDUCATION WITHOUT TOGGLE */}
                   {isSchool ? (
                     <div style={{ marginBottom: '1.25rem' }}>
                       <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#334155', marginBottom: '0.4rem' }}>
@@ -370,7 +370,7 @@ export default function Stage1AdmissionModal({ institutionId, institutionName, i
                         fontSize: '0.92rem'
                       }}>
                         <span style={{ fontSize: '1.1rem' }}>🏫</span>
-                        <span>School Education (K–10)</span>
+                        <span>School Education</span>
                       </div>
                     </div>
                   ) : offeredLevels.length > 1 ? (
@@ -918,7 +918,7 @@ export default function Stage1AdmissionModal({ institutionId, institutionName, i
                       <div>
                         <span style={{ color: '#64748B', fontSize: '0.78rem', display: 'block' }}>Education Level</span>
                         <strong style={{ color: '#102B46' }}>
-                          {isSchool ? 'School Education (K–10)' : educationLevel.replace('_', ' ')}
+                          {isSchool ? 'School Education' : educationLevel.replace('_', ' ')}
                         </strong>
                       </div>
                       <div>

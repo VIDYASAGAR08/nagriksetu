@@ -135,7 +135,21 @@ export default function RegisterPage() {
         })
       }
     } catch (err) {
-      setError(err.message || 'Registration failed. Please check your information and try again.')
+      let msg = 'Registration failed. Please check your information and try again.'
+      if (typeof err === 'string' && err !== '[object Object]') {
+        msg = err
+      } else if (err?.detail) {
+        if (typeof err.detail === 'string') {
+          msg = err.detail
+        } else if (Array.isArray(err.detail)) {
+          msg = err.detail.map((d) => (typeof d === 'string' ? d : d?.msg || d?.message || JSON.stringify(d))).join('; ')
+        } else if (typeof err.detail === 'object') {
+          msg = err.detail.msg || err.detail.message || JSON.stringify(err.detail)
+        }
+      } else if (err?.message && typeof err.message === 'string' && err.message !== '[object Object]') {
+        msg = err.message
+      }
+      setError(msg)
     } finally {
       setLoading(false)
     }

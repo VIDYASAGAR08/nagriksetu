@@ -251,8 +251,8 @@ export default function InstitutionStudentDirectory({ schoolId, schoolName, scho
                 All Sections ({sections.length})
               </button>
               {tiers.map(t => {
-                const label = t === 'school' ? 'School (K-10)'
-                  : t === 'higher_secondary' ? 'PU (11-12)'
+                const label = t === 'school' ? 'Schools'
+                  : t === 'higher_secondary' ? 'PU Colleges'
                   : t === 'diploma' ? 'Diploma'
                   : t === 'undergraduate' ? 'Undergraduate' : t
                 return (

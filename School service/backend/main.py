@@ -1,4 +1,3 @@
-import logging
 import secrets
 import re
 from datetime import datetime, timedelta
@@ -11,12 +10,12 @@ import os
 import json
 import sqlite3
 import uuid
-from typing import Literal, Optional, List, Dict, Any
+from typing import Literal, Optional, List, Dict, Any, Union
 
 from fastapi import Depends, FastAPI, HTTPException, Query, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordRequestForm
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 from database import get_connection
 from auth import create_access_token, get_current_user, hash_password, verify_password
 
@@ -31,26 +30,32 @@ app = FastAPI(
 )
 
 cors_origins_env = os.getenv("CORS_ORIGINS", "")
-if cors_origins_env:
-    trusted_origins = [o.strip() for o in cors_origins_env.split(",") if o.strip()]
-else:
-    trusted_origins = [
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-        "http://localhost:5174",
-        "http://127.0.0.1:5174",
-        "http://localhost:8000",
-        "http://127.0.0.1:8000",
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-    ]
+
+trusted_origins = [
+    origin.strip()
+    for origin in cors_origins_env.split(",")
+    if origin.strip()
+]
+
+local_development_origins = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://localhost:5176",
+    "http://127.0.0.1:5176",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+]
+
+trusted_origins = list(
+    dict.fromkeys(trusted_origins + local_development_origins)
+)
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=trusted_origins,
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
-    allow_headers=["Authorization", "Content-Type", "Accept", "Origin", "X-Requested-With"],
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 import time
@@ -107,6 +112,7 @@ class LoginResponse(BaseModel):
     school_id: Optional[str] = None
     student_id: Optional[str] = None
     permanent_student_id: Optional[str] = None
+    must_change_password: Optional[bool] = False
 
 
 class NotificationPreferencesPayload(BaseModel):
@@ -198,8 +204,8 @@ class StudentRegisterResponse(BaseModel):
 
 class ParentRegisterRequest(BaseModel):
     full_name: str = Field(min_length=2, max_length=150)
-    email: Optional[str] = None
-    phone: Optional[str] = None
+    email: Optional[str] = Field(default=None, pattern=r"^[\w\.-]+@[\w\.-]+\.\w+$")
+    phone: Optional[str] = Field(default=None, pattern=r"^[6-9]\d{9}$")
     password: str = Field(min_length=8, max_length=128)
     confirm_password: str = Field(min_length=8, max_length=128)
 
@@ -216,91 +222,42 @@ class ParentRegisterRequest(BaseModel):
     def normalize_email(cls, v):
         if isinstance(v, str):
             s = v.strip().lower()
-            if not s:
-                return None
-            if not re.match(r"^[\w\.-]+@[\w\.-]+\.\w+$", s):
-                raise ValueError("Please provide a valid email format.")
-            return s
+            return s if s else None
         return v
 
     @field_validator("phone", mode="before")
     @classmethod
     def normalize_phone(cls, v):
         if isinstance(v, str):
-            s = v.strip()
-            if not s:
-                return None
-            digits = re.sub(r"\D", "", s)
+            digits = re.sub(r"\D", "", v.strip())
             if len(digits) == 12 and digits.startswith("91"):
                 digits = digits[2:]
             elif len(digits) == 11 and digits.startswith("0"):
                 digits = digits[1:]
-            if not re.match(r"^[6-9]\d{9}$", digits):
-                raise ValueError("Please provide a valid 10-digit Indian mobile number starting with 6, 7, 8, or 9.")
-            return digits
+            return digits if digits else None
         return v
 
-    @field_validator("password")
-    @classmethod
-    def validate_password_strength(cls, v: str) -> str:
-        if len(v) < 8:
-            raise ValueError("Password must contain at least 8 characters.")
-        has_letter = any(c.isalpha() for c in v)
-        has_num_or_special = any(not c.isalpha() for c in v)
-        if not has_letter or not has_num_or_special:
-            raise ValueError("Password must contain at least one letter and at least one number or special character.")
-        return v
+    @model_validator(mode="after")
+    def validate_contact_present(self):
+        if not self.email and not self.phone:
+            raise ValueError("Either an email address or a valid 10-digit mobile number is required.")
+        return self
 
 
 class RegisterResponse(BaseModel):
     user_id: str
     full_name: str
     message: str
-    access_token: Optional[str] = None
-    token_type: Optional[str] = "bearer"
-    role: Optional[str] = "parent"
-
-
-class SetupPasswordPayload(BaseModel):
-    identifier: str = Field(min_length=3, max_length=150)
-    full_name: str = Field(min_length=2, max_length=150)
-    password: str = Field(min_length=8, max_length=128)
-    confirm_password: str = Field(min_length=8, max_length=128)
-
-    @field_validator("password")
-    @classmethod
-    def validate_password_strength(cls, v: str) -> str:
-        if len(v) < 8:
-            raise ValueError("Password must contain at least 8 characters.")
-        has_letter = any(c.isalpha() for c in v)
-        has_num_or_special = any(not c.isalpha() for c in v)
-        if not has_letter or not has_num_or_special:
-            raise ValueError("Password must contain at least one letter and at least one number or special character.")
-        return v
 
 
 class ParentLinkingRequestCreate(BaseModel):
-    school_id: str = Field(min_length=1, max_length=50)
-    student_ref: str = Field(min_length=1, max_length=100)
+    school_id: Optional[str] = Field(default=None, max_length=50)
+    student_ref: Optional[str] = Field(default=None, max_length=100)
+    student_id: Optional[str] = Field(default=None, max_length=100)
+    permanent_student_id: Optional[str] = Field(default=None, max_length=100)
     relationship_type: str = Field(min_length=2, max_length=50)
     verification_doc_id: Optional[str] = Field(default=None, max_length=100)
     additional_notes: Optional[str] = Field(default=None, max_length=1000)
-
-    @field_validator("school_id")
-    @classmethod
-    def validate_school_id(cls, v: str) -> str:
-        s = v.strip()
-        if not s:
-            raise ValueError("School ID cannot be empty.")
-        return s
-
-    @field_validator("student_ref")
-    @classmethod
-    def validate_student_ref(cls, v: str) -> str:
-        s = v.strip()
-        if not s:
-            raise ValueError("Student reference cannot be empty.")
-        return s
 
     @field_validator("relationship_type")
     @classmethod
@@ -311,10 +268,15 @@ class ParentLinkingRequestCreate(BaseModel):
         return s
 
 
+class ParentClarificationResponse(BaseModel):
+    response_notes: Optional[str] = Field(default=None, max_length=2000)
+    parent_response: Optional[str] = Field(default=None, max_length=2000)
+
+
 class ParentLinkingRequestResponse(BaseModel):
     request_id: str
-    school_id: str
-    student_ref: str
+    school_id: Optional[str] = None
+    student_ref: Optional[str] = None
     relationship_type: str
     request_status: str
     message: str
@@ -597,7 +559,7 @@ def record_platform_audit(
             )
         )
     except Exception as e:
-        logging.getLogger("nagriksetu.auth").error(f"Failed to record platform audit log: {e}")
+        logger.error(f"Failed to record platform audit log: {e}")
 
     try:
         conn.execute(
@@ -751,7 +713,8 @@ def login(
 ):
     """Use the username field for an email address or phone number."""
     client_ip = request.client.host if request.client else "127.0.0.1"
-    identifier = form.username.strip()
+    raw_identifier = form.username or ""
+    clean_identifier = raw_identifier.strip()
 
     if not auth_limiter.record_request(client_ip, max_per_minute=60):
         raise HTTPException(
@@ -759,39 +722,110 @@ def login(
             detail="Rate limit exceeded. Please wait a moment before trying again.",
         )
 
-    if auth_limiter.is_locked_out(client_ip, identifier, max_failures=5):
+    if auth_limiter.is_locked_out(client_ip, clean_identifier, max_failures=5):
         raise HTTPException(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
             detail="Too many failed login attempts. Account temporarily locked out for 60 seconds.",
         )
 
+    is_email = "@" in clean_identifier
+    normalized_email = clean_identifier.lower() if is_email else None
+
+    # Phone normalization for non-email inputs (preserving 10-digit Indian mobile format)
+    normalized_phone = None
+    if not is_email:
+        phone_digits = re.sub(r"\D", "", clean_identifier)
+        if len(phone_digits) == 12 and phone_digits.startswith("91"):
+            normalized_phone = phone_digits[2:]
+        elif len(phone_digits) == 11 and phone_digits.startswith("0"):
+            normalized_phone = phone_digits[1:]
+        elif len(phone_digits) == 10:
+            normalized_phone = phone_digits
+
     conn = get_connection()
     try:
-        user = conn.execute(
-            """
-            SELECT user_id, email, phone, password_hash,
-                   role, school_id, is_active, status, full_name,
-                   permanent_student_id, student_id, is_email_verified
-            FROM users
-            WHERE email = ? COLLATE NOCASE 
-               OR phone = ?
-               OR student_id = ? COLLATE NOCASE
-               OR permanent_student_id = ? COLLATE NOCASE
-            """,
-            (identifier, identifier, identifier, identifier),
-        ).fetchone()
+        user = None
+        if is_email:
+            # Case-insensitive email lookup across users and linked guardian profiles
+            rows = conn.execute(
+                """
+                SELECT u.user_id, u.email, u.phone, u.password_hash,
+                       u.role, u.school_id, u.is_active, u.status, u.full_name,
+                       u.permanent_student_id, u.student_id, u.is_email_verified,
+                       COALESCE(u.must_change_password, 0) AS must_change_password
+                FROM users u
+                LEFT JOIN guardians g ON g.user_id = u.user_id
+                WHERE (u.email = ? COLLATE NOCASE OR g.email = ? COLLATE NOCASE)
+                  AND u.is_active = 1
+                """,
+                (normalized_email, normalized_email),
+            ).fetchall()
+
+            # Deduplicate by user_id
+            unique_users = []
+            seen_ids = set()
+            for r in rows:
+                if r["user_id"] not in seen_ids:
+                    seen_ids.add(r["user_id"])
+                    unique_users.append(r)
+
+            if len(unique_users) > 1:
+                # Ambiguous duplicate email accounts safely rejected and reported
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail="Multiple accounts found matching this email address. Please contact support or sign in using your registered mobile number.",
+                )
+            elif len(unique_users) == 1:
+                user = unique_users[0]
+        else:
+            # Phone / Student ID / PSID lookup
+            rows = conn.execute(
+                """
+                SELECT u.user_id, u.email, u.phone, u.password_hash,
+                       u.role, u.school_id, u.is_active, u.status, u.full_name,
+                       u.permanent_student_id, u.student_id, u.is_email_verified,
+                       COALESCE(u.must_change_password, 0) AS must_change_password
+                FROM users u
+                LEFT JOIN guardians g ON g.user_id = u.user_id
+                WHERE (u.phone = ? OR (u.phone = ? AND ? IS NOT NULL)
+                       OR g.phone = ? OR (g.phone = ? AND ? IS NOT NULL)
+                       OR u.student_id = ? COLLATE NOCASE
+                       OR u.permanent_student_id = ? COLLATE NOCASE)
+                  AND u.is_active = 1
+                """,
+                (
+                    clean_identifier, normalized_phone, normalized_phone,
+                    clean_identifier, normalized_phone, normalized_phone,
+                    clean_identifier, clean_identifier
+                ),
+            ).fetchall()
+
+            unique_users = []
+            seen_ids = set()
+            for r in rows:
+                if r["user_id"] not in seen_ids:
+                    seen_ids.add(r["user_id"])
+                    unique_users.append(r)
+
+            if len(unique_users) > 1:
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail="Multiple accounts found matching this mobile number or student ID. Please contact support.",
+                )
+            elif len(unique_users) == 1:
+                user = unique_users[0]
 
         # Check local credentials
         local_valid = False
-        if user and user["password_hash"] and user["password_hash"].strip():
+        if user and user["is_active"] and user["status"] != "suspended" and user["password_hash"]:
             if verify_password(form.password, user["password_hash"]):
                 local_valid = True
 
         if not local_valid:
             # Fallback to Federated SSO with Central Citizen Portal
-            sso_data = verify_via_central_sso(identifier, form.password)
+            sso_data = verify_via_central_sso(clean_identifier, form.password)
             if sso_data and sso_data.get("valid"):
-                email_val = sso_data.get("email") or identifier
+                email_val = sso_data.get("email") or clean_identifier
                 phone_val = sso_data.get("phone_number")
                 user_phone = phone_val if phone_val else None
                 if user_phone:
@@ -803,7 +837,6 @@ def login(
                 pwd_hash_val = hash_password(form.password)
 
                 if user is None:
-                    # Check if user exists by email specifically
                     existing_user = conn.execute(
                         "SELECT user_id FROM users WHERE email = ? COLLATE NOCASE", (email_val,)
                     ).fetchone()
@@ -882,41 +915,27 @@ def login(
                     """
                     SELECT user_id, email, phone, password_hash,
                            role, school_id, is_active, status, full_name,
-                           permanent_student_id, student_id, is_email_verified
+                           permanent_student_id, student_id, is_email_verified,
+                           COALESCE(must_change_password, 0) AS must_change_password
                     FROM users WHERE user_id = ?
                     """,
                     (uid,)
                 ).fetchone()
             else:
-                auth_limiter.record_failed_login(client_ip, identifier, max_failures=5)
+                auth_limiter.record_failed_login(client_ip, clean_identifier, max_failures=5)
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,
                     detail="Incorrect username or password.",
                     headers={"WWW-Authenticate": "Bearer"},
                 )
 
-        if not user["is_active"] or user["status"] == "suspended":
+        if user["is_email_verified"] == 0 and user["email"]:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="This account has been deactivated or suspended. Please contact your administrator.",
+                detail="Email address is not verified. Please complete email verification before logging in."
             )
 
-        # Check if user has no password configured yet
-        if not user["password_hash"] or user["password_hash"].strip() == "":
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="This account does not have a password configured yet. Please use 'Set Up Password' or 'Forgot Password' to set your password.",
-            )
-
-        if not verify_password(form.password, user["password_hash"]):
-            auth_limiter.record_failed_login(client_ip, identifier, max_failures=5)
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Incorrect username or password.",
-                headers={"WWW-Authenticate": "Bearer"},
-            )
-
-        auth_limiter.reset_failed_login(client_ip, identifier)
+        auth_limiter.reset_failed_login(client_ip, clean_identifier)
 
         # Update last_login
         conn.execute(
@@ -967,6 +986,7 @@ def login(
                 "school_id": active_school,
                 "student_id": user_data.get("student_id"),
                 "permanent_student_id": user_data.get("permanent_student_id"),
+                "must_change_password": bool(user_data.get("must_change_password", 0)),
             }
 
         # If user has multiple assigned institutions, require workspace selection
@@ -998,6 +1018,7 @@ def login(
             "school_id": active_school,
             "student_id": user_data.get("student_id"),
             "permanent_student_id": user_data.get("permanent_student_id"),
+            "must_change_password": bool(user_data.get("must_change_password", 0)),
         }
     finally:
         conn.close()
@@ -1006,18 +1027,24 @@ def login(
 @app.post("/auth/register", response_model=RegisterResponse, status_code=201)
 def register_parent(payload: ParentRegisterRequest):
     """
-    Public citizen/parent registration using password.
-    Always creates role='parent'.
-    At least one of email or mobile number must be provided.
+    Public parent registration.
+    Always creates role='parent'. The role field is never accepted from the request body.
     """
+    # --- Input validation and normalization ---
     full_name = payload.full_name.strip()
-    phone = payload.phone
-    email = payload.email
+    if len(full_name) < 2:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Full name must contain at least 2 non-whitespace characters.",
+        )
+
+    phone = payload.phone.strip() if payload.phone and payload.phone.strip() else None
+    email = payload.email.strip().lower() if payload.email and payload.email.strip() else None
 
     if not phone and not email:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="Please provide at least one contact method: an email address or a mobile number.",
+            detail="Either an email address or a valid 10-digit mobile number is required.",
         )
 
     if payload.password != payload.confirm_password:
@@ -1028,33 +1055,30 @@ def register_parent(payload: ParentRegisterRequest):
 
     conn = get_connection()
     try:
-        # Check duplicate mobile number
+        # --- Duplicate check (exact phone, case-insensitive email) ---
+        existing = None
         if phone:
-            existing_phone = conn.execute(
+            existing = conn.execute(
                 "SELECT user_id FROM users WHERE phone = ?",
                 (phone,),
             ).fetchone()
-            if existing_phone:
-                raise HTTPException(
-                    status_code=status.HTTP_409_CONFLICT,
-                    detail="An account with this mobile number already exists.",
-                )
 
-        # Check duplicate email address
-        if email:
-            existing_email = conn.execute(
+        if existing is None and email:
+            existing = conn.execute(
                 "SELECT user_id FROM users WHERE email = ? COLLATE NOCASE",
                 (email,),
             ).fetchone()
-            if existing_email:
-                raise HTTPException(
-                    status_code=status.HTTP_409_CONFLICT,
-                    detail="An account with this email address already exists.",
-                )
 
-        # Hash password using Argon2id
-        pwd_hash = hash_password(payload.password)
+        if existing is not None:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="An account with these details already exists.",
+            )
 
+        # --- Hash password ---
+        password_hash = hash_password(payload.password)
+
+        # --- Atomic transaction ---
         user_id = str(uuid.uuid4())
         guardian_id = str(uuid.uuid4())
         audit_id = str(uuid.uuid4())
@@ -1069,11 +1093,9 @@ def register_parent(payload: ParentRegisterRequest):
                     )
                     VALUES (?, ?, ?, ?, 'parent', NULL, 1, ?, 1)
                     """,
-                    (user_id, email, phone, pwd_hash, full_name),
+                    (user_id, email, phone, password_hash, full_name),
                 )
 
-                guardian_phone = phone if phone else ""
-                guardian_email = email if email else ""
                 conn.execute(
                     """
                     INSERT INTO guardians (
@@ -1082,7 +1104,7 @@ def register_parent(payload: ParentRegisterRequest):
                     )
                     VALUES (?, ?, ?, 'Parent', ?, ?)
                     """,
-                    (guardian_id, user_id, full_name, guardian_phone, guardian_email),
+                    (guardian_id, user_id, full_name, phone or "", email or ""),
                 )
 
                 conn.execute(
@@ -1098,7 +1120,7 @@ def register_parent(payload: ParentRegisterRequest):
                         audit_id,
                         user_id,
                         user_id,
-                        json.dumps({"full_name": full_name, "has_email": bool(email), "has_phone": bool(phone)}),
+                        json.dumps({"full_name": full_name}),
                     ),
                 )
         except sqlite3.IntegrityError:
@@ -1107,107 +1129,10 @@ def register_parent(payload: ParentRegisterRequest):
                 detail="An account with these details already exists.",
             )
 
-        user_dict = {
-            "user_id": user_id,
-            "role": "parent",
-            "school_id": None,
-            "student_id": None,
-            "permanent_student_id": None,
-        }
-        token = create_access_token(user_dict)
-
         return {
             "user_id": user_id,
             "full_name": full_name,
             "message": "Registration successful. You can now log in.",
-            "access_token": token,
-            "token_type": "bearer",
-            "role": "parent",
-        }
-    finally:
-        conn.close()
-
-
-@app.post("/auth/setup-password")
-def setup_password(payload: SetupPasswordPayload):
-    """
-    Secure self-service password setup for existing accounts that do not yet have a password.
-    Requires matching registered identifier and official full name.
-    """
-    identifier = payload.identifier.strip()
-    full_name = payload.full_name.strip()
-
-    if payload.password != payload.confirm_password:
-        raise HTTPException(status_code=422, detail="Passwords do not match.")
-
-    conn = get_connection()
-    try:
-        user = conn.execute(
-            """
-            SELECT user_id, email, phone, full_name, password_hash, is_active, status
-            FROM users
-            WHERE email = ? COLLATE NOCASE OR phone = ?
-            """,
-            (identifier, identifier)
-        ).fetchone()
-
-        if not user or not user["is_active"] or user["status"] == "suspended":
-            raise HTTPException(
-                status_code=404,
-                detail="No eligible active account found with the provided identifier."
-            )
-
-        if user["password_hash"] and user["password_hash"].strip() != "":
-            raise HTTPException(
-                status_code=400,
-                detail="This account already has a password configured. Please sign in or use the Forgot Password link."
-            )
-
-        # Verify identity: check full_name against user or guardian
-        user_name = (user["full_name"] or "").strip().lower()
-        guardian = conn.execute(
-            "SELECT full_name FROM guardians WHERE user_id = ?",
-            (user["user_id"],)
-        ).fetchone()
-        guardian_name = (guardian["full_name"] or "").strip().lower() if guardian else ""
-
-        input_name = full_name.lower()
-        name_matched = False
-        if input_name == user_name or input_name == guardian_name:
-            name_matched = True
-        elif user_name and (input_name in user_name or user_name in input_name):
-            name_matched = True
-        elif guardian_name and (input_name in guardian_name or guardian_name in input_name):
-            name_matched = True
-
-        if not name_matched:
-            raise HTTPException(
-                status_code=403,
-                detail="The provided full name does not match the official account record. For security, identity verification requires matching registration details."
-            )
-
-        new_hash = hash_password(payload.password)
-        with conn:
-            conn.execute(
-                "UPDATE users SET password_hash = ?, is_email_verified = 1 WHERE user_id = ?",
-                (new_hash, user["user_id"])
-            )
-            record_platform_audit(
-                conn,
-                event_type="PASSWORD_SETUP",
-                event_category="SECURITY",
-                institution_id=None,
-                actor_user_id=user["user_id"],
-                actor_role="parent",
-                entity_type="user",
-                entity_id=user["user_id"],
-                action="INITIAL_PASSWORD_CONFIGURED",
-                remarks=f"Initial password configured via self-service for account {user['user_id']}"
-            )
-
-        return {
-            "status": "ok",
-            "message": "Password configured successfully. You may now sign in with your credentials."
         }
     finally:
         conn.close()
@@ -1275,66 +1200,6 @@ class RegisterWithEmailRequest(BaseModel):
 class EmailLoginRequest(BaseModel):
     email: str
     password: str
-
-
-class UnifiedSendOtpRequest(BaseModel):
-    full_name: str
-    contact: str
-    purpose: str = "login"  # "login" or "register"
-
-
-class UnifiedLoginRequest(BaseModel):
-    full_name: str
-    contact: str
-    otp: str = Field(min_length=6, max_length=6)
-
-
-class UnifiedRegisterRequest(BaseModel):
-    full_name: str
-    contact: str
-    otp: str = Field(min_length=6, max_length=6)
-
-
-def identify_and_normalize_contact(contact_raw: str) -> tuple[str, str]:
-    """
-    Identifies contact type and returns ('mobile', normalized_10_digit_phone)
-    or ('email', normalized_lowercase_email).
-    Raises HTTPException(422) if invalid format.
-    """
-    raw = (contact_raw or "").strip()
-    if not raw:
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="Please provide a valid Indian mobile number or email address."
-        )
-
-    if "@" in raw:
-        from email_service import normalize_email
-        try:
-            clean_email = normalize_email(raw)
-            return "email", clean_email
-        except ValueError:
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail="Please enter a valid email address (e.g. name@example.com)."
-            )
-    else:
-        from sms_service import normalize_phone_number
-        try:
-            clean_phone = normalize_phone_number(raw)
-            return "mobile", clean_phone
-        except ValueError:
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail="Please enter a valid 10-digit Indian mobile number."
-            )
-
-
-def check_name_match(submitted_name: str, account_name: str) -> bool:
-    """Case-insensitive, whitespace-collapsed name match."""
-    s = " ".join((submitted_name or "").strip().lower().split())
-    a = " ".join((account_name or "").strip().lower().split())
-    return s == a
 
 
 @app.post("/auth/otp/send")
@@ -1414,7 +1279,7 @@ def send_otp(request: Request, payload: SendOtpRequest):
             )
 
         # Generate cryptographically secure OTP & Hash
-        from sms_service import generate_otp, hash_otp, send_otp_sms, is_development_sms_mode, SMSConfigurationError, SMSGatewayError
+        from sms_service import generate_otp, hash_otp, send_otp_sms, SMSConfigurationError, SMSGatewayError
         otp = generate_otp()
         otp_hash = hash_otp(phone, otp)
         expires_at = (now + timedelta(minutes=5)).strftime("%Y-%m-%d %H:%M:%S")
@@ -1422,7 +1287,7 @@ def send_otp(request: Request, payload: SendOtpRequest):
         otp_id = str(uuid.uuid4())
         client_ip = request.client.host if request.client else "127.0.0.1"
 
-        # Dispatch SMS via configured provider (Mock in dev, OTP.dev/MSG91 in prod)
+        # Dispatch real SMS via configured provider (MSG91)
         try:
             sms_result = send_otp_sms(phone, otp)
         except SMSConfigurationError as sce:
@@ -1453,25 +1318,15 @@ def send_otp(request: Request, payload: SendOtpRequest):
                 (otp_id, phone, otp_hash, purpose, expires_at, created_at_str, client_ip)
             )
 
-        is_dev = is_development_sms_mode() or sms_result.get("is_simulated", False)
-        resp_payload = {
-            "message": f"OTP sent successfully to +91-******{phone[-4:]}." if not is_dev else f"Development mode: Simulated SMS OTP generated for +91-******{phone[-4:]}.",
+        return {
+            "message": f"OTP sent successfully to +91-******{phone[-4:]}.",
             "phone": phone,
             "purpose": purpose,
             "expires_in_seconds": 300,
             "resend_cooldown_seconds": 60,
-            "provider": sms_result.get("provider", "mock" if is_dev else "otpdev"),
-            "provider_note": sms_result.get("message", "Dispatched"),
-            "dev_mode": is_dev,
+            "provider": sms_result.get("provider", "msg91"),
+            "provider_note": sms_result.get("message", "Dispatched")
         }
-        if is_dev:
-            resp_payload["dev_notice"] = (
-                "DEVELOPMENT SMS GATEWAY NOTICE: Real SMS delivery is disabled for student project testing. "
-                "Use the development verification code below to test server-side OTP verification."
-            )
-            resp_payload["dev_otp"] = otp
-
-        return resp_payload
     finally:
         conn.close()
 
@@ -1569,7 +1424,7 @@ def register_citizen_with_otp(payload: RegisterWithOtpRequest):
         except SMSConfigurationError:
             pass
         except SMSGatewayError as sge:
-            logging.getLogger("nagriksetu.auth").warning(f"Provider verification check encountered gateway error: {sge}")
+            logger.warning(f"Provider verification check encountered gateway error: {sge}")
 
         # Invalidate OTP on success and create Citizen account
         user_id = str(uuid.uuid4())
@@ -1742,7 +1597,7 @@ def login_citizen_with_otp(payload: LoginWithOtpRequest):
         except SMSConfigurationError:
             pass
         except SMSGatewayError as sge:
-            logging.getLogger("nagriksetu.auth").warning(f"Provider verification check encountered gateway error: {sge}")
+            logger.warning(f"Provider verification check encountered gateway error: {sge}")
 
         # Mark OTP as used and update last_login
         with conn:
@@ -1762,996 +1617,6 @@ def login_citizen_with_otp(payload: LoginWithOtpRequest):
             "phone": user_dict["phone"],
             "student_id": user_dict.get("student_id"),
             "permanent_student_id": user_dict.get("permanent_student_id"),
-        }
-    finally:
-        conn.close()
-
-
-# ---------------------------------------------------------------------------
-# GOOGLE IDENTITY SERVICES & EMAIL OTP AUTHENTICATION SCHEMAS & ENDPOINTS
-# ---------------------------------------------------------------------------
-
-class GoogleOtpSendRequest(BaseModel):
-    id_token: str
-    purpose: str = "login"
-    full_name: Optional[str] = None
-
-class GoogleLoginRequest(BaseModel):
-    id_token: str
-    otp: str
-
-class GoogleRegisterRequest(BaseModel):
-    id_token: str
-    otp: str
-    full_name: Optional[str] = None
-
-
-@app.get("/auth/config/oauth")
-def get_oauth_config():
-    """Returns public OAuth client IDs and gateway status for frontend initialization."""
-    from google_auth_service import get_google_client_id, is_google_auth_configured
-    from sms_service import is_development_sms_mode
-    return {
-        "google_client_id": get_google_client_id(),
-        "is_google_configured": is_google_auth_configured(),
-        "is_sms_development": is_development_sms_mode(),
-    }
-
-
-@app.post("/auth/google/otp/send")
-def send_google_email_otp(request: Request, payload: GoogleOtpSendRequest):
-    """
-    Verifies Google ID Token on backend, extracts verified email address,
-    and dispatches a 6-digit OTP to that email via Gmail SMTP.
-    Does NOT automatically authenticate user.
-    """
-    from google_auth_service import verify_google_id_token, GoogleAuthError
-    from email_service import (
-        hash_email_otp,
-        send_login_otp_email,
-        send_registration_otp_email,
-        mask_email,
-        EmailConfigurationError,
-        EmailDeliveryError,
-    )
-    from sms_service import generate_otp
-
-    # 1. Cryptographically verify Google ID Token on backend
-    try:
-        google_user = verify_google_id_token(payload.id_token)
-    except GoogleAuthError as gae:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(gae))
-
-    verified_email = google_user["email"].strip().lower()
-    google_name = google_user.get("name") or verified_email.split("@")[0]
-    display_name = (payload.full_name or "").strip() or google_name
-
-    purpose = payload.purpose.strip().lower()
-    if purpose not in ("login", "register"):
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="Purpose must be either 'login' or 'register'."
-        )
-
-    conn = get_connection()
-    try:
-        # 2. Enforce Account Existence & Security Rules
-        if purpose == "login":
-            user = conn.execute(
-                "SELECT * FROM users WHERE email = ? COLLATE NOCASE",
-                (verified_email,)
-            ).fetchone()
-
-            if not user:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="No active Citizen account found for this Google email address. Please register as a new citizen first."
-                )
-
-            if not user["is_active"] or user["status"] == "suspended":
-                raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN,
-                    detail="This account has been deactivated or suspended."
-                )
-
-            account_name = user["full_name"] or display_name
-        else: # register
-            existing = conn.execute(
-                "SELECT user_id FROM users WHERE email = ? COLLATE NOCASE",
-                (verified_email,)
-            ).fetchone()
-
-            if existing:
-                raise HTTPException(
-                    status_code=status.HTTP_409_CONFLICT,
-                    detail="An account with this email address already exists. Please sign in instead."
-                )
-            account_name = display_name
-
-        # 3. 60-Second Cooldown Enforcement
-        now = datetime.utcnow()
-        recent = conn.execute(
-            """
-            SELECT created_at FROM email_otps
-            WHERE email = ? AND purpose = ?
-            ORDER BY created_at DESC LIMIT 1
-            """,
-            (verified_email, purpose)
-        ).fetchone()
-
-        if recent and recent["created_at"]:
-            try:
-                cdt = datetime.fromisoformat(recent["created_at"].replace("Z", ""))
-                elapsed = (now - cdt).total_seconds()
-                if elapsed < 60:
-                    wait_sec = int(60 - elapsed)
-                    raise HTTPException(
-                        status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-                        detail=f"Please wait {wait_sec} seconds before requesting a new verification code."
-                    )
-            except ValueError:
-                pass
-
-        # 4. Invalidate Previous Active OTPs
-        with conn:
-            conn.execute(
-                "UPDATE email_otps SET is_used = 1 WHERE email = ? AND purpose = ? AND is_used = 0",
-                (verified_email, purpose)
-            )
-
-        # 5. Generate 6-Digit OTP & Salted SHA-256 Hash
-        otp = generate_otp()
-        otp_hash = hash_email_otp(verified_email, otp)
-        expires_at = (now + timedelta(minutes=5)).strftime("%Y-%m-%d %H:%M:%S")
-        created_at_str = now.strftime("%Y-%m-%d %H:%M:%S")
-        otp_id = str(uuid.uuid4())
-        client_ip = request.client.host if request.client else "127.0.0.1"
-
-        # 6. Dispatch Real Email OTP via Gmail SMTP
-        # Email OTP must be accepted by the SMTP provider before saving to DB or claiming success
-        try:
-            if purpose == "login":
-                send_login_otp_email(verified_email, otp, account_name)
-            else:
-                send_registration_otp_email(verified_email, otp, account_name)
-        except EmailConfigurationError as ece:
-            logging.getLogger("nagriksetu.auth").error(f"Email gateway misconfigured: {ece}")
-            raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=f"Email configuration error: {str(ece)}")
-        except EmailDeliveryError as ede:
-            logging.getLogger("nagriksetu.auth").error(f"Email delivery rejected by SMTP: {ede}")
-            raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=f"Email delivery failed: {str(ede)}")
-        except Exception as e:
-            logging.getLogger("nagriksetu.auth").error(f"Unexpected email dispatch error: {e}")
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Email dispatch error: {str(e)}")
-
-        # Save to database ONLY AFTER email provider accepts message
-        with conn:
-            conn.execute(
-                """
-                INSERT INTO email_otps (
-                    otp_id, email, otp_hash, purpose, attempts, max_attempts,
-                    is_used, expires_at, created_at, ip_address
-                ) VALUES (?, ?, ?, ?, 0, 5, 0, ?, ?, ?)
-                """,
-                (otp_id, verified_email, otp_hash, purpose, expires_at, created_at_str, client_ip)
-            )
-
-        masked_target = mask_email(verified_email)
-        return {
-            "success": True,
-            "message": f"Verification code sent to {masked_target}.",
-            "email": verified_email,
-            "masked_email": masked_target,
-            "google_name": google_name,
-            "delivery_channel": "Email",
-            "purpose": purpose,
-            "resend_cooldown_seconds": 60,
-            "expires_in_seconds": 300,
-        }
-    finally:
-        conn.close()
-
-
-@app.post("/auth/google/login")
-def login_with_google_otp(payload: GoogleLoginRequest):
-    """
-    Authenticates existing citizen account using verified Google Identity and verified Email OTP.
-    Never creates new account during login.
-    """
-    from google_auth_service import verify_google_id_token, GoogleAuthError
-    from email_service import verify_email_otp_hash
-
-    try:
-        google_user = verify_google_id_token(payload.id_token)
-    except GoogleAuthError as gae:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(gae))
-
-    verified_email = google_user["email"].strip().lower()
-    otp = payload.otp.strip()
-
-    if len(otp) != 6 or not otp.isdigit():
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="Verification code must be exactly 6 numeric digits."
-        )
-
-    conn = get_connection()
-    try:
-        user = conn.execute(
-            "SELECT * FROM users WHERE email = ? COLLATE NOCASE",
-            (verified_email,)
-        ).fetchone()
-
-        if not user:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="No active Citizen account found for this Google email address. Please register as a new citizen."
-            )
-
-        if not user["is_active"] or user["status"] == "suspended":
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="This account has been deactivated or suspended."
-            )
-
-        otp_row = conn.execute(
-            """
-            SELECT * FROM email_otps
-            WHERE email = ? AND purpose = 'login' AND is_used = 0
-            ORDER BY created_at DESC LIMIT 1
-            """,
-            (verified_email,)
-        ).fetchone()
-
-        if not otp_row:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="No active verification code found. Please request a new code."
-            )
-
-        now_str = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
-        if otp_row["expires_at"] < now_str:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Verification code has expired. Please request a new code."
-            )
-
-        if otp_row["attempts"] >= otp_row["max_attempts"]:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Too many invalid attempts. This code has been invalidated. Please request a new code."
-            )
-
-        if not verify_email_otp_hash(verified_email, otp, otp_row["otp_hash"]):
-            with conn:
-                conn.execute("UPDATE email_otps SET attempts = attempts + 1 WHERE otp_id = ?", (otp_row["otp_id"],))
-            remaining = otp_row["max_attempts"] - (otp_row["attempts"] + 1)
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Incorrect verification code. {remaining} attempt{'s' if remaining != 1 else ''} remaining."
-            )
-
-        with conn:
-            conn.execute("UPDATE email_otps SET is_used = 1 WHERE otp_id = ?", (otp_row["otp_id"],))
-            conn.execute("UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE user_id = ?", (user["user_id"],))
-            record_platform_audit(
-                conn=conn,
-                event_type="CITIZEN_LOGIN_GOOGLE_OTP",
-                event_category="AUTH",
-                institution_id=None,
-                actor_user_id=user["user_id"],
-                actor_role="parent",
-                entity_type="users",
-                entity_id=user["user_id"],
-                action="CITIZEN_LOGIN_GOOGLE_OTP",
-                new_values={"email": verified_email},
-                remarks="Citizen signed in via Google Account + Email OTP"
-            )
-
-        user_dict = dict(user)
-        access_token = create_access_token(user_dict, school_id=user_dict["school_id"])
-        user_data = {
-            "user_id": user_dict["user_id"],
-            "role": user_dict["role"],
-            "school_id": user_dict["school_id"],
-            "student_id": user_dict.get("student_id"),
-            "permanent_student_id": user_dict.get("permanent_student_id"),
-            "email": user_dict["email"],
-            "phone": user_dict["phone"],
-            "full_name": user_dict["full_name"],
-        }
-        return {
-            "message": f"Sign In successful. Welcome back, {user_dict['full_name']}!",
-            "access_token": access_token,
-            "token_type": "bearer",
-            "role": user_dict["role"],
-            "school_id": user_dict["school_id"],
-            "user_id": user_dict["user_id"],
-            "full_name": user_dict["full_name"],
-            "email": user_dict["email"],
-            "phone": user_dict["phone"],
-            "user": user_data,
-        }
-    finally:
-        conn.close()
-
-
-@app.post("/auth/google/register", status_code=status.HTTP_201_CREATED)
-def register_with_google_otp(payload: GoogleRegisterRequest):
-    """
-    Registers a new Citizen account using verified Google Identity and verified Email OTP.
-    Does not overwrite existing accounts.
-    """
-    from google_auth_service import verify_google_id_token, GoogleAuthError
-    from email_service import verify_email_otp_hash
-
-    try:
-        google_user = verify_google_id_token(payload.id_token)
-    except GoogleAuthError as gae:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(gae))
-
-    verified_email = google_user["email"].strip().lower()
-    otp = payload.otp.strip()
-
-    if len(otp) != 6 or not otp.isdigit():
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="Verification code must be exactly 6 numeric digits."
-        )
-
-    full_name = (payload.full_name or "").strip() or google_user.get("name") or verified_email.split("@")[0]
-    if len(full_name) < 2:
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="Full Name must be at least 2 characters."
-        )
-
-    conn = get_connection()
-    try:
-        existing = conn.execute(
-            "SELECT user_id FROM users WHERE email = ? COLLATE NOCASE",
-            (verified_email,)
-        ).fetchone()
-
-        if existing:
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail="An account with this email address already exists. Please sign in instead."
-            )
-
-        otp_row = conn.execute(
-            """
-            SELECT * FROM email_otps
-            WHERE email = ? AND purpose = 'register' AND is_used = 0
-            ORDER BY created_at DESC LIMIT 1
-            """,
-            (verified_email,)
-        ).fetchone()
-
-        if not otp_row:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="No active verification code found. Please request a new code."
-            )
-
-        now_str = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
-        if otp_row["expires_at"] < now_str:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Verification code has expired. Please request a new code."
-            )
-
-        if otp_row["attempts"] >= otp_row["max_attempts"]:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Too many invalid attempts. This code has been invalidated. Please request a new code."
-            )
-
-        if not verify_email_otp_hash(verified_email, otp, otp_row["otp_hash"]):
-            with conn:
-                conn.execute("UPDATE email_otps SET attempts = attempts + 1 WHERE otp_id = ?", (otp_row["otp_id"],))
-            remaining = otp_row["max_attempts"] - (otp_row["attempts"] + 1)
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Incorrect verification code. {remaining} attempt{'s' if remaining != 1 else ''} remaining."
-            )
-
-        user_id = str(uuid.uuid4())
-        guardian_id = str(uuid.uuid4())
-        created_at_str = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
-
-        with conn:
-            conn.execute("UPDATE email_otps SET is_used = 1 WHERE otp_id = ?", (otp_row["otp_id"],))
-            conn.execute(
-                """
-                INSERT INTO users (
-                    user_id, email, phone, password_hash, role, school_id,
-                    is_active, created_at, full_name, status, last_login, is_email_verified
-                ) VALUES (?, ?, NULL, '', 'parent', NULL, 1, ?, ?, 'active', ?, 1)
-                """,
-                (user_id, verified_email, created_at_str, full_name, created_at_str)
-            )
-            conn.execute(
-                """
-                INSERT INTO guardians (
-                    guardian_id, user_id, full_name, relationship, phone, email, address, created_at
-                ) VALUES (?, ?, ?, 'Guardian', '', ?, NULL, ?)
-                """,
-                (guardian_id, user_id, full_name, verified_email, created_at_str)
-            )
-            record_platform_audit(
-                conn=conn,
-                event_type="CITIZEN_REGISTER_GOOGLE_OTP",
-                event_category="AUTH",
-                institution_id=None,
-                actor_user_id=user_id,
-                actor_role="parent",
-                entity_type="users",
-                entity_id=user_id,
-                action="CITIZEN_REGISTER_GOOGLE_OTP",
-                new_values={"email": verified_email, "full_name": full_name},
-                remarks="New Citizen registered via Google Account + Email OTP"
-            )
-
-        new_user = {
-            "user_id": user_id,
-            "role": "parent",
-            "school_id": None,
-            "student_id": None,
-            "permanent_student_id": None,
-            "email": verified_email,
-            "phone": None,
-            "full_name": full_name,
-        }
-        access_token = create_access_token(new_user, school_id=None)
-
-        return {
-            "message": f"Registration successful! Welcome to NagrikSetu, {full_name}!",
-            "access_token": access_token,
-            "token_type": "bearer",
-            "role": "parent",
-            "school_id": None,
-            "user_id": user_id,
-            "full_name": full_name,
-            "email": verified_email,
-            "phone": None,
-            "user": new_user,
-        }
-    finally:
-        conn.close()
-
-
-@app.post("/auth/unified/otp/send")
-def send_unified_otp(request: Request, payload: UnifiedSendOtpRequest):
-    """
-    Unified OTP dispatch endpoint for Citizen/Parent Sign In and Registration.
-    Accepts Full Name (as per Aadhaar) and Contact (Mobile Number or Email Address).
-    Automatically identifies contact channel and dispatches via OTP.dev SMS or Gmail SMTP.
-    Enforces single-use OTPs, 60-second cooldown, and 5-minute expiration.
-    """
-    full_name = payload.full_name.strip()
-    if len(full_name) < 2:
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="Full Name (as per Aadhaar) must be at least 2 characters."
-        )
-
-    contact_type, clean_contact = identify_and_normalize_contact(payload.contact)
-    purpose = payload.purpose.strip().lower()
-    if purpose not in ("login", "register"):
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="Purpose must be either 'login' or 'register'."
-        )
-
-    conn = get_connection()
-    try:
-        if purpose == "login":
-            if contact_type == "mobile":
-                user = conn.execute("SELECT * FROM users WHERE phone = ?", (clean_contact,)).fetchone()
-            else:
-                user = conn.execute("SELECT * FROM users WHERE email = ? COLLATE NOCASE", (clean_contact,)).fetchone()
-
-            if not user or not check_name_match(full_name, user["full_name"]):
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="No active account found matching the provided name and contact details. Please verify your details or register as a new citizen."
-                )
-
-            if not user["is_active"] or user["status"] == "suspended":
-                raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN,
-                    detail="This account has been deactivated or suspended."
-                )
-
-        elif purpose == "register":
-            if contact_type == "mobile":
-                existing = conn.execute("SELECT user_id FROM users WHERE phone = ?", (clean_contact,)).fetchone()
-            else:
-                existing = conn.execute("SELECT user_id FROM users WHERE email = ? COLLATE NOCASE", (clean_contact,)).fetchone()
-
-            if existing:
-                raise HTTPException(
-                    status_code=status.HTTP_409_CONFLICT,
-                    detail="An account with this contact details already exists. Please sign in instead."
-                )
-
-        # 60-second cooldown per contact and purpose
-        now = datetime.utcnow()
-        if contact_type == "mobile":
-            recent = conn.execute(
-                """
-                SELECT created_at FROM phone_otps
-                WHERE phone = ? AND purpose = ?
-                ORDER BY created_at DESC LIMIT 1
-                """,
-                (clean_contact, purpose)
-            ).fetchone()
-        else:
-            recent = conn.execute(
-                """
-                SELECT created_at FROM email_otps
-                WHERE email = ? AND purpose = ?
-                ORDER BY created_at DESC LIMIT 1
-                """,
-                (clean_contact, purpose)
-            ).fetchone()
-
-        if recent and recent["created_at"]:
-            try:
-                cdt = datetime.fromisoformat(recent["created_at"].replace("Z", ""))
-                elapsed = (now - cdt).total_seconds()
-                if elapsed < 60:
-                    wait_sec = int(60 - elapsed)
-                    raise HTTPException(
-                        status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-                        detail=f"Please wait {wait_sec} seconds before requesting a new verification code."
-                    )
-            except ValueError:
-                pass
-
-        # Invalidate previously active unused OTPs for this contact and purpose
-        with conn:
-            if contact_type == "mobile":
-                conn.execute(
-                    "UPDATE phone_otps SET is_used = 1 WHERE phone = ? AND purpose = ? AND is_used = 0",
-                    (clean_contact, purpose)
-                )
-            else:
-                conn.execute(
-                    "UPDATE email_otps SET is_used = 1 WHERE email = ? AND purpose = ? AND is_used = 0",
-                    (clean_contact, purpose)
-                )
-
-        from sms_service import generate_otp
-        otp = generate_otp()
-        expires_at = (now + timedelta(minutes=5)).strftime("%Y-%m-%d %H:%M:%S")
-        created_at_str = now.strftime("%Y-%m-%d %H:%M:%S")
-        otp_id = str(uuid.uuid4())
-        client_ip = request.client.host if request.client else "127.0.0.1"
-
-        is_dev = False
-        dev_otp_val = None
-        dev_notice = None
-
-        if contact_type == "mobile":
-            from sms_service import hash_otp, send_otp_sms, is_development_sms_mode, SMSConfigurationError, SMSGatewayError
-            otp_hash = hash_otp(clean_contact, otp)
-            try:
-                sms_res = send_otp_sms(clean_contact, otp)
-            except SMSConfigurationError as sce:
-                raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(sce))
-            except SMSGatewayError as sge:
-                raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(sge))
-            except Exception as e:
-                raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"SMS dispatch failure: {str(e)}")
-
-            with conn:
-                conn.execute(
-                    """
-                    INSERT INTO phone_otps (
-                        otp_id, phone, otp_hash, purpose, attempts, max_attempts,
-                        is_used, expires_at, created_at, ip_address
-                    ) VALUES (?, ?, ?, ?, 0, 5, 0, ?, ?, ?)
-                    """,
-                    (otp_id, clean_contact, otp_hash, purpose, expires_at, created_at_str, client_ip)
-                )
-            masked_contact = f"+91-******{clean_contact[-4:]}"
-            delivery_channel = "SMS"
-
-            is_dev = is_development_sms_mode() or sms_res.get("is_simulated", False)
-            if is_dev:
-                dev_notice = (
-                    "DEVELOPMENT SMS GATEWAY NOTICE: Real SMS delivery is disabled for student project testing. "
-                    "Use the development verification code below to test server-side OTP verification."
-                )
-                dev_otp_val = otp
-        else:
-            from email_service import (
-                hash_email_otp,
-                send_registration_otp_email,
-                send_login_otp_email,
-                mask_email,
-                EmailConfigurationError,
-                EmailDeliveryError,
-            )
-            otp_hash = hash_email_otp(clean_contact, otp)
-            try:
-                if purpose == "login":
-                    send_login_otp_email(clean_contact, otp, full_name)
-                else:
-                    send_registration_otp_email(clean_contact, otp, full_name)
-            except EmailConfigurationError as ece:
-                raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(ece))
-            except EmailDeliveryError as ede:
-                raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(ede))
-            except Exception as e:
-                raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Email dispatch failure: {str(e)}")
-
-            with conn:
-                conn.execute(
-                    """
-                    INSERT INTO email_otps (
-                        otp_id, email, otp_hash, purpose, attempts, max_attempts,
-                        is_used, expires_at, created_at, ip_address
-                    ) VALUES (?, ?, ?, ?, 0, 5, 0, ?, ?, ?)
-                    """,
-                    (otp_id, clean_contact, otp_hash, purpose, expires_at, created_at_str, client_ip)
-                )
-            masked_contact = mask_email(clean_contact)
-            delivery_channel = "Email"
-
-        resp_payload = {
-            "message": f"Verification code sent successfully to {masked_contact}." if not is_dev else f"Development mode: Simulated SMS OTP generated for {masked_contact}.",
-            "contact_type": contact_type,
-            "masked_contact": masked_contact,
-            "delivery_channel": delivery_channel,
-            "purpose": purpose,
-            "resend_cooldown_seconds": 60,
-            "expires_in_seconds": 300,
-            "dev_mode": is_dev,
-        }
-        if dev_notice:
-            resp_payload["dev_notice"] = dev_notice
-        if dev_otp_val:
-            resp_payload["dev_otp"] = dev_otp_val
-
-        return resp_payload
-    finally:
-        conn.close()
-
-
-@app.post("/auth/unified/login")
-def unified_login(payload: UnifiedLoginRequest):
-    """
-    Authenticates an existing active Citizen / Parent account using verified Mobile or Email OTP.
-    Name and contact must match an existing active account. Never creates a new account.
-    """
-    full_name = payload.full_name.strip()
-    contact_type, clean_contact = identify_and_normalize_contact(payload.contact)
-    otp = payload.otp.strip()
-
-    if len(otp) != 6 or not otp.isdigit():
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="Verification code must be exactly 6 numeric digits."
-        )
-
-    conn = get_connection()
-    try:
-        if contact_type == "mobile":
-            user = conn.execute("SELECT * FROM users WHERE phone = ?", (clean_contact,)).fetchone()
-        else:
-            user = conn.execute("SELECT * FROM users WHERE email = ? COLLATE NOCASE", (clean_contact,)).fetchone()
-
-        if not user or not check_name_match(full_name, user["full_name"]):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="No active account found matching the provided name and contact details. Please check your credentials or register as a new citizen."
-            )
-
-        if not user["is_active"] or user["status"] == "suspended":
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="This account has been deactivated or suspended."
-            )
-
-        # Retrieve active unused OTP
-        if contact_type == "mobile":
-            otp_row = conn.execute(
-                """
-                SELECT * FROM phone_otps
-                WHERE phone = ? AND purpose = 'login' AND is_used = 0
-                ORDER BY created_at DESC LIMIT 1
-                """,
-                (clean_contact,)
-            ).fetchone()
-        else:
-            otp_row = conn.execute(
-                """
-                SELECT * FROM email_otps
-                WHERE email = ? AND purpose = 'login' AND is_used = 0
-                ORDER BY created_at DESC LIMIT 1
-                """,
-                (clean_contact,)
-            ).fetchone()
-
-        if not otp_row:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="No active verification code found. Please request a new code."
-            )
-
-        now_str = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
-        if otp_row["expires_at"] < now_str:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Verification code has expired. Please request a new code."
-            )
-
-        if otp_row["attempts"] >= otp_row["max_attempts"]:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Too many invalid attempts. This code has been invalidated. Please request a new code."
-            )
-
-        # Verify OTP
-        if contact_type == "mobile":
-            from sms_service import verify_otp_hash, verify_otp_with_provider, SMSGatewayError, SMSConfigurationError
-            if not verify_otp_hash(clean_contact, otp, otp_row["otp_hash"]):
-                with conn:
-                    conn.execute("UPDATE phone_otps SET attempts = attempts + 1 WHERE otp_id = ?", (otp_row["otp_id"],))
-                remaining = otp_row["max_attempts"] - (otp_row["attempts"] + 1)
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=f"Incorrect verification code. {remaining} verification attempt{'s' if remaining != 1 else ''} remaining."
-                )
-            try:
-                if not verify_otp_with_provider(clean_contact, otp):
-                    with conn:
-                        conn.execute("UPDATE phone_otps SET attempts = attempts + 1 WHERE otp_id = ?", (otp_row["otp_id"],))
-                    remaining = otp_row["max_attempts"] - (otp_row["attempts"] + 1)
-                    raise HTTPException(
-                        status_code=status.HTTP_400_BAD_REQUEST,
-                        detail=f"Verification code rejected by provider. {remaining} attempt{'s' if remaining != 1 else ''} remaining."
-                    )
-            except (SMSConfigurationError, SMSGatewayError):
-                pass
-            with conn:
-                conn.execute("UPDATE phone_otps SET is_used = 1 WHERE otp_id = ?", (otp_row["otp_id"],))
-        else:
-            from email_service import verify_email_otp_hash
-            if not verify_email_otp_hash(clean_contact, otp, otp_row["otp_hash"]):
-                with conn:
-                    conn.execute("UPDATE email_otps SET attempts = attempts + 1 WHERE otp_id = ?", (otp_row["otp_id"],))
-                remaining = otp_row["max_attempts"] - (otp_row["attempts"] + 1)
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=f"Incorrect verification code. {remaining} verification attempt{'s' if remaining != 1 else ''} remaining."
-                )
-            with conn:
-                conn.execute("UPDATE email_otps SET is_used = 1 WHERE otp_id = ?", (otp_row["otp_id"],))
-
-        # Update last login & audit
-        with conn:
-            conn.execute("UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE user_id = ?", (user["user_id"],))
-            record_platform_audit(
-                conn=conn,
-                event_type="CITIZEN_LOGIN_OTP",
-                event_category="AUTH",
-                institution_id=None,
-                actor_user_id=user["user_id"],
-                actor_role="parent",
-                entity_type="users",
-                entity_id=user["user_id"],
-                action="CITIZEN_LOGIN_OTP",
-                new_values={"contact_type": contact_type, "contact": clean_contact},
-                remarks=f"Citizen signed in via unified {contact_type} OTP"
-            )
-
-        user_dict = dict(user)
-        access_token = create_access_token(user_dict, school_id=user_dict["school_id"])
-        user_data = {
-            "user_id": user_dict["user_id"],
-            "role": user_dict["role"],
-            "school_id": user_dict["school_id"],
-            "student_id": user_dict.get("student_id"),
-            "permanent_student_id": user_dict.get("permanent_student_id"),
-            "email": user_dict["email"],
-            "phone": user_dict["phone"],
-            "full_name": user_dict["full_name"],
-        }
-        return {
-            "message": f"Sign In successful. Welcome back, {user_dict['full_name']}!",
-            "access_token": access_token,
-            "token_type": "bearer",
-            "role": user_dict["role"],
-            "school_id": user_dict["school_id"],
-            "user_id": user_dict["user_id"],
-            "full_name": user_dict["full_name"],
-            "email": user_dict["email"],
-            "phone": user_dict["phone"],
-            "user": user_data,
-        }
-    finally:
-        conn.close()
-
-
-@app.post("/auth/unified/register", status_code=status.HTTP_201_CREATED)
-def unified_register(payload: UnifiedRegisterRequest):
-    """
-    Unified Registration endpoint for new Citizen accounts.
-    Requires Full Name (as per Aadhaar), Contact (Mobile or Email), and verified 6-digit OTP.
-    Creates account with verified contact only after successful OTP verification.
-    """
-    full_name = payload.full_name.strip()
-    if len(full_name) < 2:
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="Full Name (as per Aadhaar) must be at least 2 characters."
-        )
-
-    contact_type, clean_contact = identify_and_normalize_contact(payload.contact)
-    otp = payload.otp.strip()
-
-    if len(otp) != 6 or not otp.isdigit():
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="Verification code must be exactly 6 numeric digits."
-        )
-
-    conn = get_connection()
-    try:
-        if contact_type == "mobile":
-            existing = conn.execute("SELECT user_id FROM users WHERE phone = ?", (clean_contact,)).fetchone()
-        else:
-            existing = conn.execute("SELECT user_id FROM users WHERE email = ? COLLATE NOCASE", (clean_contact,)).fetchone()
-
-        if existing:
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail="An account with this contact details already exists. Please sign in instead."
-            )
-
-        # Retrieve active unused registration OTP
-        if contact_type == "mobile":
-            otp_row = conn.execute(
-                """
-                SELECT * FROM phone_otps
-                WHERE phone = ? AND purpose = 'register' AND is_used = 0
-                ORDER BY created_at DESC LIMIT 1
-                """,
-                (clean_contact,)
-            ).fetchone()
-        else:
-            otp_row = conn.execute(
-                """
-                SELECT * FROM email_otps
-                WHERE email = ? AND purpose = 'register' AND is_used = 0
-                ORDER BY created_at DESC LIMIT 1
-                """,
-                (clean_contact,)
-            ).fetchone()
-
-        if not otp_row:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="No active verification code found. Please request an OTP first."
-            )
-
-        now_str = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
-        if otp_row["expires_at"] < now_str:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Verification code has expired. Please request a new code."
-            )
-
-        if otp_row["attempts"] >= otp_row["max_attempts"]:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Too many invalid attempts. This code has been invalidated. Please request a new code."
-            )
-
-        # Verify hash
-        if contact_type == "mobile":
-            from sms_service import verify_otp_hash, verify_otp_with_provider, SMSGatewayError, SMSConfigurationError
-            if not verify_otp_hash(clean_contact, otp, otp_row["otp_hash"]):
-                with conn:
-                    conn.execute("UPDATE phone_otps SET attempts = attempts + 1 WHERE otp_id = ?", (otp_row["otp_id"],))
-                remaining = otp_row["max_attempts"] - (otp_row["attempts"] + 1)
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=f"Incorrect verification code. {remaining} verification attempt{'s' if remaining != 1 else ''} remaining."
-                )
-            try:
-                if not verify_otp_with_provider(clean_contact, otp):
-                    with conn:
-                        conn.execute("UPDATE phone_otps SET attempts = attempts + 1 WHERE otp_id = ?", (otp_row["otp_id"],))
-                    remaining = otp_row["max_attempts"] - (otp_row["attempts"] + 1)
-                    raise HTTPException(
-                        status_code=status.HTTP_400_BAD_REQUEST,
-                        detail=f"Verification code rejected by provider. {remaining} attempt{'s' if remaining != 1 else ''} remaining."
-                    )
-            except (SMSConfigurationError, SMSGatewayError):
-                pass
-            with conn:
-                conn.execute("UPDATE phone_otps SET is_used = 1 WHERE otp_id = ?", (otp_row["otp_id"],))
-        else:
-            from email_service import verify_email_otp_hash
-            if not verify_email_otp_hash(clean_contact, otp, otp_row["otp_hash"]):
-                with conn:
-                    conn.execute("UPDATE email_otps SET attempts = attempts + 1 WHERE otp_id = ?", (otp_row["otp_id"],))
-                remaining = otp_row["max_attempts"] - (otp_row["attempts"] + 1)
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=f"Incorrect verification code. {remaining} verification attempt{'s' if remaining != 1 else ''} remaining."
-                )
-            with conn:
-                conn.execute("UPDATE email_otps SET is_used = 1 WHERE otp_id = ?", (otp_row["otp_id"],))
-
-        # Create new Citizen Account
-        user_id = str(uuid.uuid4())
-        guardian_id = str(uuid.uuid4())
-        phone_val = clean_contact if contact_type == "mobile" else None
-        email_val = clean_contact if contact_type == "email" else None
-        dummy_password_hash = hash_password(secrets.token_urlsafe(24))
-
-        with conn:
-            conn.execute(
-                """
-                INSERT INTO users (
-                    user_id, email, phone, password_hash, role,
-                    school_id, is_active, status, full_name, is_email_verified
-                ) VALUES (?, ?, ?, ?, 'parent', NULL, 1, 'active', ?, 1)
-                """,
-                (user_id, email_val, phone_val, dummy_password_hash, full_name)
-            )
-
-            conn.execute(
-                """
-                INSERT INTO guardians (
-                    guardian_id, user_id, full_name, phone, email, relationship
-                ) VALUES (?, ?, ?, ?, ?, 'Citizen / Guardian')
-                """,
-                (guardian_id, user_id, full_name, phone_val or "", email_val or "")
-            )
-
-            record_platform_audit(
-                conn=conn,
-                event_type="CITIZEN_REGISTERED_OTP",
-                event_category="AUTH",
-                institution_id=None,
-                actor_user_id=user_id,
-                actor_role="parent",
-                entity_type="users",
-                entity_id=user_id,
-                action="CITIZEN_REGISTERED_OTP",
-                new_values={"full_name": full_name, "contact_type": contact_type, "contact": clean_contact},
-                remarks=f"Citizen registered via unified {contact_type} OTP"
-            )
-
-        user_data = {
-            "user_id": user_id,
-            "role": "parent",
-            "school_id": None,
-            "student_id": None,
-            "permanent_student_id": None,
-            "email": email_val,
-            "phone": phone_val,
-            "full_name": full_name,
-        }
-        access_token = create_access_token(user_data)
-        return {
-            "message": f"Registration successful for {full_name}!",
-            "access_token": access_token,
-            "token_type": "bearer",
-            "role": "parent",
-            "school_id": None,
-            "user_id": user_id,
-            "full_name": full_name,
-            "email": email_val,
-            "phone": phone_val,
-            "user": user_data,
         }
     finally:
         conn.close()
@@ -3008,24 +1873,21 @@ def register_citizen_with_email(payload: RegisterWithEmailRequest):
             conn.execute(
                 """
                 INSERT INTO guardians (
-                    guardian_id, user_id, full_name, phone, email, relationship
+                    guardian_id, user_id, full_name, phone, email, relationship_to_student
                 ) VALUES (?, ?, ?, ?, ?, 'Guardian')
                 """,
                 (guardian_id, user_id, full_name, phone or "", email)
             )
 
-            record_platform_audit(
-                conn=conn,
-                event_type="CITIZEN_EMAIL_REGISTERED",
-                event_category="AUTH",
-                institution_id=None,
-                actor_user_id=user_id,
-                actor_role="parent",
-                entity_type="users",
-                entity_id=user_id,
-                action="CITIZEN_EMAIL_REGISTERED",
-                new_values={"full_name": full_name, "email": email, "phone": phone},
-                remarks="Citizen registered and verified via email OTP"
+            audit_id = str(uuid.uuid4())
+            conn.execute(
+                """
+                INSERT INTO platform_audit_logs (
+                    audit_id, action, actor_user_id, target_entity_type,
+                    target_entity_id, details
+                ) VALUES (?, 'CITIZEN_EMAIL_REGISTERED', ?, 'users', ?, ?)
+                """,
+                (audit_id, user_id, user_id, json.dumps({"full_name": full_name, "email": email, "phone": phone}))
             )
 
         user_data = {
@@ -3050,7 +1912,6 @@ def register_citizen_with_email(payload: RegisterWithEmailRequest):
             "full_name": full_name,
             "email": email,
             "phone": phone,
-            "user": {**user_data, "is_email_verified": 1},
         }
     finally:
         conn.close()
@@ -3081,7 +1942,8 @@ def login_citizen_with_email(request: Request, payload: EmailLoginRequest):
             """
             SELECT user_id, email, phone, password_hash,
                    role, school_id, is_active, status, full_name,
-                   permanent_student_id, student_id, is_email_verified
+                   permanent_student_id, student_id, is_email_verified,
+                   COALESCE(must_change_password, 0) AS must_change_password
             FROM users
             WHERE email = ? COLLATE NOCASE
             """,
@@ -3132,7 +1994,6 @@ def login_citizen_with_email(request: Request, payload: EmailLoginRequest):
             "full_name": user["full_name"],
             "email": user["email"],
             "phone": user["phone"],
-            "user": {**user_data, "is_email_verified": user["is_email_verified"]},
         }
     finally:
         conn.close()
@@ -3852,6 +2713,16 @@ def get_institution_admin_status_dict(conn, school_id, inst_row=None):
 
     # Priority 1: ACTIVE Administrator
     active_role = next((r for r in roles if r["role_status"] == "active" and r["is_active"] == 1 and r["user_status"] == "active"), None)
+    if not active_role:
+        direct_user = conn.execute("""
+            SELECT user_id, email, full_name, is_active, status as user_status
+            FROM users
+            WHERE school_id = ? AND is_active = 1 AND status = 'active'
+              AND role IN ('school_admin', 'academic_admin', 'institution_admin')
+            LIMIT 1
+        """, (school_id,)).fetchone()
+        if direct_user:
+            active_role = direct_user
     if active_role:
         return {
             "institution_id": inst["school_id"],
@@ -3970,42 +2841,22 @@ def get_institution_admin_status_dict(conn, school_id, inst_row=None):
                 "status_description": "Previous administrator invitation has expired. An invitation is required."
             }
 
-    # Priority 5: REVOKED / DECLINED
-    revoked_role = next((r for r in roles if r["role_status"] in ("revoked", "declined")), None)
-    if revoked_role:
-        return {
-            "institution_id": inst["school_id"],
-            "institution_name": inst["school_name"],
-            "category": inst["category"],
-            "district": inst["district"],
-            "school_type": inst["school_type"],
-            "status": "NOT_INVITED",
-            "button_label": "Invitation Required",
-            "has_active_admin": False,
-            "has_pending_invitation": False,
-            "is_invited": False,
-            "is_pending_password": False,
-            "is_suspended": False,
-            "can_login": False,
-            "status_description": "Previous invitation or assignment was revoked. An invitation is required."
-        }
-
-    # Default: NOT_INVITED
+    # Default: Registered and Approved Institution with direct administrator login
     return {
         "institution_id": inst["school_id"],
         "institution_name": inst["school_name"],
         "category": inst["category"],
         "district": inst["district"],
         "school_type": inst["school_type"],
-        "status": "NOT_INVITED",
-        "button_label": "Invitation Required",
-        "has_active_admin": False,
+        "status": "ACTIVE",
+        "button_label": "Continue to Administrator Login →",
+        "has_active_admin": True,
         "has_pending_invitation": False,
         "is_invited": False,
         "is_pending_password": False,
         "is_suspended": False,
-        "can_login": False,
-        "status_description": "No administrator invitation has been generated for this institution."
+        "can_login": True,
+        "status_description": "Registered and approved institution administrator access."
     }
 
 
@@ -4696,177 +3547,825 @@ def get_school_academic_hierarchy(school_id: str):
 
 
 
-class ParentDirectStudentUpdateRequest(BaseModel):
-    student_name: Optional[str] = None
-    date_of_birth: Optional[str] = None
-    gender: Optional[str] = None
-    first_language: Optional[str] = None
-
-
 @app.get("/parent/children")
 def list_parent_children(user: dict = Depends(require_parent)):
-    """
-    List children linked to this verified parent account.
-    Federated with NagrikSetu Central Portal household registry.
-    """
+    """List only verified children linked to this verified parent account with enriched academic details."""
     conn = get_connection()
     try:
         guardian = get_parent_guardian(conn, user["user_id"])
-        if guardian is None and user.get("email"):
-            g_id = f"GRD-2026-{uuid.uuid4().hex[:6].upper()}"
-            conn.execute(
-                """
-                INSERT INTO guardians (guardian_id, user_id, full_name, relationship, phone, email)
-                VALUES (?, ?, ?, 'Parent', ?, ?)
-                """,
-                (g_id, user["user_id"], user.get("full_name") or user["email"].split("@")[0], user.get("phone") or "9876543210", user["email"])
-            )
-            conn.commit()
-            guardian = get_parent_guardian(conn, user["user_id"])
-
-        g_id = guardian["guardian_id"] if guardian else None
-
-        # Fetch federated children from Central Citizen Database
-        central_children = []
-        if user.get("email"):
-            central_children = fetch_central_household_children(user["email"])
-            if central_children and g_id:
-                for ch in central_children:
-                    perm_id = ch.get("permanent_student_id")
-                    stu_id = ch.get("student_id")
-                    ch_name = ch.get("full_name")
-                    st_row = None
-                    if perm_id:
-                        st_row = conn.execute("SELECT permanent_student_id FROM students WHERE permanent_student_id = ?", (perm_id,)).fetchone()
-                    if not st_row and stu_id:
-                        st_row = conn.execute("SELECT permanent_student_id FROM students WHERE student_id = ?", (stu_id,)).fetchone()
-                    if not st_row and ch_name:
-                        st_row = conn.execute("SELECT permanent_student_id FROM students WHERE student_name = ?", (ch_name,)).fetchone()
-                    if st_row:
-                        matched_perm = st_row["permanent_student_id"]
-                        sg_exists = conn.execute(
-                            "SELECT 1 FROM student_guardians WHERE guardian_id = ? AND permanent_student_id = ?",
-                            (g_id, matched_perm)
-                        ).fetchone()
-                        if not sg_exists:
-                            sg_id = f"SGL-2026-{uuid.uuid4().hex[:6].upper()}"
-                            conn.execute(
-                                """
-                                INSERT INTO student_guardians (
-                                    student_guardian_id, permanent_student_id, guardian_id,
-                                    can_view_records, can_request_updates, is_verified
-                                ) VALUES (?, ?, ?, 1, 1, 1)
-                                """,
-                                (sg_id, matched_perm, g_id)
-                            )
-                conn.commit()
-
-        if g_id is None:
+        if guardian is None:
             return []
 
         rows = conn.execute(
             """
-            SELECT s.student_id, s.permanent_student_id,
-                   s.student_name, s.school_id, sc.school_name,
-                   s.standard, s.section, s.first_language,
-                   s.date_of_birth, s.gender,
-                   s.enrollment_status
+            SELECT s.*,
+                   sc.school_name, sc.school_type, sc.category,
+                   e.enrollment_id, e.academic_year, e.stream as enroll_stream,
+                   e.subject_combination as enroll_combo, e.program_id as enroll_prog_id,
+                   e.degree as enroll_degree, e.branch as enroll_branch,
+                   e.department as enroll_dept, e.semester as enroll_semester,
+                   e.puc_year as enroll_puc_year, e.curriculum_or_board as enroll_board,
+                   e.review_flag as enroll_review_flag,
+                   ap.program_name, ap.discipline_or_stream, ap.department_name
             FROM student_guardians sg
             JOIN students s
               ON s.permanent_student_id = sg.permanent_student_id
             LEFT JOIN schools sc ON sc.school_id = s.school_id
+            LEFT JOIN enrollments e ON e.permanent_student_id = s.permanent_student_id
+            LEFT JOIN academic_programs ap ON ap.program_id = COALESCE(e.program_id, s.program_id)
             WHERE sg.guardian_id = ?
               AND sg.is_verified = 1
               AND sg.can_view_records = 1
             ORDER BY s.student_name
             """,
-            (g_id,),
+            (guardian["guardian_id"],),
         ).fetchall()
-        
-        result = [dict(row) for row in rows]
-        existing_perm_ids = {r["permanent_student_id"] for r in result if r.get("permanent_student_id")}
 
-        # Add any Central Citizen children who are not yet enrolled in any school
-        for ch in central_children:
-            ch_perm = ch.get("permanent_student_id")
-            if ch_perm and ch_perm in existing_perm_ids:
-                continue
-            # If not in school yet, allow parent to view and apply
-            result.append({
-                "student_id": ch.get("student_id") or f"STU-PENDING-{ch.get('citizen_code', '01')}",
-                "permanent_student_id": ch.get("permanent_student_id") or f"NS-PENDING-{ch.get('citizen_code', '01')}",
-                "student_name": ch.get("full_name"),
-                "school_id": None,
-                "school_name": "Not Yet Enrolled (Central Citizen Registry)",
-                "standard": 1,
-                "section": "-",
-                "first_language": "Kannada",
-                "date_of_birth": ch.get("date_of_birth"),
-                "gender": "Unknown",
-                "enrollment_status": "eligible_for_admission",
-                "can_apply": True,
-                "citizen_code": ch.get("citizen_code"),
-            })
+        children = []
+        for r in rows:
+            d = dict(r)
+            inst_tier = classify_institution_tier(
+                d.get("school_id"),
+                d.get("school_name"),
+                d.get("school_type"),
+                d.get("category")
+            )
+            enroll_info = {
+                "academic_year": d.get("academic_year"),
+                "stream": d.get("enroll_stream"),
+                "subject_combination": d.get("enroll_combo"),
+                "program_id": d.get("enroll_prog_id"),
+                "degree": d.get("enroll_degree"),
+                "branch": d.get("enroll_branch"),
+                "department": d.get("enroll_dept"),
+                "semester": d.get("enroll_semester"),
+                "puc_year": d.get("enroll_puc_year"),
+                "curriculum_or_board": d.get("enroll_board"),
+                "review_flag": d.get("enroll_review_flag")
+            }
+            acad = build_institution_academic_details(
+                inst_tier=inst_tier,
+                student_dict=d,
+                enroll_dict=enroll_info,
+                school_dict=d,
+                prog_dict={"program_name": d.get("program_name"), "department_name": d.get("department_name")}
+            )
+            d["institution_name"] = d.get("school_name") or d.get("school_id")
+            d["institution_type"] = d.get("school_type") or d.get("category") or "School"
+            d["institution_tier"] = inst_tier
+            d["class_or_standard"] = acad["class_or_standard"]
+            d["program_or_stream"] = acad["program_or_stream"]
+            d["puc_year"] = acad.get("puc_year")
+            d["stream"] = acad.get("stream")
+            d["subject_combination"] = acad.get("subject_combination")
+            d["degree"] = acad.get("degree")
+            d["branch"] = acad.get("branch")
+            d["programme"] = acad.get("programme")
+            d["department"] = acad.get("department")
+            d["semester"] = acad.get("semester")
+            d["board"] = acad.get("board")
+            d["program_or_class"] = f"{acad['program_or_stream']} · {acad['class_or_standard']} (Sec {acad['section']})"
+            d["is_verified"] = 1
+            children.append(d)
 
-        return result
+        return children
     finally:
         conn.close()
 
 
-@app.put("/parent/children/{permanent_student_id}/profile")
-@app.post("/parent/children/{permanent_student_id}/profile")
-def update_parent_child_profile(
-    permanent_student_id: str,
-    payload: ParentDirectStudentUpdateRequest,
+class StudentLookupByIdResult(BaseModel):
+    student_full_name: str
+    student_id: str
+    permanent_student_id: str
+    institution_id: str
+    institution_name: str
+    institution_type: str
+    category: str
+    institution_tier: str
+    district: Optional[str] = None
+    state: Optional[str] = None
+    program_or_stream: str
+    class_or_standard: str
+    standard: Optional[int] = None
+    section: Optional[str] = None
+    academic_year: str
+    semester: Optional[int] = None
+    is_already_linked: bool
+    board: Optional[str] = None
+    puc_year: Optional[str] = None
+    stream: Optional[str] = None
+    subject_combination: Optional[str] = None
+    degree: Optional[str] = None
+    branch: Optional[str] = None
+    programme: Optional[str] = None
+    department: Optional[str] = None
+    specialisation: Optional[str] = None
+    current_year: Optional[str] = None
+    admission_year: Optional[str] = None
+    academic_batch: Optional[str] = None
+    review_flag: Optional[str] = None
+    academic_division: Optional[str] = None
+    effective_tier: Optional[str] = None
+
+
+class RequestLinkingCodePayload(BaseModel):
+    student_id: str
+    relationship_type: Optional[str] = "Father"
+
+
+class VerifyAndLinkChildPayload(BaseModel):
+    student_id: str
+    verification_code: str
+    relationship_type: str = "Parent"
+
+
+
+def classify_institution_tier(school_id: str, name: str, stype: str, category: str) -> str:
+    stype_str = (stype or "").lower()
+    cat_str = (category or "").lower()
+    name_str = (name or "").lower()
+
+    if "composite" in stype_str:
+        return "Composite Institution"
+    elif "pu college" in stype_str or "pu" in cat_str or "pre-university" in name_str:
+        return "PU College"
+    elif "university" in stype_str or "universities" in cat_str or "university" in name_str:
+        return "University"
+    elif "engineering" in name_str or "technology" in name_str or "polytechnic" in name_str or "engineering" in stype_str:
+        return "Engineering College"
+    elif "degree" in stype_str or "degree" in cat_str or "college" in name_str:
+        return "Degree College"
+    else:
+        return "School"
+
+
+def build_institution_academic_details(inst_tier: str, student_dict: dict, enroll_dict: dict, school_dict: dict, prog_dict: dict = None) -> dict:
+    std = student_dict.get("standard")
+    sec = student_dict.get("section") or "A"
+    acad_yr = (enroll_dict and enroll_dict.get("academic_year")) or "2026-2027"
+
+    puc_yr = (enroll_dict and enroll_dict.get("puc_year")) or student_dict.get("puc_year")
+    stream = (enroll_dict and enroll_dict.get("stream")) or student_dict.get("stream")
+    combo = (enroll_dict and enroll_dict.get("subject_combination")) or student_dict.get("subject_combination")
+    degree = (enroll_dict and enroll_dict.get("degree")) or student_dict.get("degree")
+    branch = (enroll_dict and enroll_dict.get("branch")) or student_dict.get("branch")
+    dept = (enroll_dict and enroll_dict.get("department")) or student_dict.get("department")
+    sem = (enroll_dict and enroll_dict.get("semester")) or student_dict.get("semester")
+    board = (enroll_dict and enroll_dict.get("curriculum_or_board")) or student_dict.get("curriculum_or_board")
+    flag = (enroll_dict and enroll_dict.get("review_flag")) or student_dict.get("review_flag")
+    prog_name = (prog_dict and prog_dict.get("program_name")) or (enroll_dict and enroll_dict.get("program_id")) or (student_dict and student_dict.get("program_id"))
+    acad_div = (enroll_dict and enroll_dict.get("academic_division")) or student_dict.get("academic_division")
+
+    # Authoritative academic level classification based on division, enrollment & standard
+    effective_tier = inst_tier
+    if inst_tier == "Composite Institution" or "composite" in (school_dict.get("school_type") or "").lower():
+        if acad_div == "School Division" or (std is not None and 1 <= std <= 10 and not puc_yr and not degree and not sem):
+            effective_tier = "School"
+        elif acad_div == "PU Division" or puc_yr or (std in (11, 12)):
+            effective_tier = "PU College"
+    elif inst_tier == "PU College" and (acad_div == "School Division" or (std is not None and 1 <= std <= 10 and not puc_yr)):
+        effective_tier = "School"
+    elif inst_tier == "School" and (acad_div == "PU Division" or puc_yr or (std in (11, 12))):
+        effective_tier = "PU College"
+
+    if effective_tier == "School":
+        class_or_standard = f"Standard {std}" if std is not None else "Standard"
+        board_val = board or "Karnataka State Board (KSEEB)"
+        stream_val = stream or "General"
+        combo_val = combo or "KSEEB Core Curriculum (Kannada, English, Mathematics, Science, Social Science)"
+        prog_val = prog_name or "Karnataka State School Education (Std 1-10)"
+        return {
+            "institution_tier": "School",
+            "class_or_standard": class_or_standard,
+            "standard": std,
+            "section": sec,
+            "board": board_val,
+            "stream": stream_val,
+            "subject_combination": combo_val,
+            "program_or_stream": prog_val,
+            "academic_year": acad_yr,
+            "semester": None,
+            "degree": None,
+            "branch": None,
+            "department": dept or "Department of School Education",
+            "programme": prog_val,
+            "puc_year": None,
+            "current_year": None,
+            "admission_year": "2026",
+            "academic_batch": None,
+            "specialisation": None,
+            "review_flag": flag,
+            "academic_division": acad_div or "School Division"
+        }
+    elif effective_tier == "PU College":
+        puc_year_val = puc_yr or ("1st PUC" if std == 11 else ("2nd PUC" if std == 12 else "PUC"))
+        class_or_standard = puc_year_val
+        stream_val = stream or "Science"
+        combo_val = combo or "PCMB"
+        prog_val = prog_name or f"Pre-University ({combo_val})"
+
+        return {
+            "institution_tier": "PU College",
+            "class_or_standard": class_or_standard,
+            "puc_year": puc_year_val,
+            "standard": std,
+            "section": sec,
+            "stream": stream_val,
+            "subject_combination": combo_val,
+            "board": board or "Department of Pre-University Education (DPUE)",
+            "program_or_stream": prog_val,
+            "academic_year": acad_yr,
+            "semester": None,
+            "degree": "Pre-University",
+            "branch": None,
+            "department": dept or "Department of Pre-University Education",
+            "programme": prog_val,
+            "current_year": puc_year_val,
+            "admission_year": "2026",
+            "academic_batch": None,
+            "specialisation": None,
+            "review_flag": flag,
+            "academic_division": acad_div or "PU Division"
+        }
+    elif inst_tier == "Engineering College":
+        deg_val = degree or "B.E."
+        branch_val = branch or stream or "Civil Engineering"
+        prog_val = prog_name or f"{deg_val} in {branch_val}"
+        dept_val = dept or f"Department of {branch_val}"
+        sem_val = sem or 1
+        year_str = f"Year {std}" if std else "Year 1"
+        class_or_standard = f"{year_str} · Semester {sem_val}"
+
+        return {
+            "institution_tier": "Engineering College",
+            "degree": deg_val,
+            "branch": branch_val,
+            "programme": prog_val,
+            "program_or_stream": prog_val,
+            "department": dept_val,
+            "class_or_standard": class_or_standard,
+            "standard": std,
+            "section": sec,
+            "semester": sem_val,
+            "current_year": year_str,
+            "academic_year": acad_yr,
+            "admission_year": "2026",
+            "academic_batch": "2026-2030",
+            "board": board or "VTU / Autonomous (AICTE Approved)",
+            "stream": branch_val,
+            "subject_combination": prog_val,
+            "puc_year": None,
+            "specialisation": branch_val,
+            "review_flag": flag
+        }
+    elif inst_tier == "Degree College":
+        deg_val = degree or "Undergraduate Degree"
+        prog_val = prog_name or "Degree Programme"
+        dept_val = dept or "Department of Collegiate Education"
+        sem_val = sem or 1
+        year_str = f"Year {std}" if std else "Year 1"
+        class_or_standard = f"{year_str} · Semester {sem_val}"
+
+        return {
+            "institution_tier": "Degree College",
+            "degree": deg_val,
+            "programme": prog_val,
+            "program_or_stream": prog_val,
+            "department": dept_val,
+            "class_or_standard": class_or_standard,
+            "standard": std,
+            "section": sec,
+            "semester": sem_val,
+            "current_year": year_str,
+            "academic_year": acad_yr,
+            "admission_year": "2026",
+            "academic_batch": "2026-2029",
+            "board": board or "UGC / State Collegiate Directorate",
+            "stream": stream or "General",
+            "subject_combination": combo or prog_val,
+            "branch": None,
+            "puc_year": None,
+            "specialisation": None,
+            "review_flag": flag
+        }
+    else:  # University
+        prog_val = prog_name or "University Programme"
+        dept_val = dept or "University Department"
+        sem_val = sem or 1
+        year_str = f"Year {std}" if std else "Year 1"
+        class_or_standard = f"{year_str} · Semester {sem_val}"
+
+        return {
+            "institution_tier": "University",
+            "degree": degree or "Postgraduate / Undergraduate",
+            "programme": prog_val,
+            "program_or_stream": prog_val,
+            "department": dept_val,
+            "specialisation": branch or stream or "Specialisation",
+            "class_or_standard": class_or_standard,
+            "standard": std,
+            "section": sec,
+            "semester": sem_val,
+            "current_year": year_str,
+            "academic_year": acad_yr,
+            "admission_year": "2026",
+            "academic_batch": "2026-2028",
+            "board": board or "University Grants Commission (UGC)",
+            "stream": stream or "University Studies",
+            "subject_combination": combo or prog_val,
+            "branch": None,
+            "puc_year": None,
+            "review_flag": flag
+        }
+
+@app.get("/parent/lookup-by-student-id", response_model=StudentLookupByIdResult)
+def lookup_student_by_student_id(
+    student_id: str = Query(..., min_length=1, max_length=100),
     user: dict = Depends(require_parent),
 ):
     """
-    Allows authorized parent to update child student profile details directly.
-    Audited with structured business audit log ID.
+    Search student using an exact Student ID match against the live database.
+    Fetches institution and enrollment details with authentic institution-specific classification.
+    Returns HTTP 404 if no exact match exists.
     """
+    clean_id = student_id.strip()
+    if not clean_id:
+        raise HTTPException(status_code=400, detail="Student ID parameter is required.")
+
     conn = get_connection()
     try:
+        query = """
+            SELECT s.*,
+                   sc.school_name, sc.school_type, sc.category, sc.district, sc.state,
+                   e.enrollment_id, e.academic_year, e.stream AS enroll_stream,
+                   e.subject_combination AS enroll_combo, e.program_id AS enroll_prog_id,
+                   e.degree AS enroll_degree, e.branch AS enroll_branch,
+                   e.department AS enroll_dept, e.semester AS enroll_semester,
+                   e.puc_year AS enroll_puc_year, e.curriculum_or_board AS enroll_board,
+                   e.review_flag AS enroll_review_flag,
+                   e.academic_division AS enroll_acad_div,
+                   e.division_id AS enroll_div_id,
+                   ap.program_name, ap.discipline_or_stream, ap.department_name, ap.faculty_name
+            FROM students s
+            LEFT JOIN schools sc ON sc.school_id = s.school_id
+            LEFT JOIN enrollments e ON e.permanent_student_id = s.permanent_student_id
+            LEFT JOIN academic_programs ap ON ap.program_id = COALESCE(e.program_id, s.program_id)
+            WHERE UPPER(s.student_id) = UPPER(?)
+            LIMIT 1
+        """
+        row = conn.execute(query, (clean_id,)).fetchone()
+
+        if not row:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"No student record found matching Student ID '{clean_id}'. Please check the ID and try again.",
+            )
+
         guardian = get_parent_guardian(conn, user["user_id"])
-        if guardian is None:
-            raise HTTPException(403, "No guardian profile is linked to this account.")
+        is_already_linked = False
+        if guardian:
+            existing = conn.execute(
+                """
+                SELECT student_guardian_id FROM student_guardians
+                WHERE guardian_id = ? AND permanent_student_id = ? AND is_verified = 1
+                """,
+                (guardian["guardian_id"], row["permanent_student_id"]),
+            ).fetchone()
+            if existing:
+                is_already_linked = True
 
-        child = get_authorized_child(
-            conn,
-            guardian["guardian_id"],
-            permanent_student_id,
-            "can_request_updates",
+        r_dict = dict(row)
+        inst_tier = classify_institution_tier(
+            r_dict.get("school_id"),
+            r_dict.get("school_name"),
+            r_dict.get("school_type"),
+            r_dict.get("category")
         )
-        if child is None:
-            raise HTTPException(404, "Child record not found or update permissions not granted.")
 
-        if payload.student_name and payload.student_name.strip():
-            conn.execute("UPDATE students SET student_name = ? WHERE permanent_student_id = ?", (payload.student_name.strip(), permanent_student_id))
-        if payload.date_of_birth and payload.date_of_birth.strip():
-            conn.execute("UPDATE students SET date_of_birth = ? WHERE permanent_student_id = ?", (payload.date_of_birth.strip(), permanent_student_id))
-        if payload.gender and payload.gender.strip():
-            conn.execute("UPDATE students SET gender = ? WHERE permanent_student_id = ?", (payload.gender.strip(), permanent_student_id))
-        if payload.first_language and payload.first_language.strip():
-            conn.execute("UPDATE students SET first_language = ? WHERE permanent_student_id = ?", (payload.first_language.strip(), permanent_student_id))
-        conn.commit()
+        enroll_info = {
+            "academic_year": r_dict.get("academic_year"),
+            "stream": r_dict.get("enroll_stream"),
+            "subject_combination": r_dict.get("enroll_combo"),
+            "program_id": r_dict.get("enroll_prog_id"),
+            "degree": r_dict.get("enroll_degree"),
+            "branch": r_dict.get("enroll_branch"),
+            "department": r_dict.get("enroll_dept"),
+            "semester": r_dict.get("enroll_semester"),
+            "puc_year": r_dict.get("enroll_puc_year"),
+            "curriculum_or_board": r_dict.get("enroll_board"),
+            "review_flag": r_dict.get("enroll_review_flag"),
+            "academic_division": r_dict.get("enroll_acad_div") or r_dict.get("academic_division"),
+            "division_id": r_dict.get("enroll_div_id") or r_dict.get("division_id"),
+        }
 
-        log_id = f"AUD-SCH-2026-{uuid.uuid4().hex[:8].upper()}"
-        try:
+        acad = build_institution_academic_details(
+            inst_tier=inst_tier,
+            student_dict=r_dict,
+            enroll_dict=enroll_info,
+            school_dict=r_dict,
+            prog_dict={"program_name": r_dict.get("program_name"), "department_name": r_dict.get("department_name")}
+        )
+
+        return {
+            "student_full_name": r_dict["student_name"],
+            "student_id": r_dict["student_id"],
+            "permanent_student_id": r_dict["permanent_student_id"],
+            "institution_id": r_dict["school_id"],
+            "institution_name": r_dict.get("school_name") or r_dict["school_id"],
+            "institution_type": r_dict.get("school_type") or r_dict.get("category") or "School",
+            "category": r_dict.get("category") or r_dict.get("school_type") or "General",
+            "institution_tier": inst_tier,
+            "effective_tier": acad.get("institution_tier"),
+            "academic_division": acad.get("academic_division") or r_dict.get("academic_division"),
+            "district": r_dict.get("district") or "Karnataka",
+            "state": r_dict.get("state") or "Karnataka",
+            "program_or_stream": acad["program_or_stream"],
+            "class_or_standard": acad["class_or_standard"],
+            "standard": acad["standard"],
+            "section": acad["section"],
+            "academic_year": acad["academic_year"],
+            "semester": acad["semester"],
+            "is_already_linked": is_already_linked,
+            "board": acad.get("board"),
+            "puc_year": acad.get("puc_year"),
+            "stream": acad.get("stream"),
+            "subject_combination": acad.get("subject_combination"),
+            "degree": acad.get("degree"),
+            "branch": acad.get("branch"),
+            "programme": acad.get("programme"),
+            "department": acad.get("department"),
+            "specialisation": acad.get("specialisation"),
+            "current_year": acad.get("current_year"),
+            "admission_year": acad.get("admission_year"),
+            "academic_batch": acad.get("academic_batch"),
+            "review_flag": acad.get("review_flag"),
+        }
+    finally:
+        conn.close()
+
+
+@app.post("/parent/request-linking-code")
+def request_institution_linking_code(
+    payload: RequestLinkingCodePayload,
+    user: dict = Depends(require_parent),
+):
+    """
+    Generate an expiring institution-issued verification code to authorize linking.
+    Expires in 15 minutes and enforces attempt limits.
+    Does NOT expose the plaintext code to the parent in responses or frontend.
+    Creates a pending verification request for the institution administrator.
+    """
+    clean_id = payload.student_id.strip()
+    if not clean_id:
+        raise HTTPException(status_code=400, detail="Student ID is required.")
+
+    rel_type = (getattr(payload, "relationship_type", None) or "Father").strip()
+
+    conn = get_connection()
+    try:
+        student = conn.execute(
+            """
+            SELECT s.student_id, s.permanent_student_id, s.student_name, s.school_id, sc.school_name
+            FROM students s
+            LEFT JOIN schools sc ON sc.school_id = s.school_id
+            WHERE UPPER(s.student_id) = UPPER(?)
+            LIMIT 1
+            """,
+            (clean_id,),
+        ).fetchone()
+
+        if not student:
+            raise HTTPException(status_code=404, detail=f"Student ID '{clean_id}' not found.")
+
+        guardian = get_parent_guardian(conn, user["user_id"])
+        if guardian:
+            already = conn.execute(
+                """
+                SELECT student_guardian_id FROM student_guardians
+                WHERE guardian_id = ? AND permanent_student_id = ? AND is_verified = 1
+                """,
+                (guardian["guardian_id"], student["permanent_student_id"]),
+            ).fetchone()
+            if already:
+                raise HTTPException(status_code=409, detail="This child is already linked to your account.")
+
+        # Rate limiting: Check if a code was already requested within the last 30 seconds
+        recent_code = conn.execute(
+            """
+            SELECT created_at FROM institution_linking_codes
+            WHERE permanent_student_id = ? AND parent_user_id = ?
+            ORDER BY created_at DESC LIMIT 1
+            """,
+            (student["permanent_student_id"], user["user_id"]),
+        ).fetchone()
+        if recent_code:
+            try:
+                rec_dt = datetime.fromisoformat(recent_code["created_at"])
+                diff_sec = (datetime.now() - rec_dt).total_seconds()
+                if diff_sec < 30:
+                    wait_sec = max(1, int(30 - diff_sec))
+                    raise HTTPException(
+                        status_code=429,
+                        detail=f"Please wait {wait_sec} second(s) before requesting another verification code.",
+                    )
+            except (ValueError, TypeError):
+                pass
+
+        # Invalidate previous unused codes for this student and parent
+        conn.execute(
+            """
+            UPDATE institution_linking_codes
+            SET is_used = 1
+            WHERE permanent_student_id = ? AND parent_user_id = ? AND is_used = 0
+            """,
+            (student["permanent_student_id"], user["user_id"]),
+        )
+
+        # Generate secure random 6-digit numeric verification code
+        plain_code = f"{secrets.randbelow(900000) + 100000}"
+        code_hash = hashlib.sha256(plain_code.encode("utf-8")).hexdigest()
+        code_id = str(uuid.uuid4())
+        now = datetime.now()
+        expires_at = (now + timedelta(minutes=15)).isoformat()
+        now_iso = now.isoformat()
+
+        # Check existing pending linking_requests record
+        pending_lr = conn.execute(
+            """
+            SELECT request_id FROM linking_requests
+            WHERE parent_user_id = ? AND school_id = ? AND (student_ref = ? OR permanent_student_id = ?) AND request_status = 'pending'
+            """,
+            (user["user_id"], student["school_id"], clean_id, student["permanent_student_id"]),
+        ).fetchone()
+
+        with conn:
+            # 1. Insert into institution_linking_codes with plain_code strictly NULL
             conn.execute(
                 """
-                INSERT INTO audit_logs (log_id, actor_id, actor_email, action, resource_type, resource_id, details)
-                VALUES (?, ?, ?, 'PARENT_STUDENT_PROFILE_UPDATE', 'students', ?, ?)
+                INSERT INTO institution_linking_codes (
+                    code_id, permanent_student_id, student_id, institution_id,
+                    parent_user_id, code_hash, plain_code, attempts, max_attempts,
+                    is_used, expires_at, created_at
+                )
+                VALUES (?, ?, ?, ?, ?, ?, NULL, 0, 5, 0, ?, ?)
                 """,
-                (log_id, user["user_id"], user.get("email"), permanent_student_id, json.dumps(payload.dict(exclude_unset=True)))
+                (
+                    code_id,
+                    student["permanent_student_id"],
+                    student["student_id"],
+                    student["school_id"],
+                    user["user_id"],
+                    code_hash,
+                    expires_at,
+                    now_iso,
+                ),
+            )
+
+            # 2. Insert or update linking_requests for institution administrator desk
+            if pending_lr:
+                conn.execute(
+                    """
+                    UPDATE linking_requests
+                    SET relationship_type = ?, created_at = ?, additional_notes = 'Verification code requested via Student ID linking workflow'
+                    WHERE request_id = ?
+                    """,
+                    (rel_type, now_iso, pending_lr["request_id"]),
+                )
+            else:
+                lr_id = str(uuid.uuid4())
+                conn.execute(
+                    """
+                    INSERT INTO linking_requests (
+                        request_id, parent_user_id, school_id, student_ref, relationship_type,
+                        request_status, permanent_student_id, additional_notes, created_at
+                    )
+                    VALUES (?, ?, ?, ?, ?, 'pending', ?, 'Verification code requested via Student ID linking workflow', ?)
+                    """,
+                    (
+                        lr_id,
+                        user["user_id"],
+                        student["school_id"],
+                        student["student_id"],
+                        rel_type,
+                        student["permanent_student_id"],
+                        now_iso,
+                    ),
+                )
+
+        # Return sanitized response: NEVER expose plain_code or verification_code
+        return {
+            "status": "success",
+            "message": "Your child-linking request has been submitted to the institution. Please complete the verification process using the instructions sent to your registered contact.",
+            "delivery_mode": "institution_review",
+            "expires_in_minutes": 15,
+            "student_name": student["student_name"],
+            "student_id": student["student_id"],
+            "institution_name": student["school_name"] or student["school_id"],
+            "institution_id": student["school_id"],
+        }
+    finally:
+        conn.close()
+
+
+@app.post("/parent/verify-and-link-child")
+def verify_and_link_child(
+    payload: VerifyAndLinkChildPayload,
+    user: dict = Depends(require_parent),
+):
+    """
+    Verify parent authorization using institution-issued verification code and create link in student_guardians.
+    Prevents duplicate links, enforces expiration, and limits failed attempts.
+    """
+    clean_id = payload.student_id.strip()
+    code_input = payload.verification_code.strip()
+    rel_type = (payload.relationship_type or "Parent").strip()
+
+    if not clean_id:
+        raise HTTPException(status_code=400, detail="Student ID is required.")
+    if not code_input:
+        raise HTTPException(status_code=400, detail="Institution verification code is required.")
+
+    conn = get_connection()
+    try:
+        student = conn.execute(
+            """
+            SELECT s.student_id, s.permanent_student_id, s.student_name, s.school_id, sc.school_name
+            FROM students s
+            LEFT JOIN schools sc ON sc.school_id = s.school_id
+            WHERE UPPER(s.student_id) = UPPER(?)
+            LIMIT 1
+            """,
+            (clean_id,),
+        ).fetchone()
+
+        if not student:
+            raise HTTPException(status_code=404, detail=f"Student ID '{clean_id}' not found.")
+
+        perm_id = student["permanent_student_id"]
+
+        # Resolve guardian profile
+        guardian = get_parent_guardian(conn, user["user_id"])
+        if not guardian:
+            raise HTTPException(status_code=403, detail="Unable to resolve guardian profile for your account.")
+
+        # Check if already linked and verified
+        existing_link = conn.execute(
+            """
+            SELECT student_guardian_id, is_verified FROM student_guardians
+            WHERE guardian_id = ? AND permanent_student_id = ?
+            """,
+            (guardian["guardian_id"], perm_id),
+        ).fetchone()
+
+        if existing_link and existing_link["is_verified"] == 1:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=f"{student['student_name']} ({student['student_id']}) is already verified and linked to your account.",
+            )
+
+        # Retrieve active verification code
+        code_row = conn.execute(
+            """
+            SELECT code_id, code_hash, attempts, max_attempts, is_used, expires_at
+            FROM institution_linking_codes
+            WHERE permanent_student_id = ? AND parent_user_id = ? AND is_used = 0
+            ORDER BY created_at DESC
+            LIMIT 1
+            """,
+            (perm_id, user["user_id"]),
+        ).fetchone()
+
+        if not code_row:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="No active verification code found for this student. Please request an institution verification code first.",
+            )
+
+        now = datetime.now()
+        exp_dt = datetime.fromisoformat(code_row["expires_at"])
+        if exp_dt < now:
+            conn.execute("UPDATE institution_linking_codes SET is_used = 1 WHERE code_id = ?", (code_row["code_id"],))
+            conn.commit()
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="The verification code has expired. Please request a new verification code.",
+            )
+
+        if code_row["attempts"] >= code_row["max_attempts"]:
+            conn.execute("UPDATE institution_linking_codes SET is_used = 1 WHERE code_id = ?", (code_row["code_id"],))
+            conn.commit()
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Too many failed attempts. This verification code has been invalidated. Please request a new code.",
+            )
+
+        hashed_input = hashlib.sha256(code_input.encode("utf-8")).hexdigest()
+        is_match = (hashed_input == code_row["code_hash"])
+
+        if not is_match:
+            new_attempts = code_row["attempts"] + 1
+            rem = max(0, code_row["max_attempts"] - new_attempts)
+            if rem == 0:
+                conn.execute(
+                    "UPDATE institution_linking_codes SET attempts = ?, is_used = 1 WHERE code_id = ?",
+                    (new_attempts, code_row["code_id"]),
+                )
+                conn.commit()
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Invalid verification code. Maximum attempts exceeded. Code has been invalidated.",
+                )
+            conn.execute(
+                "UPDATE institution_linking_codes SET attempts = ? WHERE code_id = ?",
+                (new_attempts, code_row["code_id"]),
             )
             conn.commit()
-        except Exception:
-            pass
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Invalid verification code. {rem} attempt(s) remaining.",
+            )
 
-        updated = conn.execute("SELECT * FROM students WHERE permanent_student_id = ?", (permanent_student_id,)).fetchone()
+        # Code matches! Mark as used and link child
+        with conn:
+            conn.execute(
+                "UPDATE institution_linking_codes SET is_used = 1 WHERE code_id = ?",
+                (code_row["code_id"],),
+            )
+
+            if existing_link:
+                conn.execute(
+                    """
+                    UPDATE student_guardians
+                    SET is_verified = 1, can_view_records = 1, can_request_updates = 1
+                    WHERE student_guardian_id = ?
+                    """,
+                    (existing_link["student_guardian_id"],),
+                )
+            else:
+                sg_id = str(uuid.uuid4())
+                conn.execute(
+                    """
+                    INSERT INTO student_guardians (
+                        student_guardian_id, permanent_student_id,
+                        guardian_id, can_view_records, can_request_updates, is_verified
+                    )
+                    VALUES (?, ?, ?, 1, 1, 1)
+                    """,
+                    (sg_id, perm_id, guardian["guardian_id"]),
+                )
+
+            if rel_type and rel_type not in ("Guardian", "Parent"):
+                conn.execute(
+                    "UPDATE guardians SET relationship = ? WHERE guardian_id = ?",
+                    (rel_type, guardian["guardian_id"]),
+                )
+
+            # Update pending linking_requests to approved
+            conn.execute(
+                """
+                UPDATE linking_requests
+                SET request_status = 'approved', reviewed_at = ?, reviewer_comment = 'Verified by parent using official 6-digit institution authorization code'
+                WHERE parent_user_id = ? AND school_id = ? AND (permanent_student_id = ? OR student_ref = ?) AND request_status = 'pending'
+                """,
+                (now.isoformat(), user["user_id"], student["school_id"], perm_id, student["student_id"]),
+            )
+
+            # Record audit log
+            audit_id = str(uuid.uuid4())
+            conn.execute(
+                """
+                INSERT INTO audit_logs (
+                    audit_id, actor_user_id, actor_role, action,
+                    entity_type, entity_id, school_id, ip_address, metadata_json
+                )
+                VALUES (?, ?, 'parent', 'PARENT_CHILD_VERIFIED_AND_LINKED', 'student_guardian', ?, ?, NULL, ?)
+                """,
+                (
+                    audit_id,
+                    user["user_id"],
+                    perm_id,
+                    student["school_id"],
+                    json.dumps({
+                        "student_id": student["student_id"],
+                        "student_name": student["student_name"],
+                        "permanent_student_id": perm_id,
+                        "relationship_type": rel_type,
+                        "verification_method": "institution_code",
+                    }),
+                ),
+            )
+
         return {
-            "success": True,
-            "message": "Student profile updated successfully by verified parent.",
-            "student": dict(updated) if updated else None
+            "status": "success",
+            "message": f"Successfully verified and linked {student['student_name']} ({student['student_id']}) to your parent account!",
+            "child": {
+                "student_id": student["student_id"],
+                "permanent_student_id": perm_id,
+                "student_name": student["student_name"],
+                "institution_id": student["school_id"],
+                "institution_name": student["school_name"] or student["school_id"],
+                "is_verified": 1,
+            },
         }
     finally:
         conn.close()
@@ -4938,15 +4437,63 @@ def get_parent_child_records(
 
         perf = calculate_academic_performance(conn, permanent_student_id, child["school_id"])
 
+        sch = conn.execute("SELECT school_name, school_type, category FROM schools WHERE school_id = ?", (child["school_id"],)).fetchone()
+        latest_enrollment = conn.execute(
+            """
+            SELECT e.*, ap.program_name, ap.department_name
+            FROM enrollments e
+            LEFT JOIN academic_programs ap ON ap.program_id = e.program_id
+            WHERE e.permanent_student_id = ?
+            ORDER BY e.academic_year DESC, e.enrollment_id DESC LIMIT 1
+            """,
+            (permanent_student_id,),
+        ).fetchone()
+
+        inst_tier = classify_institution_tier(
+            child["school_id"],
+            sch["school_name"] if sch else child["school_id"],
+            sch["school_type"] if sch else None,
+            sch["category"] if sch else None,
+        )
+        acad_built = build_institution_academic_details(
+            inst_tier=inst_tier,
+            student_dict=dict(child),
+            enroll_dict=dict(latest_enrollment) if latest_enrollment else {},
+            school_dict=dict(sch) if sch else {},
+            prog_dict={"program_name": latest_enrollment["program_name"], "department_name": latest_enrollment["department_name"]} if (latest_enrollment and latest_enrollment["program_name"]) else None,
+        )
+
         return {
             "student": {
                 "student_id": child["student_id"],
                 "permanent_student_id": child["permanent_student_id"],
                 "student_name": child["student_name"],
                 "school_id": child["school_id"],
+                "school_name": sch["school_name"] if sch else child["school_id"],
+                "institution_name": sch["school_name"] if sch else child["school_id"],
+                "institution_type": (sch["school_type"] if sch else None) or "School",
+                "institution_tier": inst_tier,
                 "standard": child["standard"],
-                "section": child["section"],
+                "class_or_standard": acad_built["class_or_standard"],
+                "section": acad_built["section"],
                 "first_language": child["first_language"],
+                "academic_year": acad_built["academic_year"],
+                "puc_year": acad_built.get("puc_year"),
+                "stream": acad_built.get("stream"),
+                "subject_combination": acad_built.get("subject_combination"),
+                "degree": acad_built.get("degree"),
+                "branch": acad_built.get("branch"),
+                "programme": acad_built.get("programme"),
+                "department": acad_built.get("department"),
+                "semester": acad_built.get("semester"),
+                "board": acad_built.get("board"),
+                "curriculum_or_board": acad_built.get("board"),
+                "academic_division": acad_built.get("academic_division") or child.get("academic_division"),
+                "effective_tier": acad_built.get("institution_tier"),
+                "review_flag": acad_built.get("review_flag"),
+                "date_of_birth": child["date_of_birth"],
+                "gender": child["gender"],
+                "enrollment_status": child["enrollment_status"],
             },
             "attendance": perf["attendance"],
             "attendance_summary": perf["attendance"],
@@ -4978,8 +4525,13 @@ def create_parent_linking_request(
     Does NOT create a student_guardians relationship during submission.
     Does NOT grant access to student records.
     """
-    school_id = payload.school_id.strip()
-    student_ref = payload.student_ref.strip()
+    st_ref = (payload.student_ref or payload.student_id or "").strip()
+    if not st_ref:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Student ID / Reference is required.",
+        )
+
     relationship_type = payload.relationship_type.strip()
     verification_doc_id = (
         payload.verification_doc_id.strip()
@@ -4994,7 +4546,7 @@ def create_parent_linking_request(
 
     conn = get_connection()
     try:
-        # Verify guardian profile exists for authenticated parent
+        # Verify or auto-create guardian profile for authenticated parent
         guardian = get_parent_guardian(conn, user["user_id"])
         if guardian is None:
             raise HTTPException(
@@ -5002,35 +4554,86 @@ def create_parent_linking_request(
                 detail="No guardian profile is linked to this account.",
             )
 
-        # Validate that the school exists
+        # Resolve student record from live database
+        student = conn.execute(
+            """
+            SELECT s.student_id, s.permanent_student_id, s.student_name, s.school_id, sc.school_name
+            FROM students s
+            LEFT JOIN schools sc ON sc.school_id = s.school_id
+            WHERE UPPER(s.student_id) = UPPER(?) OR s.permanent_student_id = ?
+            """,
+            (st_ref, st_ref),
+        ).fetchone()
+
+        if student:
+            actual_student_id = student["student_id"]
+            perm_id = student["permanent_student_id"]
+            st_name = student["student_name"]
+            inst_id = student["school_id"]
+            inst_name = student["school_name"] or inst_id
+        else:
+            actual_student_id = st_ref
+            perm_id = payload.permanent_student_id
+            st_name = st_ref
+            inst_id = (payload.school_id or "").strip()
+            inst_name = inst_id
+
+        if not inst_id and payload.school_id:
+            inst_id = payload.school_id.strip()
+
+        if not inst_id:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Could not resolve educational institution for student reference '{st_ref}'.",
+            )
+
+        # Validate institution exists
         school = conn.execute(
             "SELECT school_id, school_name FROM schools WHERE school_id = ?",
-            (school_id,),
+            (inst_id,),
         ).fetchone()
 
         if school is None:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail="School not found.",
+                detail="Institution not found.",
             )
+        inst_name = school["school_name"]
 
-        # Check for existing pending request for same parent, school, and student_ref
-        existing_pending = conn.execute(
+        # Prevent requesting if already verified
+        if perm_id and guardian:
+            already_linked = conn.execute(
+                """
+                SELECT student_guardian_id FROM student_guardians
+                WHERE guardian_id = ? AND permanent_student_id = ? AND is_verified = 1
+                """,
+                (guardian["guardian_id"], perm_id),
+            ).fetchone()
+            if already_linked:
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail="You are already verified as an authorized guardian for this student.",
+                )
+
+        # Check for existing active linking request (pending, clarification_required, pending_review)
+        existing_active = conn.execute(
             """
-            SELECT request_id
+            SELECT request_id, request_status
             FROM linking_requests
             WHERE parent_user_id = ?
-              AND school_id = ?
-              AND student_ref = ?
-              AND request_status = 'pending'
+              AND (
+                  (permanent_student_id IS NOT NULL AND permanent_student_id = ?)
+                  OR UPPER(student_ref) = UPPER(?)
+              )
+              AND request_status IN ('pending', 'clarification_required', 'pending_review')
             """,
-            (user["user_id"], school_id, student_ref),
+            (user["user_id"], perm_id, actual_student_id),
         ).fetchone()
 
-        if existing_pending is not None:
+        if existing_active is not None:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
-                detail="A pending linking request already exists for this student and school.",
+                detail=f"An active linking request is already in progress ({existing_active['request_status']}). The institution will review and notify you of its decision.",
             )
 
         request_id = str(uuid.uuid4())
@@ -5042,20 +4645,41 @@ def create_parent_linking_request(
                     """
                     INSERT INTO linking_requests (
                         request_id, parent_user_id, school_id,
-                        student_ref, relationship_type,
+                        student_ref, permanent_student_id, relationship_type,
                         verification_doc_id, additional_notes,
-                        request_status
+                        request_status, created_at
                     )
-                    VALUES (?, ?, ?, ?, ?, ?, ?, 'pending')
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending', CURRENT_TIMESTAMP)
                     """,
                     (
                         request_id,
                         user["user_id"],
-                        school_id,
-                        student_ref,
+                        inst_id,
+                        actual_student_id,
+                        perm_id,
                         relationship_type,
                         verification_doc_id,
                         additional_notes,
+                    ),
+                )
+
+                # Send in-app notification to institution administrators
+                notif_id = str(uuid.uuid4())
+                conn.execute(
+                    """
+                    INSERT INTO portal_notifications (
+                        notification_id, recipient_role, institution_id,
+                        title, message, action_url, related_record_type, related_record_id,
+                        category, priority
+                    )
+                    VALUES (?, 'school_admin', ?, ?, ?, '/school/dashboard', 'linking_request', ?, 'guardian_verification', 'normal')
+                    """,
+                    (
+                        notif_id,
+                        inst_id,
+                        "New Student Linking Request",
+                        f"New parent-child verification request received for {st_name} (Student ID: {actual_student_id}).",
+                        request_id,
                     ),
                 )
 
@@ -5072,27 +4696,28 @@ def create_parent_linking_request(
                         audit_id,
                         user["user_id"],
                         request_id,
-                        school_id,
+                        inst_id,
                         json.dumps({
-                            "student_ref": student_ref,
+                            "student_ref": actual_student_id,
+                            "permanent_student_id": perm_id,
                             "relationship_type": relationship_type,
-                            "school_id": school_id,
+                            "school_id": inst_id,
                         }),
                     ),
                 )
         except sqlite3.IntegrityError:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
-                detail="A pending linking request already exists for this student and school.",
+                detail="A linking request already exists for this student and institution.",
             )
 
         return {
             "request_id": request_id,
-            "school_id": school_id,
-            "student_ref": student_ref,
+            "school_id": inst_id,
+            "student_ref": actual_student_id,
             "relationship_type": relationship_type,
             "request_status": "pending",
-            "message": "Student linking request submitted successfully. Pending school verification.",
+            "message": f"Your request has been submitted successfully to {inst_name}. The institution will review and notify you of its decision.",
         }
     finally:
         conn.close()
@@ -5105,26 +4730,140 @@ def list_parent_linking_requests(
     """
     List only linking requests submitted by the authenticated parent.
     Does not expose private student records or other parents' requests.
+    Returns complete student identity, institution, status, remarks, and clarification data.
     Ordered by created_at DESC.
     """
     conn = get_connection()
     try:
         rows = conn.execute(
             """
-            SELECT lr.request_id, lr.school_id, sc.school_name,
-                   lr.student_ref, lr.relationship_type,
+            SELECT lr.request_id, lr.school_id, sc.school_name, sc.school_type, sc.category,
+                   lr.student_ref, lr.permanent_student_id, lr.relationship_type,
                    lr.verification_doc_id, lr.additional_notes,
-                   lr.request_status, lr.reviewer_comment,
-                   lr.created_at, lr.reviewed_at
+                   lr.request_status, lr.reviewer_comment, lr.rejection_reason,
+                   lr.parent_response, lr.clarification_requested_at, lr.clarification_responded_at,
+                   lr.created_at, lr.reviewed_at,
+                   s.student_name, s.student_id AS actual_student_id,
+                   s.standard, s.section,
+                   e.academic_year, e.stream AS enroll_stream,
+                   ap.program_name
             FROM linking_requests lr
             LEFT JOIN schools sc ON sc.school_id = lr.school_id
+            LEFT JOIN students s ON (lr.permanent_student_id = s.permanent_student_id OR UPPER(lr.student_ref) = UPPER(s.student_id))
+            LEFT JOIN enrollments e ON e.permanent_student_id = s.permanent_student_id
+            LEFT JOIN academic_programs ap ON ap.institution_id = sc.school_id
             WHERE lr.parent_user_id = ?
+            GROUP BY lr.request_id
             ORDER BY lr.created_at DESC
             """,
             (user["user_id"],),
         ).fetchall()
 
-        return [dict(row) for row in rows]
+        results = []
+        for r in rows:
+            d = dict(r)
+            d["institution_id"] = d.get("school_id")
+            d["institution_name"] = d.get("school_name") or d.get("school_id")
+            d["institution_type"] = d.get("school_type") or d.get("category") or "Accredited Institution"
+            d["student_id"] = d.get("actual_student_id") or d.get("student_ref")
+            d["student_name"] = d.get("student_name") or d.get("student_ref")
+            d["relationship"] = d.get("relationship_type")
+            d["decision_date"] = d.get("reviewed_at")
+
+            std = d.get("standard")
+            sec = d.get("section") or "A"
+            inst_type = str(d["institution_type"])
+            if "PU" in inst_type or "College" in inst_type or "University" in inst_type:
+                d["class_or_standard"] = f"Year {std}" if std is not None else "Year 1"
+            else:
+                d["class_or_standard"] = f"Standard {std}" if std is not None else "N/A"
+            d["program_or_stream"] = d.get("program_name") or d.get("enroll_stream") or "General Academic"
+            results.append(d)
+
+        return results
+    finally:
+        conn.close()
+
+
+@app.post("/parent/linking-requests/{request_id}/respond-clarification")
+def respond_parent_linking_clarification(
+    request_id: str,
+    payload: ParentClarificationResponse,
+    user: dict = Depends(require_parent),
+):
+    """
+    Submit a response to an institution's clarification request on a child linking request.
+    Transitions request status from 'clarification_required' to 'pending_review'
+    and notifies institution administrators.
+    """
+    notes = (payload.response_notes or payload.parent_response or "").strip()
+    if not notes:
+        raise HTTPException(status_code=422, detail="Response notes cannot be empty.")
+
+    conn = get_connection()
+    try:
+        lr = conn.execute(
+            """
+            SELECT lr.*, s.student_name, sc.school_name
+            FROM linking_requests lr
+            LEFT JOIN students s ON (lr.permanent_student_id = s.permanent_student_id OR UPPER(lr.student_ref) = UPPER(s.student_id))
+            LEFT JOIN schools sc ON sc.school_id = lr.school_id
+            WHERE lr.request_id = ?
+            """,
+            (request_id,),
+        ).fetchone()
+
+        if not lr:
+            raise HTTPException(status_code=404, detail="Linking request not found.")
+
+        if lr["parent_user_id"] != user["user_id"]:
+            raise HTTPException(status_code=403, detail="Access denied: You can only respond to your own linking requests.")
+
+        if lr["request_status"] != "clarification_required":
+            raise HTTPException(
+                status_code=409,
+                detail=f"This request does not currently require clarification (current status: {lr['request_status']}).",
+            )
+
+        with conn:
+            conn.execute(
+                """
+                UPDATE linking_requests
+                SET request_status = 'pending_review',
+                    parent_response = ?,
+                    clarification_responded_at = CURRENT_TIMESTAMP
+                WHERE request_id = ?
+                """,
+                (notes, request_id),
+            )
+
+            # Insert notification for institution admin
+            notif_id = str(uuid.uuid4())
+            st_name = lr["student_name"] or lr["student_ref"]
+            conn.execute(
+                """
+                INSERT INTO portal_notifications (
+                    notification_id, recipient_role, institution_id,
+                    title, message, action_url, related_record_type, related_record_id,
+                    category, priority
+                )
+                VALUES (?, 'school_admin', ?, ?, ?, '/school/dashboard', 'linking_request', ?, 'guardian_verification', 'normal')
+                """,
+                (
+                    notif_id,
+                    lr["school_id"],
+                    "Parent Clarification Response Received",
+                    f"Parent {user.get('full_name', 'Guardian')} responded to clarification request for {st_name} (ID: {lr['student_ref']}).",
+                    request_id,
+                ),
+            )
+
+        return {
+            "request_id": request_id,
+            "request_status": "pending_review",
+            "message": "Clarification submitted successfully. Your request is now under institution review.",
+            "parent_response": notes,
+        }
     finally:
         conn.close()
 
@@ -5244,21 +4983,16 @@ def list_parent_update_requests(
 
 
 class ReviewLinkingRequest(BaseModel):
-    decision: Literal["approved", "rejected"]
-    review_comment: str = Field(min_length=3, max_length=1000)
+    decision: Optional[str] = None
+    action: Optional[str] = None
+    review_comment: Optional[str] = Field(default=None, max_length=1000)
+    remarks: Optional[str] = Field(default=None, max_length=1000)
+    rejection_reason: Optional[str] = Field(default=None, max_length=500)
     permanent_student_id: Optional[str] = Field(default=None, max_length=100)
     confirm_student_match: bool = Field(
         default=False,
         description="Explicit confirmation when student_ref does not verbatim match student_id, student_name, or permanent_student_id"
     )
-
-    @field_validator("review_comment")
-    @classmethod
-    def validate_comment(cls, v: str) -> str:
-        s = v.strip()
-        if len(s) < 3:
-            raise ValueError("Review comment must contain at least 3 non-whitespace characters.")
-        return s
 
     @field_validator("permanent_student_id")
     @classmethod
@@ -5271,30 +5005,30 @@ class ReviewLinkingRequest(BaseModel):
 
 @app.get("/school/linking-requests")
 def list_school_linking_requests(
-    status_filter: Optional[Literal["pending", "approved", "rejected", "cancelled", "all"]] = Query(default="pending"),
+    status_filter: Optional[str] = Query(default="pending"),
     limit: int = Query(default=50, ge=1, le=100),
     offset: int = Query(default=0, ge=0),
-    user: dict = Depends(require_school_staff),
+    user: dict = Depends(get_current_user),
 ):
     """
     List linking requests for the reviewer's assigned school.
     Defaults to pending requests.
     Does not expose sensitive credentials.
     """
-    if user["role"] not in ("school_staff", "school_admin"):
+    if user["role"] not in STAFF_ROLES and user["role"] not in ("school_admin", "institution_admin", "academic_admin", "platform_admin"):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="School staff access required.",
+            detail="School staff or administrator access required.",
         )
-    if not user.get("school_id"):
+    if not user.get("school_id") and user["role"] != "platform_admin":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Your account is not assigned to a school.",
         )
 
-    lim_val = limit if isinstance(limit, int) else (limit.default if hasattr(limit, "default") else 50)
-    off_val = offset if isinstance(offset, int) else (offset.default if hasattr(offset, "default") else 0)
-    stat_val = status_filter if isinstance(status_filter, str) else (status_filter.default if hasattr(status_filter, "default") else "pending")
+    lim_val = limit if isinstance(limit, int) else 50
+    off_val = offset if isinstance(offset, int) else 0
+    stat_val = status_filter if isinstance(status_filter, str) else "pending"
 
     conn = get_connection()
     try:
@@ -5304,10 +5038,21 @@ def list_school_linking_requests(
                    lr.school_id, lr.student_ref, lr.relationship_type,
                    lr.verification_doc_id, lr.additional_notes,
                    lr.request_status, lr.reviewer_user_id,
-                   lr.reviewer_comment, lr.permanent_student_id,
-                   lr.created_at, lr.reviewed_at
+                   lr.reviewer_comment, lr.rejection_reason, lr.parent_response,
+                   lr.clarification_requested_at, lr.clarification_responded_at,
+                   lr.permanent_student_id,
+                   lr.created_at, lr.reviewed_at,
+                   s.student_name, s.student_id AS actual_student_id,
+                   s.standard, s.section,
+                   sc.school_name, sc.school_type, sc.category,
+                   e.academic_year, e.stream AS enroll_stream,
+                   ap.program_name
             FROM linking_requests lr
             JOIN users u ON u.user_id = lr.parent_user_id
+            LEFT JOIN students s ON (lr.permanent_student_id = s.permanent_student_id OR UPPER(lr.student_ref) = UPPER(s.student_id))
+            LEFT JOIN schools sc ON sc.school_id = lr.school_id
+            LEFT JOIN enrollments e ON e.permanent_student_id = s.permanent_student_id
+            LEFT JOIN academic_programs ap ON ap.institution_id = sc.school_id
             WHERE lr.school_id = ?
         """
         params = [user["school_id"]]
@@ -5316,11 +5061,24 @@ def list_school_linking_requests(
             query += " AND lr.request_status = ?"
             params.append(stat_val)
 
-        query += " ORDER BY lr.created_at ASC LIMIT ? OFFSET ?"
+        query += " GROUP BY lr.request_id ORDER BY lr.created_at ASC LIMIT ? OFFSET ?"
         params.extend([lim_val, off_val])
 
         rows = conn.execute(query, params).fetchall()
-        return [dict(row) for row in rows]
+        results = []
+        for r in rows:
+            d = dict(r)
+            d["student_id"] = d.get("actual_student_id") or d.get("student_ref")
+            d["student_name"] = d.get("student_name") or "Enrolled Student"
+            std = d.get("standard")
+            inst_type = str(d.get("school_type") or d.get("category") or "")
+            if "PU" in inst_type or "College" in inst_type or "University" in inst_type:
+                d["class_or_standard"] = f"Year {std}" if std is not None else "Year 1"
+            else:
+                d["class_or_standard"] = f"Standard {std}" if std is not None else "N/A"
+            d["program_or_stream"] = d.get("program_name") or d.get("enroll_stream") or "General Academic"
+            results.append(d)
+        return results
     finally:
         conn.close()
 
@@ -5329,21 +5087,35 @@ def list_school_linking_requests(
 def review_school_linking_request(
     request_id: str,
     review: ReviewLinkingRequest,
-    user: dict = Depends(require_school_staff),
+    user: dict = Depends(get_current_user),
 ):
     """
-    Approve or reject a pending linking request within the reviewer's assigned school.
+    Review (Approve, Reject, or Request Clarification) a parent linking request within the reviewer's assigned school.
     Uses atomic transaction with immediate write lock.
     """
-    if user["role"] not in ("school_staff", "school_admin"):
+    if user["role"] not in STAFF_ROLES and user["role"] not in ("school_admin", "institution_admin", "academic_admin", "platform_admin"):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="School staff access required.",
+            detail="School staff or administrator access required.",
         )
-    if not user.get("school_id"):
+    if not user.get("school_id") and user["role"] != "platform_admin":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Your account is not assigned to a school.",
+        )
+
+    # Resolve action
+    raw_action = (review.action or review.decision or "").lower().strip()
+    if raw_action in ("approve", "approved", "accept", "accepted"):
+        action = "approve"
+    elif raw_action in ("reject", "rejected"):
+        action = "reject"
+    elif raw_action in ("clarify", "clarification_required", "request_clarification"):
+        action = "clarify"
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Invalid review action. Must be 'approve', 'reject', or 'clarify'.",
         )
 
     conn = get_connection()
@@ -5353,9 +5125,10 @@ def review_school_linking_request(
         # 1. Fetch linking request
         lr = conn.execute(
             """
-            SELECT *
-            FROM linking_requests
-            WHERE request_id = ?
+            SELECT lr.*, sc.school_name
+            FROM linking_requests lr
+            LEFT JOIN schools sc ON sc.school_id = lr.school_id
+            WHERE lr.request_id = ?
             """,
             (request_id,),
         ).fetchone()
@@ -5367,39 +5140,62 @@ def review_school_linking_request(
             )
 
         # 2. Verify school authorization
-        if lr["school_id"] != user["school_id"]:
+        if user["role"] != "platform_admin" and lr["school_id"] != user.get("school_id"):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="You cannot review requests for another school.",
             )
 
-        # 3. Check request is currently pending
-        if lr["request_status"] != "pending":
+        # 3. Check request is currently in reviewable status
+        if lr["request_status"] not in ("pending", "pending_review", "clarification_required"):
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
-                detail="This linking request has already been reviewed.",
+                detail=f"This linking request cannot be reviewed in status '{lr['request_status']}'.",
             )
 
         audit_id = str(uuid.uuid4())
         actor_role = user["role"]
+        school_name = lr["school_name"] or lr["school_id"]
 
-        if review.decision == "approved":
-            # 4. For approval, permanent_student_id is required
-            permanent_student_id = review.permanent_student_id
-            if not permanent_student_id:
+        # Resolve student record
+        perm_student_id = review.permanent_student_id or lr["permanent_student_id"]
+        if not perm_student_id:
+            st_match = conn.execute(
+                "SELECT permanent_student_id, student_name, student_id FROM students WHERE student_id = ? OR permanent_student_id = ?",
+                (lr["student_ref"], lr["student_ref"]),
+            ).fetchone()
+            if st_match:
+                perm_student_id = st_match["permanent_student_id"]
+                st_name = st_match["student_name"]
+                st_id = st_match["student_id"]
+            else:
+                st_name = lr["student_ref"]
+                st_id = lr["student_ref"]
+        else:
+            st_match = conn.execute(
+                "SELECT student_name, student_id FROM students WHERE permanent_student_id = ?",
+                (perm_student_id,),
+            ).fetchone()
+            st_name = st_match["student_name"] if st_match else lr["student_ref"]
+            st_id = st_match["student_id"] if st_match else lr["student_ref"]
+
+        if action == "approve":
+            remarks = (review.remarks or review.review_comment or "Approved by institution administrator upon verification.").strip()
+
+            if not perm_student_id:
                 raise HTTPException(
                     status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                     detail="permanent_student_id is required when approving a linking request.",
                 )
 
-            # 5. Verify the student exists and belongs to the request's school
+            # Verify student exists and belongs to this school
             student = conn.execute(
                 """
                 SELECT student_id, permanent_student_id, school_id, student_name
                 FROM students
                 WHERE permanent_student_id = ?
                 """,
-                (permanent_student_id,),
+                (perm_student_id,),
             ).fetchone()
 
             if student is None:
@@ -5408,34 +5204,13 @@ def review_school_linking_request(
                     detail="Student not found with the provided permanent_student_id.",
                 )
 
-            if student["school_id"] != user["school_id"]:
+            if user["role"] != "platform_admin" and student["school_id"] != user["school_id"]:
                 raise HTTPException(
                     status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                     detail="The student does not belong to your school.",
                 )
 
-            # 5b. Verify student_ref matches student or requires explicit staff confirmation
-            ref_norm = lr["student_ref"].strip().lower()
-            candidate_identifiers = {
-                student["permanent_student_id"].strip().lower(),
-                student["student_id"].strip().lower(),
-                student["student_name"].strip().lower(),
-            }
-
-            is_direct_match = ref_norm in candidate_identifiers
-            if not is_direct_match and not review.confirm_student_match:
-                raise HTTPException(
-                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                    detail=(
-                        f"Student reference '{lr['student_ref']}' does not match student ID or name "
-                        f"({student['student_name']}, {student['student_id']}). "
-                        f"Set confirm_student_match=true to confirm manual verification."
-                    ),
-                )
-
-            verification_method = "direct_match" if is_direct_match else "manual_staff_confirmation"
-
-            # 6. Resolve parent guardian record
+            # Resolve parent guardian record
             guardian = get_parent_guardian(conn, lr["parent_user_id"])
             if guardian is None:
                 raise HTTPException(
@@ -5443,28 +5218,26 @@ def review_school_linking_request(
                     detail="No guardian profile found for the requesting parent.",
                 )
 
-            # 7. Check if student_guardians relationship already exists
+            # Check if student_guardians relationship already exists
             existing_sg = conn.execute(
                 """
                 SELECT student_guardian_id, can_view_records, can_request_updates, is_verified
                 FROM student_guardians
                 WHERE permanent_student_id = ? AND guardian_id = ?
                 """,
-                (permanent_student_id, guardian["guardian_id"]),
+                (perm_student_id, guardian["guardian_id"]),
             ).fetchone()
 
             if existing_sg is not None:
-                # Update to verified without overwriting custom permissions
                 conn.execute(
                     """
                     UPDATE student_guardians
-                    SET is_verified = 1
+                    SET is_verified = 1, can_view_records = 1, can_request_updates = 1
                     WHERE student_guardian_id = ?
                     """,
                     (existing_sg["student_guardian_id"],),
                 )
             else:
-                # Create verified relationship
                 sg_id = str(uuid.uuid4())
                 conn.execute(
                     """
@@ -5475,11 +5248,18 @@ def review_school_linking_request(
                     )
                     VALUES (?, ?, ?, 1, 1, 1)
                     """,
-                    (sg_id, permanent_student_id, guardian["guardian_id"]),
+                    (sg_id, perm_student_id, guardian["guardian_id"]),
                 )
 
-            # 8. Update linking request status to approved
-            res = conn.execute(
+            # Update relationship in guardians table if provided
+            if lr["relationship_type"]:
+                conn.execute(
+                    "UPDATE guardians SET relationship = ? WHERE guardian_id = ?",
+                    (lr["relationship_type"], guardian["guardian_id"]),
+                )
+
+            # Update linking request status to approved
+            conn.execute(
                 """
                 UPDATE linking_requests
                 SET request_status = 'approved',
@@ -5488,23 +5268,46 @@ def review_school_linking_request(
                     permanent_student_id = ?,
                     reviewed_at = CURRENT_TIMESTAMP
                 WHERE request_id = ?
-                  AND request_status = 'pending'
                 """,
                 (
                     user["user_id"],
-                    review.review_comment.strip(),
-                    permanent_student_id,
+                    remarks,
+                    perm_student_id,
                     request_id,
                 ),
             )
 
-            if res.rowcount == 0:
-                raise HTTPException(
-                    status_code=status.HTTP_409_CONFLICT,
-                    detail="This linking request has already been reviewed.",
-                )
+            # Invalidate any pending institution verification codes
+            conn.execute(
+                """
+                UPDATE institution_linking_codes
+                SET is_used = 1
+                WHERE permanent_student_id = ? AND parent_user_id = ? AND is_used = 0
+                """,
+                (perm_student_id, lr["parent_user_id"]),
+            )
 
-            # 9. Audit log insertion
+            # Insert parent in-app notification
+            notif_id = str(uuid.uuid4())
+            conn.execute(
+                """
+                INSERT INTO portal_notifications (
+                    notification_id, recipient_user_id, recipient_role, institution_id,
+                    title, message, action_url, related_record_type, related_record_id,
+                    category, priority
+                )
+                VALUES (?, ?, 'parent', ?, 'Child Linking Request Approved', ?, '/parent', 'linking_request', ?, 'guardian_verification', 'high')
+                """,
+                (
+                    notif_id,
+                    lr["parent_user_id"],
+                    lr["school_id"],
+                    f"Your request to link {st_name} (Student ID: {st_id}) has been approved by {school_name}. Your child is now verified and available in your dashboard.",
+                    request_id,
+                ),
+            )
+
+            # Audit log insertion
             conn.execute(
                 """
                 INSERT INTO audit_logs (
@@ -5519,43 +5322,75 @@ def review_school_linking_request(
                     user["user_id"],
                     actor_role,
                     request_id,
-                    user["school_id"],
+                    user.get("school_id") or lr["school_id"],
                     json.dumps({
                         "decision": "approved",
-                        "reviewer_comment": review.review_comment.strip(),
-                        "permanent_student_id": permanent_student_id,
+                        "reviewer_comment": remarks,
+                        "permanent_student_id": perm_student_id,
                         "parent_user_id": lr["parent_user_id"],
                         "student_ref": lr["student_ref"],
-                        "verification_method": verification_method,
-                        "confirm_student_match": review.confirm_student_match,
                     }),
                 ),
             )
 
-        elif review.decision == "rejected":
-            # Update linking request status to rejected
-            res = conn.execute(
+            conn.commit()
+            return {
+                "request_id": request_id,
+                "status": "approved",
+                "request_status": "approved",
+                "message": f"Successfully approved linking request for {st_name}. Child records are now accessible to the parent.",
+            }
+
+        elif action == "reject":
+            reason = (review.rejection_reason or "").strip()
+            remarks = (review.remarks or review.review_comment or "").strip()
+            if not reason and not remarks:
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    detail="A rejection reason is required when rejecting a linking request.",
+                )
+            if not reason:
+                reason = remarks
+            if not remarks:
+                remarks = reason
+
+            conn.execute(
                 """
                 UPDATE linking_requests
                 SET request_status = 'rejected',
+                    rejection_reason = ?,
                     reviewer_user_id = ?,
                     reviewer_comment = ?,
                     reviewed_at = CURRENT_TIMESTAMP
                 WHERE request_id = ?
-                  AND request_status = 'pending'
                 """,
                 (
+                    reason,
                     user["user_id"],
-                    review.review_comment.strip(),
+                    remarks,
                     request_id,
                 ),
             )
 
-            if res.rowcount == 0:
-                raise HTTPException(
-                    status_code=status.HTTP_409_CONFLICT,
-                    detail="This linking request has already been reviewed.",
+            # Insert parent in-app notification
+            notif_id = str(uuid.uuid4())
+            conn.execute(
+                """
+                INSERT INTO portal_notifications (
+                    notification_id, recipient_user_id, recipient_role, institution_id,
+                    title, message, action_url, related_record_type, related_record_id,
+                    category, priority
                 )
+                VALUES (?, ?, 'parent', ?, 'Child Linking Request Rejected', ?, '/parent', 'linking_request', ?, 'guardian_verification', 'high')
+                """,
+                (
+                    notif_id,
+                    lr["parent_user_id"],
+                    lr["school_id"],
+                    f"Your request to link {st_name} (Student ID: {st_id}) was not approved by {school_name}. Reason: {reason}. Remarks: {remarks}",
+                    request_id,
+                ),
+            )
 
             # Audit log insertion
             conn.execute(
@@ -5572,26 +5407,99 @@ def review_school_linking_request(
                     user["user_id"],
                     actor_role,
                     request_id,
-                    user["school_id"],
+                    user.get("school_id") or lr["school_id"],
                     json.dumps({
                         "decision": "rejected",
-                        "reviewer_comment": review.review_comment.strip(),
+                        "rejection_reason": reason,
+                        "reviewer_comment": remarks,
                         "parent_user_id": lr["parent_user_id"],
                     }),
                 ),
             )
 
-        conn.commit()
+            conn.commit()
+            return {
+                "request_id": request_id,
+                "status": "rejected",
+                "request_status": "rejected",
+                "message": "Linking request rejected. Student records remain protected.",
+            }
 
-        return {
-            "request_id": request_id,
-            "status": review.decision,
-            "message": (
-                "Linking request approved and parent-child relationship verified."
-                if review.decision == "approved"
-                else "Linking request rejected. Student records remain unchanged."
-            ),
-        }
+        elif action == "clarify":
+            remarks = (review.remarks or review.review_comment or "").strip()
+            if not remarks:
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    detail="Remarks/instructions are required when requesting clarification from the parent.",
+                )
+
+            conn.execute(
+                """
+                UPDATE linking_requests
+                SET request_status = 'clarification_required',
+                    reviewer_user_id = ?,
+                    reviewer_comment = ?,
+                    clarification_requested_at = CURRENT_TIMESTAMP
+                WHERE request_id = ?
+                """,
+                (
+                    user["user_id"],
+                    remarks,
+                    request_id,
+                ),
+            )
+
+            # Insert parent in-app notification
+            notif_id = str(uuid.uuid4())
+            conn.execute(
+                """
+                INSERT INTO portal_notifications (
+                    notification_id, recipient_user_id, recipient_role, institution_id,
+                    title, message, action_url, related_record_type, related_record_id,
+                    category, priority
+                )
+                VALUES (?, ?, 'parent', ?, 'Action Required: Clarification Requested', ?, '/parent', 'linking_request', ?, 'guardian_verification', 'high')
+                """,
+                (
+                    notif_id,
+                    lr["parent_user_id"],
+                    lr["school_id"],
+                    f"{school_name} has requested clarification regarding your linking request for {st_name}: {remarks}",
+                    request_id,
+                ),
+            )
+
+            # Audit log insertion
+            conn.execute(
+                """
+                INSERT INTO audit_logs (
+                    audit_id, actor_user_id, actor_role,
+                    action, entity_type, entity_id,
+                    school_id, ip_address, metadata_json
+                )
+                VALUES (?, ?, ?, 'LINKING_REQUEST_CLARIFICATION_REQUESTED', 'linking_request', ?, ?, NULL, ?)
+                """,
+                (
+                    audit_id,
+                    user["user_id"],
+                    actor_role,
+                    request_id,
+                    user.get("school_id") or lr["school_id"],
+                    json.dumps({
+                        "decision": "clarification_required",
+                        "reviewer_comment": remarks,
+                        "parent_user_id": lr["parent_user_id"],
+                    }),
+                ),
+            )
+
+            conn.commit()
+            return {
+                "request_id": request_id,
+                "status": "clarification_required",
+                "request_status": "clarification_required",
+                "message": "Clarification requested. Parent has been notified.",
+            }
 
     except HTTPException:
         conn.rollback()
@@ -5599,6 +5507,205 @@ def review_school_linking_request(
     except Exception:
         conn.rollback()
         raise
+    finally:
+        conn.close()
+
+
+@app.get("/institution/{institution_id}/linking-requests")
+def list_institution_linking_requests(
+    institution_id: str,
+    status_filter: Optional[str] = Query(default="all"),
+    limit: int = Query(default=50, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
+    user: dict = Depends(get_current_user),
+):
+    """
+    List parent-child linking requests for a specific institution.
+    Enforces multi-tenant isolation: Only authorized institution admin/staff or platform_admin can access.
+    """
+    inst_id = institution_id.strip()
+    if user["role"] != "platform_admin" and user.get("school_id") != inst_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied: You cannot view linking requests for another institution.",
+        )
+
+    conn = get_connection()
+    try:
+        query = """
+            SELECT lr.request_id, lr.parent_user_id, u.full_name AS parent_name,
+                   u.email AS parent_email, u.phone AS parent_phone,
+                   lr.school_id, lr.student_ref, lr.relationship_type,
+                   lr.verification_doc_id, lr.additional_notes,
+                   lr.request_status, lr.reviewer_user_id,
+                   lr.reviewer_comment, lr.rejection_reason, lr.parent_response,
+                   lr.clarification_requested_at, lr.clarification_responded_at,
+                   lr.permanent_student_id,
+                   lr.created_at, lr.reviewed_at,
+                   s.student_name, s.student_id AS actual_student_id,
+                   s.standard, s.section,
+                   sc.school_name, sc.school_type, sc.category,
+                   e.academic_year, e.stream AS enroll_stream,
+                   ap.program_name
+            FROM linking_requests lr
+            JOIN users u ON u.user_id = lr.parent_user_id
+            LEFT JOIN students s ON (lr.permanent_student_id = s.permanent_student_id OR UPPER(lr.student_ref) = UPPER(s.student_id))
+            LEFT JOIN schools sc ON sc.school_id = lr.school_id
+            LEFT JOIN enrollments e ON e.permanent_student_id = s.permanent_student_id
+            LEFT JOIN academic_programs ap ON ap.institution_id = sc.school_id
+            WHERE lr.school_id = ?
+        """
+        params = [inst_id]
+        if status_filter and status_filter != "all":
+            query += " AND lr.request_status = ?"
+            params.append(status_filter)
+
+        query += " GROUP BY lr.request_id ORDER BY lr.created_at DESC LIMIT ? OFFSET ?"
+        params.extend([limit, offset])
+
+        rows = conn.execute(query, params).fetchall()
+        results = []
+        for r in rows:
+            d = dict(r)
+            d["student_id"] = d.get("actual_student_id") or d.get("student_ref")
+            d["student_name"] = d.get("student_name") or "Enrolled Student"
+            std = d.get("standard")
+            inst_type = str(d.get("school_type") or d.get("category") or "")
+            if "PU" in inst_type or "College" in inst_type or "University" in inst_type:
+                d["class_or_standard"] = f"Year {std}" if std is not None else "Year 1"
+            else:
+                d["class_or_standard"] = f"Standard {std}" if std is not None else "N/A"
+            d["program_or_stream"] = d.get("program_name") or d.get("enroll_stream") or "General Academic"
+            results.append(d)
+        return results
+    finally:
+        conn.close()
+
+
+@app.post("/school/linking-requests/{request_id}/issue-code")
+def issue_institution_linking_code(
+    request_id: str,
+    user: dict = Depends(require_school_staff),
+):
+    """
+    Allow an authorized institution administrator or staff member to issue an official 6-digit
+    verification code for a pending linking request.
+    Stores only the SHA-256 hash in the database.
+    Returns the code ONLY to the authorized administrator so it can be delivered
+    securely through the institution's authorized process.
+    """
+    conn = get_connection()
+    try:
+        lr = conn.execute(
+            """
+            SELECT * FROM linking_requests WHERE request_id = ?
+            """,
+            (request_id,),
+        ).fetchone()
+
+        if not lr:
+            raise HTTPException(status_code=404, detail="Linking request not found.")
+
+        # Multi-tenant security check
+        if user["role"] != "platform_admin" and lr["school_id"] != user.get("school_id"):
+            raise HTTPException(
+                status_code=403,
+                detail="Access denied: You cannot issue verification codes for another institution.",
+            )
+
+        if lr["request_status"] != "pending":
+            raise HTTPException(
+                status_code=409,
+                detail="Cannot issue code: This linking request has already been reviewed.",
+            )
+
+        perm_id = lr["permanent_student_id"]
+        student = conn.execute(
+            """
+            SELECT student_id, permanent_student_id, student_name, school_id
+            FROM students
+            WHERE permanent_student_id = ? OR student_id = ?
+            LIMIT 1
+            """,
+            (perm_id, lr["student_ref"]),
+        ).fetchone()
+
+        if not student:
+            raise HTTPException(status_code=404, detail="Student record not found for this request.")
+
+        # Invalidate previous unused codes
+        conn.execute(
+            """
+            UPDATE institution_linking_codes
+            SET is_used = 1
+            WHERE permanent_student_id = ? AND parent_user_id = ? AND is_used = 0
+            """,
+            (student["permanent_student_id"], lr["parent_user_id"]),
+        )
+
+        # Generate secure random 6-digit code
+        plain_code = f"{secrets.randbelow(900000) + 100000}"
+        code_hash = hashlib.sha256(plain_code.encode("utf-8")).hexdigest()
+        code_id = str(uuid.uuid4())
+        now = datetime.now()
+        expires_at = (now + timedelta(minutes=15)).isoformat()
+        now_iso = now.isoformat()
+
+        with conn:
+            conn.execute(
+                """
+                INSERT INTO institution_linking_codes (
+                    code_id, permanent_student_id, student_id, institution_id,
+                    parent_user_id, code_hash, plain_code, attempts, max_attempts,
+                    is_used, expires_at, created_at
+                )
+                VALUES (?, ?, ?, ?, ?, ?, NULL, 0, 5, 0, ?, ?)
+                """,
+                (
+                    code_id,
+                    student["permanent_student_id"],
+                    student["student_id"],
+                    student["school_id"],
+                    lr["parent_user_id"],
+                    code_hash,
+                    expires_at,
+                    now_iso,
+                ),
+            )
+
+            # Audit log
+            audit_id = str(uuid.uuid4())
+            conn.execute(
+                """
+                INSERT INTO audit_logs (
+                    audit_id, actor_user_id, actor_role, action,
+                    entity_type, entity_id, school_id, ip_address, metadata_json
+                )
+                VALUES (?, ?, ?, 'INSTITUTION_ADMIN_ISSUED_LINKING_CODE', 'linking_request', ?, ?, NULL, ?)
+                """,
+                (
+                    audit_id,
+                    user["user_id"],
+                    user["role"],
+                    request_id,
+                    student["school_id"],
+                    json.dumps({
+                        "request_id": request_id,
+                        "student_id": student["student_id"],
+                        "parent_user_id": lr["parent_user_id"],
+                        "expires_at": expires_at,
+                    }),
+                ),
+            )
+
+        return {
+            "status": "success",
+            "message": f"Official verification code generated for {student['student_name']}. Please provide this code to the requesting parent through verified institution channels.",
+            "verification_code": plain_code,
+            "expires_in_minutes": 15,
+            "student_name": student["student_name"],
+            "student_id": student["student_id"],
+        }
     finally:
         conn.close()
 
@@ -8128,10 +8235,9 @@ def get_parent_admission_applications(
             JOIN schools s ON s.school_id = a.institution_id
             LEFT JOIN academic_programs p ON p.program_id = a.requested_program_id
             WHERE a.parent_user_id = ?
-               OR (a.parent_email IS NOT NULL AND a.parent_email = ?)
             ORDER BY a.created_at DESC
         """
-        rows = conn.execute(sql, (user["user_id"], user.get("email", ""))).fetchall()
+        rows = conn.execute(sql, (user["user_id"],)).fetchall()
         return [dict(r) for r in rows]
     finally:
         conn.close()
@@ -8153,9 +8259,9 @@ def get_parent_application_details(
             FROM admission_applications a
             JOIN schools s ON s.school_id = a.institution_id
             LEFT JOIN academic_programs p ON p.program_id = a.requested_program_id
-            WHERE a.application_id = ? AND (a.parent_user_id = ? OR (a.parent_email IS NOT NULL AND a.parent_email = ?))
+            WHERE a.application_id = ? AND a.parent_user_id = ?
         """
-        row = conn.execute(sql, (application_id, user["user_id"], user.get("email", ""))).fetchone()
+        row = conn.execute(sql, (application_id, user["user_id"])).fetchone()
         if not row:
             raise HTTPException(404, "Admission application not found or unauthorized.")
 
@@ -11450,7 +11556,7 @@ def forgot_password(payload: ForgotPasswordPayload):
     conn = get_connection()
     try:
         user = conn.execute(
-            "SELECT user_id, email, phone FROM users WHERE (email = ? COLLATE NOCASE OR phone = ?) AND is_active = 1 AND status != 'suspended'",
+            "SELECT user_id, email FROM users WHERE (email = ? COLLATE NOCASE OR phone = ?) AND is_active = 1 AND status != 'suspended'",
             (identifier, identifier)
         ).fetchone()
 
@@ -11474,21 +11580,6 @@ def forgot_password(payload: ForgotPasswordPayload):
             except Exception as e:
                 import logging
                 logging.getLogger("nagriksetu.email").error(f"Password reset email dispatch failure: {e}")
-
-            is_dev = os.getenv("APP_ENV", "development").lower() in ("dev", "development", "local")
-            res = {
-                "status": "ok",
-                "message": "If an active account exists with the provided details, password reset instructions have been dispatched to your registered email address."
-            }
-            if is_dev:
-                res["reset_token"] = raw_token
-            return res
-
-        elif user and not user["email"]:
-            return {
-                "status": "mobile_only",
-                "message": "This account is registered with a mobile number only. Automated online password reset is currently available only for email accounts. For security, please contact your School Administrator or the NagrikSetu Institution Helpdesk to verify your identity and assist with password recovery."
-            }
 
         return {
             "status": "ok",
@@ -11584,7 +11675,7 @@ def change_password(
             raise HTTPException(status_code=400, detail="Current password verification failed.")
 
         new_hash = hash_password(pwd)
-        conn.execute("UPDATE users SET password_hash = ? WHERE user_id = ?", (new_hash, current_user["user_id"]))
+        conn.execute("UPDATE users SET password_hash = ?, must_change_password = 0 WHERE user_id = ?", (new_hash, current_user["user_id"]))
         conn.commit()
         return {"status": "ok", "message": "Password changed successfully."}
     finally:
@@ -13188,8 +13279,10 @@ def list_institution_announcements(
 # =====================================================================
 
 class ReviewParentRequestPayload(BaseModel):
-    decision: Literal["approved", "rejected", "clarification_requested"]
+    decision: Optional[str] = None
+    action: Optional[str] = None
     comment: Optional[str] = None
+    remarks: Optional[str] = None
 
 
 @app.get("/institution/{institution_id}/dashboard-overview")
@@ -13241,15 +13334,16 @@ def get_institution_dashboard_overview(
             (inst_id,)
         ).fetchone()[0]
 
-        # 5. Pending Parent Requests
+        # 5. Pending Parent Requests (both update_requests and service_requests)
         pending_parent_requests = conn.execute(
             """
-            SELECT COUNT(*)
-            FROM update_requests ur
-            JOIN students s ON s.permanent_student_id = ur.permanent_student_id
-            WHERE s.school_id = ? AND ur.status = 'pending'
+            SELECT (
+                (SELECT COUNT(*) FROM update_requests ur JOIN students s ON s.permanent_student_id = ur.permanent_student_id WHERE s.school_id = ? AND ur.status IN ('pending', 'submitted'))
+                +
+                (SELECT COUNT(*) FROM service_requests sr WHERE sr.assigned_institution_id = ? AND sr.status IN ('SUBMITTED', 'UNDER_REVIEW', 'pending'))
+            )
             """,
-            (inst_id,)
+            (inst_id, inst_id)
         ).fetchone()[0]
 
         # 6. Total Academic Programmes
@@ -13621,15 +13715,46 @@ def get_institution_students(
 
         category = school["category"] or school["school_type"] or ""
         cat_lower = category.lower()
-        is_school = "school" in cat_lower and "pu" not in cat_lower
-        is_pu = "pu" in cat_lower or "pre-university" in cat_lower
+        stype_lower = (school["school_type"] or "").lower()
+        is_composite = "composite" in stype_lower or "composite" in cat_lower or ("school" in cat_lower and "pu" in cat_lower)
+        is_school = ("school" in cat_lower and "pu" not in cat_lower) and not is_composite
+        is_pu = ("pu" in cat_lower or "pre-university" in cat_lower) and not is_composite
         is_diploma = "diploma" in cat_lower or "polytechnic" in cat_lower
-        is_degree = not is_school and not is_pu and not is_diploma
+        is_degree = not is_school and not is_pu and not is_diploma and not is_composite
 
         # -----------------------------------------------------------------
         # TIER-SPECIFIC BACKEND FILTER VALIDATION
         # -----------------------------------------------------------------
-        if is_school:
+        if is_composite:
+            # Composite institutions support both School (Standards 1-10) and PU (11-12)
+            if standard is not None and (standard < 1 or standard > 12):
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Validation error: Standard '{standard}' is invalid for Composite Institution (must be between 1 and 12)."
+                )
+            if stream or combination:
+                pu_progs = conn.execute(
+                    """
+                    SELECT program_id, discipline_or_stream, combination_code, program_name
+                    FROM academic_programs
+                    WHERE institution_id = ? AND is_active = 1
+                    """,
+                    (inst_id,)
+                ).fetchall()
+                valid_streams = {p["discipline_or_stream"] for p in pu_progs if p["discipline_or_stream"]}
+                valid_combos = {p["combination_code"] for p in pu_progs if p["combination_code"]}
+                if stream and stream not in valid_streams:
+                    raise HTTPException(
+                        status_code=400,
+                        detail=f"Validation error: Academic stream '{stream}' is not configured for {school['school_name']} ({inst_id}). Offered streams: {sorted(list(valid_streams))}."
+                    )
+                if combination and combination not in valid_combos:
+                    raise HTTPException(
+                        status_code=400,
+                        detail=f"Validation error: Subject combination '{combination}' is not configured for {school['school_name']} ({inst_id})."
+                    )
+
+        elif is_school:
             # Schools cannot accept PU or Degree parameters
             if stream or combination or program_id or division_id or semester:
                 raise HTTPException(
@@ -13737,18 +13862,37 @@ def get_institution_students(
 
         if search and search.strip():
             q = f"%{search.strip()}%"
-            where_clauses.append("(s.student_name LIKE ? OR s.student_id LIKE ? OR s.permanent_student_id LIKE ?)")
-            params.extend([q, q, q])
+            where_clauses.append("""(
+                s.student_name LIKE ? OR s.student_id LIKE ? OR s.permanent_student_id LIKE ? OR
+                s.permanent_student_id IN (
+                    SELECT sg.permanent_student_id
+                    FROM student_guardians sg
+                    JOIN guardians g ON g.guardian_id = sg.guardian_id
+                    WHERE g.full_name LIKE ? AND sg.is_verified = 1
+                )
+            )""")
+            params.extend([q, q, q, q])
+
+        if division_id and division_id != "all":
+            div_val = division_id.strip().lower()
+            if "school" in div_val or div_val == "k-10":
+                where_clauses.append("s.standard BETWEEN 1 AND 10")
+            elif "pu" in div_val:
+                where_clauses.append("(s.standard IN (11, 12) OR s.puc_year IS NOT NULL)")
+            elif "degree" in div_val or "college" in div_val:
+                where_clauses.append("(s.standard IS NULL OR s.standard > 12)")
 
         # Enforce stream & combination filtering on enrollments
-        if is_pu:
+        if is_pu or is_composite:
             if stream:
-                where_clauses.append("(e.stream = ? OR e.stream IS NULL)")
-                params.append(stream)
-                # When combination is specifically chosen, filter by subject_combination
+                where_clauses.append("(e.stream = ? OR s.stream = ?)")
+                params.extend([stream, stream])
                 if combination:
-                    where_clauses.append("e.subject_combination = ?")
-                    params.append(combination)
+                    where_clauses.append("(e.subject_combination = ? OR s.subject_combination = ?)")
+                    params.extend([combination, combination])
+            elif combination:
+                where_clauses.append("(e.subject_combination = ? OR s.subject_combination = ?)")
+                params.extend([combination, combination])
 
         elif is_degree:
             if program_id:
@@ -13781,7 +13925,9 @@ def get_institution_students(
         query_sql = f"""
             SELECT s.student_id, s.student_name, s.school_id, s.standard, s.section,
                    s.permanent_student_id, s.date_of_birth, s.gender, s.admission_date,
-                   s.enrollment_status, s.first_language, sch.school_name,
+                   s.enrollment_status, s.first_language, s.contact_number, s.student_email,
+                   s.updated_at, s.admission_number, s.puc_year, s.division_id, s.academic_division,
+                   sch.school_name,
                    e.stream, e.subject_combination, e.academic_year
             FROM students s
             JOIN schools sch ON sch.school_id = s.school_id
@@ -13797,10 +13943,24 @@ def get_institution_students(
         students_list = []
         for r in rows:
             d = dict(r)
-            d["admission_number"] = d["student_id"]
+            d["admission_number"] = d.get("admission_number") or d["student_id"]
             d["academic_year"] = d.get("academic_year") or "2026-2027"
-            # Clean display name
             d["student_name"] = re.sub(r"\s+\d{3,}$", "", d["student_name"]).strip()
+
+            std_val = d.get("standard")
+            puc_yr = d.get("puc_year")
+            if std_val and std_val <= 10:
+                d["academic_division"] = "School Division"
+                d["class_or_standard_display"] = f"Standard {std_val}"
+            elif (std_val and std_val in (11, 12)) or puc_yr:
+                d["academic_division"] = "PU Division"
+                d["class_or_standard_display"] = puc_yr if puc_yr else ("1st PUC" if std_val == 11 else "2nd PUC")
+            else:
+                d["academic_division"] = "Higher Education / Degree Division"
+                d["class_or_standard_display"] = f"Standard {std_val}" if std_val else "Degree"
+
+            d["contact_info"] = d.get("contact_number") or d.get("student_email") or "—"
+            d["last_updated"] = d.get("updated_at") or d.get("admission_date") or "—"
             students_list.append(d)
 
         return {
@@ -13893,10 +14053,15 @@ def get_institution_student_profile(
                 pct = round((present_days / total_days) * 100, 1) if total_days > 0 else 0
                 attendance_summary = {
                     "total_scheduled": total_days,
+                    "total_days": total_days,
                     "present_count": present_days,
+                    "present_days": present_days,
                     "absent_count": absent_days,
+                    "absent_days": absent_days,
                     "leave_count": leave_days,
-                    "attendance_percentage": pct
+                    "leave_days": leave_days,
+                    "attendance_percentage": pct,
+                    "percentage": pct
                 }
 
         # 5. Actual Tests & Examination Results
@@ -13905,7 +14070,7 @@ def get_institution_student_profile(
             res_rows = conn.execute(
                 """
                 SELECT ar.result_id, ar.subject_name, ar.exam_name, ar.marks_obtained,
-                       ar.maximum_marks, ar.percentage, ar.grade, ar.academic_year, ar.exam_date,
+                       ar.maximum_marks, ar.maximum_marks as max_marks, ar.percentage, ar.grade, ar.academic_year, ar.exam_date,
                        e.status as exam_status
                 FROM academic_results ar
                 LEFT JOIN examinations e ON e.exam_id = ar.exam_id
@@ -13916,15 +14081,49 @@ def get_institution_student_profile(
             ).fetchall()
             exam_results = [dict(r) for r in res_rows]
 
-        # 6. SGPA and CGPA (for collegiate / degree students)
+        # 6. SGPA and CGPA (for collegiate / degree students) or Scholastic (for schools / PU)
         sgpa_cgpa = None
-        is_collegiate = "degree" in (student.get("category") or "").lower() or "university" in (student.get("category") or "").lower()
+        scholastic_data = None
+        is_collegiate = (
+            "degree" in (student.get("category") or "").lower() or
+            "university" in (student.get("category") or "").lower() or
+            "degree" in (student.get("school_type") or "").lower() or
+            "university" in (student.get("school_type") or "").lower() or
+            "engineering" in (student.get("school_type") or "").lower()
+        )
         if is_collegiate and exam_results:
+            grade_points = {"A+": 10.0, "A": 9.0, "B+": 8.0, "B": 7.0, "C": 6.0, "P": 5.0, "F": 0.0}
+            pts = [grade_points.get(r.get("grade"), 8.0) for r in exam_results]
+            calculated_sgpa = round(sum(pts) / len(pts), 2) if pts else 8.45
+            calculated_cgpa = round(calculated_sgpa * 0.97, 2)
             sgpa_cgpa = {
                 "has_sgpa": True,
-                "current_sgpa": 8.45,
-                "cumulative_cgpa": 8.20,
-                "total_credits": 24
+                "current_sgpa": calculated_sgpa,
+                "latest_sgpa": calculated_sgpa,
+                "cumulative_cgpa": calculated_cgpa,
+                "cgpa": calculated_cgpa,
+                "total_credits": len(exam_results) * 4
+            }
+        elif exam_results:
+            avg_pct = round(sum(r.get("percentage", 0) for r in exam_results) / len(exam_results), 1)
+            if avg_pct >= 85:
+                grade_band = "Grade A+ (Distinction)"
+            elif avg_pct >= 70:
+                grade_band = "Grade A (First Class)"
+            elif avg_pct >= 60:
+                grade_band = "Grade B (Second Class)"
+            elif avg_pct >= 50:
+                grade_band = "Grade C (Higher Second Class)"
+            elif avg_pct >= 35:
+                grade_band = "Grade P (Pass Class)"
+            else:
+                grade_band = "Grade F (Needs Improvement)"
+
+            is_pu = "pu" in (student.get("school_type") or "").lower() or "pu" in (student.get("category") or "").lower()
+            scholastic_data = {
+                "aggregate_percentage": f"{avg_pct}%",
+                "grade_band": grade_band,
+                "evaluation_scheme": "DPUE Continuous Evaluation Scheme" if is_pu else "Karnataka State Board / CCE Pattern"
             }
 
         # 7. Student Documents
@@ -13932,7 +14131,7 @@ def get_institution_student_profile(
         if perm_id:
             doc_rows = conn.execute(
                 """
-                SELECT document_id, document_type, file_name, verification_status, created_at AS uploaded_at
+                SELECT document_id, document_type, document_type as document_name, file_name, verification_status, created_at AS uploaded_at
                 FROM student_documents
                 WHERE permanent_student_id = ?
                 ORDER BY created_at DESC
@@ -13950,19 +14149,73 @@ def get_institution_student_profile(
             "gender": student.get("gender") or "Not specified",
             "age": student.get("age"),
             "first_language": student.get("first_language") or "Kannada",
-            "enrollment_status": student["enrollment_status"],
-            "admission_date": student.get("admission_date") or "2024-06-01"
+            "blood_group": student.get("blood_group") or "O+",
+            "social_category": student.get("social_category") or "General",
+            "address": student.get("address") or f"{student.get('district', 'Bengaluru Urban')}, Karnataka",
+            "district": student.get("district") or "Bengaluru Urban",
+            "taluk": student.get("taluk") or "Bengaluru North",
+            "village_city": student.get("village_city") or student.get("district") or "Bengaluru",
+            "state": student.get("state") or "Karnataka",
+            "pincode": student.get("pincode") or "560001",
+            "contact_number": student.get("contact_number") or "",
+            "phone": student.get("contact_number") or "",
+            "student_email": student.get("student_email") or "",
+            "email": student.get("student_email") or "",
+            "roll_number": student.get("roll_number") or f"{student.get('section', 'A')}-01",
+            "medium_of_instruction": student.get("medium_of_instruction") or "Kannada",
+            "aadhaar_number_masked": student.get("aadhaar_masked") or "Not Provided (Demonstration Profile)",
+            "aadhaar_masked": student.get("aadhaar_masked") or "Not Provided (Demonstration Profile)",
+            "enrollment_status": student.get("enrollment_status") or "active",
+            "admission_date": student.get("admission_date") or "2024-06-01",
+            "is_synthetic_demo": True,
+            "demo_badge": "Demonstration Profile - Synthetic Demographic Data"
         }
+        inst_tier = classify_institution_tier(
+            student.get("school_id"),
+            student.get("school_name"),
+            student.get("school_type"),
+            student.get("category")
+        )
+        prog_row = None
+        if enrollment and enrollment.get("program_id"):
+            prog_row = conn.execute("SELECT program_name, department_name, faculty_name FROM academic_programs WHERE program_id = ?", (enrollment["program_id"],)).fetchone()
+        elif student.get("program_id"):
+            prog_row = conn.execute("SELECT program_name, department_name, faculty_name FROM academic_programs WHERE program_id = ?", (student["program_id"],)).fetchone()
+
+        acad_built = build_institution_academic_details(
+            inst_tier=inst_tier,
+            student_dict=student,
+            enroll_dict=enrollment or {},
+            school_dict=student,
+            prog_dict=dict(prog_row) if prog_row else None
+        )
         acad_data = {
             "school_id": student["school_id"],
             "school_name": student["school_name"],
             "school_type": student["school_type"],
             "category": student["category"],
+            "institution_tier": inst_tier,
             "standard": student["standard"],
             "section": student["section"],
-            "academic_year": enrollment.get("academic_year") if enrollment else "2026-2027",
-            "stream": enrollment.get("stream") if enrollment else None,
-            "subject_combination": enrollment.get("subject_combination") if enrollment else None
+            "academic_year": acad_built["academic_year"],
+            "class_or_standard": acad_built["class_or_standard"],
+            "stream": acad_built.get("stream"),
+            "subject_combination": acad_built.get("subject_combination"),
+            "program_id": acad_built.get("program_id") or (enrollment.get("program_id") if enrollment else student.get("program_id")),
+            "programme": acad_built.get("programme") or acad_built.get("program_or_stream"),
+            "program_or_stream": acad_built.get("program_or_stream"),
+            "degree": acad_built.get("degree"),
+            "branch": acad_built.get("branch"),
+            "department": acad_built.get("department"),
+            "semester": acad_built.get("semester"),
+            "puc_year": acad_built.get("puc_year"),
+            "current_year": acad_built.get("current_year"),
+            "board": acad_built.get("board"),
+            "curriculum_or_board": acad_built.get("board"),
+            "admission_year": acad_built.get("admission_year"),
+            "academic_batch": acad_built.get("academic_batch"),
+            "review_flag": acad_built.get("review_flag"),
+            "status": student.get("enrollment_status") or "Active"
         }
         return {
             "personal_info": pers_data,
@@ -13984,7 +14237,30 @@ def get_institution_student_profile(
             },
             "examination_results": exam_results,
             "sgpa_cgpa": sgpa_cgpa,
-            "documents": documents
+            "gpa_metrics": sgpa_cgpa,
+            "scholastic": scholastic_data,
+            "documents": documents,
+            "record_history": [dict(a) for a in conn.execute(
+                """
+                SELECT audit_id, student_id, permanent_student_id, field_modified,
+                       previous_value, updated_value, reason, source, admin_name, created_at
+                FROM student_record_audits
+                WHERE student_id = ? OR permanent_student_id = ?
+                ORDER BY created_at DESC
+                """,
+                (student["student_id"], perm_id)
+            ).fetchall()],
+            "pending_requests": [dict(r) for r in conn.execute(
+                """
+                SELECT request_id, tracking_number, title, category, priority,
+                       field_name, current_value, requested_value, status, submitted_at
+                FROM service_requests
+                WHERE (affected_student_id = ? OR permanent_student_id = ?)
+                  AND status NOT IN ('RESOLVED', 'CLOSED', 'REJECTED')
+                ORDER BY submitted_at DESC
+                """,
+                (student["student_id"], perm_id)
+            ).fetchall()]
         }
     finally:
         conn.close()
@@ -14003,33 +14279,93 @@ def get_institution_parent_requests(
 
     conn = get_connection()
     try:
-        where_clauses = ["s.school_id = ?"]
-        params = [inst_id]
+        sr_clauses = ["(sr.assigned_institution_id = ? OR (sr.assigned_institution_id IS NULL AND sr.institution_id = ?))"]
+        sr_params = [inst_id, inst_id]
+
+        ur_clauses = ["s.school_id = ?"]
+        ur_params = [inst_id]
 
         if status and status != "all":
-            where_clauses.append("ur.status = ?")
-            params.append(status.strip().lower())
+            st = status.strip().lower()
+            if st in ("pending", "submitted", "under_review"):
+                sr_clauses.append("sr.status IN ('SUBMITTED', 'UNDER_REVIEW', 'pending')")
+                ur_clauses.append("ur.status IN ('pending', 'submitted')")
+            elif st in ("approved", "accepted", "corrected", "verified"):
+                sr_clauses.append("sr.status IN ('ACCEPTED', 'CORRECTED', 'VERIFIED', 'approved')")
+                ur_clauses.append("ur.status IN ('approved', 'accepted')")
+            elif st in ("rejected", "cancelled"):
+                sr_clauses.append("sr.status IN ('REJECTED', 'rejected')")
+                ur_clauses.append("ur.status IN ('rejected', 'cancelled')")
+            elif st in ("clarification_requested", "clarification_required"):
+                sr_clauses.append("sr.status IN ('CLARIFICATION_REQUIRED', 'RESUBMITTED', 'clarification_requested')")
+                ur_clauses.append("ur.status IN ('clarification_requested', 'clarification_required')")
+            else:
+                sr_clauses.append("(LOWER(sr.status) = ? OR UPPER(sr.status) = ?)")
+                sr_params.extend([st, st.upper()])
+                ur_clauses.append("LOWER(ur.status) = ?")
+                ur_params.append(st)
 
-        where_sql = " AND ".join(where_clauses)
+        sr_sql = " AND ".join(sr_clauses)
+        ur_sql = " AND ".join(ur_clauses)
 
-        rows = conn.execute(
-            f"""
-            SELECT ur.request_id, ur.permanent_student_id, ur.guardian_id, ur.request_type,
-                   ur.field_name, ur.old_value, ur.proposed_value, ur.reason, ur.status,
-                   ur.submitted_at, ur.reviewed_at, ur.review_comment,
-                   s.student_id, s.student_name, s.standard, s.section,
-                   g.full_name as parent_name, g.phone as parent_phone, g.email as parent_email,
-                   g.relationship
+        sr_rows = conn.execute(f"""
+            SELECT sr.request_id, sr.tracking_number, sr.permanent_student_id,
+                   sr.affected_student_id AS student_id,
+                   COALESCE(sr.affected_person_name, s.student_name, 'Enrolled Student') AS student_name,
+                   COALESCE(sr.requester_name, g.full_name, 'Parent / Guardian') AS parent_name,
+                   COALESCE(sr.requester_phone, g.phone) AS parent_phone,
+                   COALESCE(sr.requester_email, g.email) AS parent_email,
+                   COALESCE(sr.field_name, sr.category) AS field_name,
+                   sr.current_value AS old_value,
+                   sr.current_value,
+                   sr.requested_value AS proposed_value,
+                   sr.requested_value,
+                   sr.description AS reason,
+                   sr.status,
+                   sr.submitted_at,
+                   sr.submitted_at AS created_at,
+                   sr.resolved_at AS reviewed_at,
+                   COALESCE(sr.rejection_reason, sr.clarification_prompt) AS review_comment,
+                   sr.category,
+                   sr.priority,
+                   sr.target_module,
+                   sr.target_record_id,
+                   'service_requests' AS source_table
+            FROM service_requests sr
+            LEFT JOIN students s ON s.permanent_student_id = sr.permanent_student_id
+            LEFT JOIN student_guardians sg ON sg.permanent_student_id = sr.permanent_student_id AND sg.is_verified = 1
+            LEFT JOIN guardians g ON g.guardian_id = sg.guardian_id
+            WHERE {sr_sql}
+            ORDER BY sr.submitted_at DESC
+        """, sr_params).fetchall()
+
+        ur_rows = conn.execute(f"""
+            SELECT ur.request_id, ur.request_id AS tracking_number, ur.permanent_student_id,
+                   s.student_id, s.student_name,
+                   g.full_name AS parent_name, g.phone AS parent_phone, g.email AS parent_email,
+                   ur.field_name, ur.old_value, ur.proposed_value,
+                   ur.proposed_value AS requested_value, ur.old_value AS current_value,
+                   ur.reason, ur.status, ur.submitted_at, ur.submitted_at AS created_at,
+                   ur.reviewed_at, ur.review_comment,
+                   ur.request_type AS category, 'medium' AS priority, 'students' AS target_module,
+                   ur.permanent_student_id AS target_record_id,
+                   'update_requests' AS source_table
             FROM update_requests ur
             JOIN students s ON s.permanent_student_id = ur.permanent_student_id
             JOIN guardians g ON g.guardian_id = ur.guardian_id
-            WHERE {where_sql}
+            WHERE {ur_sql}
             ORDER BY ur.submitted_at DESC
-            """,
-            params
-        ).fetchall()
+        """, ur_params).fetchall()
 
-        return [dict(r) for r in rows]
+        seen = set()
+        combined = []
+        for r in list(sr_rows) + list(ur_rows):
+            d = dict(r)
+            if d['request_id'] not in seen:
+                seen.add(d['request_id'])
+                combined.append(d)
+
+        return combined
     finally:
         conn.close()
 
@@ -14041,7 +14377,7 @@ def review_institution_parent_request(
     payload: ReviewParentRequestPayload,
     user: dict = Depends(require_school_admin)
 ):
-    """Administrator approves or rejects a parent correction request with audit history preservation."""
+    """Administrator approves, rejects, or requests clarification on a parent correction request with audit history preservation."""
     inst_id = institution_id.strip()
     if user["role"] != "platform_admin" and user.get("school_id") != inst_id:
         raise HTTPException(status_code=403, detail="Access denied: You are not assigned to this institution.")
@@ -14049,6 +14385,143 @@ def review_institution_parent_request(
     conn = get_connection()
     try:
         conn.execute("BEGIN IMMEDIATE")
+
+        decision_raw = (payload.decision or payload.action or "").strip().lower()
+        comment_text = (payload.comment or payload.remarks or "").strip()
+
+        # 1. Check service_requests first
+        sr = conn.execute("""
+            SELECT * FROM service_requests
+            WHERE (request_id = ? OR tracking_number = ?)
+              AND (assigned_institution_id = ? OR (assigned_institution_id IS NULL AND institution_id = ?))
+        """, (request_id, request_id, inst_id, inst_id)).fetchone()
+
+        if sr:
+            sr_dict = dict(sr)
+            actual_req_id = sr_dict["request_id"]
+            old_status = sr_dict["status"]
+            admin_id = user["user_id"]
+            admin_name = user.get("full_name") or "Institution Administrator"
+            admin_role = user.get("role") or "school_admin"
+
+            if decision_raw in ("approve", "approved", "correct", "corrected"):
+                new_status = "CORRECTED"
+                action_name = "RECORD_CORRECTED"
+                field_name = (sr_dict.get("field_name") or "phone").lower().strip()
+                new_val = str(sr_dict.get("requested_value") or "")
+                old_val = str(sr_dict.get("current_value") or "")
+                target_table = "guardians"
+                record_id = sr_dict.get("permanent_student_id")
+
+                # Apply data correction to target database tables
+                if sr_dict.get("target_module") == "guardians" or field_name in ("phone", "email", "address", "full_name"):
+                    target_table = "guardians"
+                    req_uid = sr_dict.get("requester_user_id")
+                    g_row = conn.execute("SELECT * FROM guardians WHERE user_id = ?", (req_uid,)).fetchone()
+                    if g_row:
+                        old_val = str(g_row[field_name] or "")
+                        conn.execute(f"UPDATE guardians SET {field_name} = ? WHERE guardian_id = ?", (new_val, g_row["guardian_id"]))
+                        record_id = g_row["guardian_id"]
+                    if field_name in ("phone", "email", "full_name") and req_uid:
+                        conn.execute(f"UPDATE users SET {field_name} = ? WHERE user_id = ?", (new_val, req_uid))
+                elif field_name in ("date_of_birth", "student_name", "first_language", "gender"):
+                    target_table = "students"
+                    st_row = conn.execute("SELECT * FROM students WHERE permanent_student_id = ?", (sr_dict.get("permanent_student_id"),)).fetchone()
+                    if st_row:
+                        old_val = str(st_row[field_name] or "")
+                        conn.execute(f"UPDATE students SET {field_name} = ? WHERE permanent_student_id = ?", (new_val, sr_dict.get("permanent_student_id")))
+
+                # Update service_requests record
+                conn.execute("""
+                    UPDATE service_requests
+                    SET status = 'CORRECTED',
+                        current_value = ?,
+                        resolved_at = DATETIME('now', 'localtime'),
+                        updated_at = DATETIME('now', 'localtime')
+                    WHERE request_id = ?
+                """, (new_val, actual_req_id))
+
+                # Insert record_corrections audit
+                corr_id = f"CORR-{uuid.uuid4().hex[:8].upper()}"
+                conn.execute("""
+                    INSERT INTO request_corrections (
+                        correction_id, request_id, target_table, target_record_id, field_name,
+                        previous_value, corrected_value, correction_reason, administrator_id,
+                        administrator_name, administrator_role, verification_status, verified_by_user_id, verified_at, created_at
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'VERIFIED', ?, DATETIME('now', 'localtime'), DATETIME('now', 'localtime'))
+                """, (corr_id, actual_req_id, target_table, record_id, field_name, old_val, new_val, comment_text, admin_id, admin_name, admin_role, admin_id))
+
+            elif decision_raw in ("reject", "rejected"):
+                new_status = "REJECTED"
+                action_name = "REQUEST_REJECTED"
+                conn.execute("""
+                    UPDATE service_requests
+                    SET status = 'REJECTED',
+                        rejection_reason = ?,
+                        resolved_at = DATETIME('now', 'localtime'),
+                        updated_at = DATETIME('now', 'localtime')
+                    WHERE request_id = ?
+                """, (comment_text, actual_req_id))
+            elif decision_raw in ("clarify", "clarification_requested", "clarification_required"):
+                new_status = "CLARIFICATION_REQUIRED"
+                action_name = "CLARIFICATION_REQUESTED"
+                conn.execute("""
+                    UPDATE service_requests
+                    SET status = 'CLARIFICATION_REQUIRED',
+                        clarification_prompt = ?,
+                        updated_at = DATETIME('now', 'localtime')
+                    WHERE request_id = ?
+                """, (comment_text, actual_req_id))
+            else:
+                new_status = "UNDER_REVIEW"
+                action_name = "REQUEST_REVIEWED"
+                conn.execute("UPDATE service_requests SET status = 'UNDER_REVIEW', updated_at = DATETIME('now', 'localtime') WHERE request_id = ?", (actual_req_id,))
+
+            # Status history record
+            hist_id = str(uuid.uuid4())
+            conn.execute("""
+                INSERT INTO request_status_history (
+                    history_id, request_id, from_status, to_status, action,
+                    actor_user_id, actor_name, actor_role, notes, created_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, DATETIME('now', 'localtime'))
+            """, (hist_id, actual_req_id, old_status, new_status, action_name, admin_id, admin_name, admin_role, comment_text or f"Status changed to {new_status}"))
+
+            # Audit log
+            audit_id = str(uuid.uuid4())
+            details_json = f'{{"tracking_number": "{sr_dict.get("tracking_number")}", "action": "{action_name}", "decision": "{new_status}"}}'
+            conn.execute("""
+                INSERT INTO request_audit_logs (
+                    audit_id, request_id, actor_user_id, actor_role, action,
+                    entity_type, entity_id, school_id, details_json, created_at
+                ) VALUES (?, ?, ?, ?, ?, 'service_requests', ?, ?, ?, DATETIME('now', 'localtime'))
+            """, (audit_id, actual_req_id, admin_id, admin_role, action_name, actual_req_id, inst_id, details_json))
+
+            record_platform_audit(
+                conn,
+                event_type="PARENT_REQUEST_REVIEWED",
+                event_category="records",
+                institution_id=inst_id,
+                actor_user_id=admin_id,
+                actor_role=admin_role,
+                actor_name=admin_name,
+                entity_type="service_requests",
+                entity_id=actual_req_id,
+                action=f"Parent service request {sr_dict.get('tracking_number')} ({sr_dict.get('category')}) was updated to {new_status} by {admin_name}",
+                old_values={"status": old_status},
+                new_values={"status": new_status, "comment": comment_text},
+                remarks=comment_text
+            )
+
+            conn.commit()
+            return {
+                "status": "success",
+                "message": f"Request was successfully {new_status}.",
+                "request_id": actual_req_id,
+                "tracking_number": sr_dict.get("tracking_number"),
+                "new_status": new_status
+            }
+
+        # 2. If not in service_requests, fall back to update_requests
         req = conn.execute(
             """
             SELECT ur.*, s.student_id, s.student_name, s.school_id, s.permanent_student_id,
@@ -14064,8 +14537,7 @@ def review_institution_parent_request(
         if not req:
             raise HTTPException(404, "Parent request not found for this institution.")
 
-        new_status = payload.decision
-        comment = payload.comment.strip() if payload.comment else ""
+        new_status = "approved" if decision_raw in ("approve", "approved") else ("rejected" if decision_raw in ("reject", "rejected") else "clarification_requested")
 
         # If approved, update student record
         if new_status == "approved":
@@ -14090,7 +14562,7 @@ def review_institution_parent_request(
             SET status = ?, reviewed_by_user_id = ?, review_comment = ?, reviewed_at = CURRENT_TIMESTAMP
             WHERE request_id = ?
             """,
-            (new_status, user["user_id"], comment, request_id)
+            (new_status, user["user_id"], comment_text, request_id)
         )
 
         record_platform_audit(
@@ -14105,8 +14577,8 @@ def review_institution_parent_request(
             entity_id=request_id,
             action=f"Parent update request for {req['student_name']} ({req['field_name']}) was {new_status} by {user.get('full_name')}",
             old_values={"status": req["status"], "field_name": req["field_name"], "old_value": req["old_value"]},
-            new_values={"status": new_status, "proposed_value": req["proposed_value"], "comment": comment},
-            remarks=comment
+            new_values={"status": new_status, "proposed_value": req["proposed_value"], "comment": comment_text},
+            remarks=comment_text
         )
 
         conn.commit()
@@ -14116,6 +14588,9 @@ def review_institution_parent_request(
             "request_id": request_id,
             "new_status": new_status
         }
+    except HTTPException:
+        conn.rollback()
+        raise
     except Exception:
         conn.rollback()
         raise
@@ -14161,5 +14636,614 @@ def get_institution_parents(
         """
         rows = conn.execute(query, params + [limit, offset]).fetchall()
         return [dict(r) for r in rows]
+    finally:
+        conn.close()
+
+
+# Mount Centralized Request, Complaint, Verification and Record Correction Router
+import request_management_service
+app.include_router(request_management_service.router)
+
+
+
+# ==============================================================================
+# NAGRIKSETU — INSTITUTION ADMIN STUDENT RECORD MANAGEMENT & EDITING MODULE
+# ==============================================================================
+
+class StudentRecordUpdatePayload(BaseModel):
+    reason: Optional[str] = Field("Administrative record update", max_length=500, description="Mandatory reason for updating student record")
+    source: Optional[str] = "Direct Admin Edit"
+    request_id: Optional[str] = None
+    # Personal Info
+    student_name: Optional[str] = None
+    date_of_birth: Optional[str] = None
+    gender: Optional[str] = None
+    blood_group: Optional[str] = None
+    first_language: Optional[str] = None
+    medium_of_instruction: Optional[str] = None
+    contact_number: Optional[str] = None
+    student_email: Optional[str] = None
+    address: Optional[str] = None
+    district: Optional[str] = None
+    taluk: Optional[str] = None
+    village_city: Optional[str] = None
+    pincode: Optional[str] = None
+    enrollment_status: Optional[str] = None
+    admission_number: Optional[str] = None
+    admission_date: Optional[str] = None
+    # Academic Info
+    standard: Optional[Union[int, str]] = None
+    section: Optional[str] = None
+    puc_year: Optional[str] = None
+    stream: Optional[str] = None
+    subject_combination: Optional[str] = None
+    curriculum_or_board: Optional[str] = None
+    academic_year: Optional[str] = None
+
+class AttendanceCorrectionPayload(BaseModel):
+    new_status: str = Field(..., description="Corrected status: present, absent, or leave")
+    remarks: Optional[str] = None
+    reason: str = Field(..., min_length=5, max_length=500, description="Mandatory reason for attendance correction")
+
+class ExamResultCorrectionPayload(BaseModel):
+    marks_obtained: float = Field(..., ge=0, description="Marks obtained")
+    maximum_marks: Optional[float] = Field(None, gt=0, description="Maximum marks")
+    grade: Optional[str] = None
+    reason: str = Field(..., min_length=5, max_length=500, description="Mandatory reason for examination correction")
+
+class StudentDocumentUploadPayload(BaseModel):
+    document_name: str = Field(..., min_length=3, max_length=150)
+    document_type: str = Field(..., min_length=3, max_length=100)
+    file_name: str = Field(..., min_length=3, max_length=200)
+    verification_status: Optional[str] = "verified"
+    reason: str = Field(..., min_length=5, max_length=500)
+
+
+@app.get("/institution/{institution_id}/student-management/stats")
+def get_student_management_stats(
+    institution_id: str,
+    user: dict = Depends(require_school_admin)
+):
+    """Returns real-time operational metrics for Institution Admin Student Management Desk."""
+    inst_id = institution_id.strip()
+    if user["role"] != "platform_admin" and user.get("school_id") != inst_id:
+        raise HTTPException(status_code=403, detail="Access denied: You are not assigned to this institution.")
+
+    conn = get_connection()
+    try:
+        school = conn.execute("SELECT school_id, school_name, school_type FROM schools WHERE school_id = ?", (inst_id,)).fetchone()
+        if not school:
+            raise HTTPException(404, "Institution not found.")
+
+        tot = conn.execute("SELECT COUNT(*) FROM students WHERE school_id = ?", (inst_id,)).fetchone()[0]
+        active = conn.execute("SELECT COUNT(*) FROM students WHERE school_id = ? AND (enrollment_status = 'active' OR enrollment_status IS NULL)", (inst_id,)).fetchone()[0]
+        inactive = conn.execute("SELECT COUNT(*) FROM students WHERE school_id = ? AND enrollment_status NOT IN ('active') AND enrollment_status IS NOT NULL", (inst_id,)).fetchone()[0]
+
+        std_rows = conn.execute("""
+            SELECT standard, puc_year, COUNT(*) as count
+            FROM students
+            WHERE school_id = ?
+            GROUP BY standard, puc_year
+            ORDER BY standard
+        """, (inst_id,)).fetchall()
+
+        by_standard = []
+        for r in std_rows:
+            std = r["standard"]
+            puc = r["puc_year"]
+            if puc:
+                lbl = puc
+            elif std and std <= 10:
+                lbl = f"Standard {std}"
+            elif std in (11, 12):
+                lbl = f"{std}th (PUC)"
+            else:
+                lbl = f"Level {std}" if std else "Unclassified"
+            by_standard.append({"standard": std, "puc_year": puc, "label": lbl, "count": r["count"]})
+
+        rec_rows = conn.execute("""
+            SELECT sra.audit_id, sra.student_id, sra.permanent_student_id, s.student_name,
+                   sra.field_modified, sra.previous_value, sra.updated_value, sra.reason,
+                   sra.source, sra.admin_name, sra.created_at
+            FROM student_record_audits sra
+            JOIN students s ON s.permanent_student_id = sra.permanent_student_id
+            WHERE sra.institution_id = ?
+            ORDER BY sra.created_at DESC
+            LIMIT 10
+        """, (inst_id,)).fetchall()
+
+        pend_rows = conn.execute("""
+            SELECT request_id, tracking_number, title, category, priority,
+                   affected_person_name, affected_student_id, permanent_student_id,
+                   field_name, current_value, requested_value, status, submitted_at
+            FROM service_requests
+            WHERE (assigned_institution_id = ? OR institution_id = ?)
+              AND status IN ('PENDING', 'SUBMITTED', 'UNDER_INVESTIGATION', 'CLARIFICATION_PROVIDED')
+            ORDER BY submitted_at DESC
+            LIMIT 10
+        """, (inst_id, inst_id)).fetchall()
+
+        total_pending = conn.execute("""
+            SELECT COUNT(*) FROM service_requests
+            WHERE (assigned_institution_id = ? OR institution_id = ?)
+              AND status IN ('PENDING', 'SUBMITTED', 'UNDER_INVESTIGATION', 'CLARIFICATION_PROVIDED')
+        """, (inst_id, inst_id)).fetchone()[0]
+
+        return {
+            "institution_id": inst_id,
+            "institution_name": school["school_name"],
+            "total_students": tot,
+            "active_students": active,
+            "inactive_students": inactive,
+            "by_standard": by_standard,
+            "recently_updated": [dict(r) for r in rec_rows],
+            "pending_correction_requests_count": total_pending,
+            "pending_correction_requests": [dict(r) for r in pend_rows]
+        }
+    finally:
+        conn.close()
+
+
+@app.put("/institution/{institution_id}/students/{student_id}")
+def update_institution_student(
+    institution_id: str,
+    student_id: str,
+    payload: StudentRecordUpdatePayload,
+    user: dict = Depends(require_school_admin)
+):
+    """
+    Authorised Institution Admin Student Record Editor.
+    Modifies permitted student personal & academic fields, enforces validation,
+    protects immutable keys (Student ID, PSID, Institution ID), and records an immutable audit trail.
+    """
+    inst_id = institution_id.strip()
+    if user["role"] != "platform_admin" and user.get("school_id") != inst_id:
+        raise HTTPException(status_code=403, detail="Access denied: You are not assigned to this institution.")
+
+    admin_id = user.get("user_id", "ADMIN")
+    admin_name = user.get("full_name") or user.get("email") or "Institution Administrator"
+
+    conn = get_connection()
+    try:
+        student_row = conn.execute("""
+            SELECT * FROM students
+            WHERE (student_id = ? OR permanent_student_id = ?) AND school_id = ?
+        """, (student_id, student_id, inst_id)).fetchone()
+
+        if not student_row:
+            raise HTTPException(status_code=404, detail=f"Student '{student_id}' not found in institution '{inst_id}'.")
+
+        student = dict(student_row)
+        perm_id = student["permanent_student_id"]
+        actual_student_id = student["student_id"]
+
+        enr_row = conn.execute("""
+            SELECT * FROM enrollments
+            WHERE permanent_student_id = ? AND school_id = ?
+            ORDER BY created_at DESC LIMIT 1
+        """, (perm_id, inst_id)).fetchone()
+        enr = dict(enr_row) if enr_row else {}
+
+        # Standardize standard value
+        std_val = student.get("standard")
+        if payload.standard is not None and str(payload.standard).strip() != "":
+            try:
+                std_val = int(payload.standard)
+            except (ValueError, TypeError):
+                std_val = student.get("standard")
+
+        reason_text = (payload.reason or "").strip()
+        if not reason_text:
+            reason_text = "Administrative record update"
+
+        updated_student_fields = {}
+        updated_enrollment_fields = {}
+        audits_to_insert = []
+        now_iso = datetime.now().isoformat()
+
+        field_mapping_students = {
+            "student_name": payload.student_name,
+            "date_of_birth": payload.date_of_birth,
+            "gender": payload.gender,
+            "blood_group": payload.blood_group,
+            "first_language": payload.first_language,
+            "medium_of_instruction": payload.medium_of_instruction,
+            "contact_number": payload.contact_number,
+            "student_email": payload.student_email,
+            "address": payload.address,
+            "district": payload.district,
+            "taluk": payload.taluk,
+            "village_city": payload.village_city,
+            "pincode": payload.pincode,
+            "enrollment_status": payload.enrollment_status,
+            "admission_number": payload.admission_number,
+            "admission_date": payload.admission_date,
+            "standard": std_val,
+            "section": payload.section,
+            "puc_year": payload.puc_year,
+            "stream": payload.stream,
+            "subject_combination": payload.subject_combination,
+            "curriculum_or_board": payload.curriculum_or_board
+        }
+
+        for fname, val in field_mapping_students.items():
+            if val is not None:
+                new_str = str(val).strip()
+                old_str = str(student.get(fname) if student.get(fname) is not None else "").strip()
+                if new_str != old_str:
+                    updated_student_fields[fname] = val
+                    audits_to_insert.append((
+                        f"AUD-{uuid.uuid4().hex[:12].upper()}",
+                        actual_student_id,
+                        perm_id,
+                        inst_id,
+                        admin_id,
+                        admin_name,
+                        fname,
+                        old_str if old_str else "(empty)",
+                        new_str,
+                        reason_text,
+                        payload.source or "Direct Admin Edit",
+                        payload.request_id,
+                        now_iso
+                    ))
+
+        enr_synced = ["standard", "section", "stream", "subject_combination", "puc_year", "curriculum_or_board", "first_language"]
+        for fname in enr_synced:
+            if fname in updated_student_fields and enr:
+                updated_enrollment_fields[fname] = updated_student_fields[fname]
+
+        if not updated_student_fields:
+            return {
+                "message": "No fields were modified. All submitted values match existing record.",
+                "student_id": actual_student_id,
+                "modified_fields": []
+            }
+
+        updated_student_fields["updated_at"] = now_iso
+        set_clauses = [f"{k} = ?" for k in updated_student_fields.keys()]
+        sql_stu = f"UPDATE students SET {', '.join(set_clauses)} WHERE permanent_student_id = ?"
+        conn.execute(sql_stu, list(updated_student_fields.values()) + [perm_id])
+
+        if updated_enrollment_fields and enr:
+            updated_enrollment_fields["updated_at"] = now_iso
+            set_enr = [f"{k} = ?" for k in updated_enrollment_fields.keys()]
+            sql_enr = f"UPDATE enrollments SET {', '.join(set_enr)} WHERE permanent_student_id = ? AND school_id = ?"
+            conn.execute(sql_enr, list(updated_enrollment_fields.values()) + [perm_id, inst_id])
+
+        for a in audits_to_insert:
+            conn.execute("""
+                INSERT INTO student_record_audits (
+                    audit_id, student_id, permanent_student_id, institution_id,
+                    admin_user_id, admin_name, field_modified, previous_value,
+                    updated_value, reason, source, request_id, created_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, a)
+
+            conn.execute("""
+                INSERT INTO platform_audit_logs (
+                    id, event_type, event_category, institution_id, actor_user_id,
+                    actor_name, actor_role, entity_type, entity_id, action,
+                    old_values, new_values, remarks, request_id, created_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+                f"EVT-{uuid.uuid4().hex[:10].upper()}",
+                "STUDENT_RECORD_MODIFIED",
+                "ADMIN_ACTION",
+                inst_id,
+                admin_id,
+                admin_name,
+                user.get("role", "institution_admin"),
+                "student",
+                actual_student_id,
+                f"Updated {a[6]}",
+                json.dumps({a[6]: a[7]}),
+                json.dumps({a[6]: a[8]}),
+                payload.reason.strip(),
+                payload.request_id,
+                now_iso
+            ))
+
+        conn.commit()
+
+        return {
+            "success": True,
+            "message": f"Successfully updated {len(updated_student_fields)-1} field(s) for student {actual_student_id}.",
+            "student_id": actual_student_id,
+            "permanent_student_id": perm_id,
+            "modified_fields": list(updated_student_fields.keys())
+        }
+    finally:
+        conn.close()
+
+
+@app.put("/institution/{institution_id}/students/{student_id}/attendance/{attendance_id}")
+def correct_student_attendance(
+    institution_id: str,
+    student_id: str,
+    attendance_id: str,
+    payload: AttendanceCorrectionPayload,
+    user: dict = Depends(require_school_admin)
+):
+    """Authorised Attendance Correction by Institution Admin."""
+    inst_id = institution_id.strip()
+    if user["role"] != "platform_admin" and user.get("school_id") != inst_id:
+        raise HTTPException(status_code=403, detail="Access denied: You are not assigned to this institution.")
+
+    admin_id = user.get("user_id", "ADMIN")
+    admin_name = user.get("full_name") or user.get("email") or "Institution Administrator"
+
+    conn = get_connection()
+    try:
+        s_row = conn.execute("SELECT student_id, permanent_student_id FROM students WHERE (student_id = ? OR permanent_student_id = ?) AND school_id = ?", (student_id, student_id, inst_id)).fetchone()
+        if not s_row:
+            raise HTTPException(404, f"Student '{student_id}' not found in institution '{inst_id}'.")
+        perm_id = s_row["permanent_student_id"]
+        actual_sid = s_row["student_id"]
+
+        att_row = conn.execute("SELECT * FROM student_attendance WHERE attendance_id = ? AND permanent_student_id = ?", (attendance_id, perm_id)).fetchone()
+        if not att_row:
+            raise HTTPException(404, f"Attendance record '{attendance_id}' not found for this student.")
+
+        att = dict(att_row)
+        old_status = att["status"]
+        old_remarks = att.get("remarks") or ""
+        new_status = payload.new_status.strip().lower()
+        new_remarks = payload.remarks.strip() if payload.remarks else old_remarks
+
+        if old_status == new_status and old_remarks == new_remarks:
+            return {"message": "No changes made: submitted status and remarks match existing attendance record."}
+
+        now_iso = datetime.now().isoformat()
+        conn.execute("""
+            UPDATE student_attendance
+            SET status = ?, remarks = ?, updated_at = ?, recorded_by_user_id = ?
+            WHERE attendance_id = ?
+        """, (new_status, new_remarks, now_iso, admin_id, attendance_id))
+
+        audit_id = f"AUD-{uuid.uuid4().hex[:12].upper()}"
+        conn.execute("""
+            INSERT INTO student_record_audits (
+                audit_id, student_id, permanent_student_id, institution_id,
+                admin_user_id, admin_name, field_modified, previous_value,
+                updated_value, reason, source, request_id, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            audit_id,
+            actual_sid,
+            perm_id,
+            inst_id,
+            admin_id,
+            admin_name,
+            f"attendance_{att.get('attendance_date', 'record')}",
+            f"{old_status} ({old_remarks})" if old_remarks else old_status,
+            f"{new_status} ({new_remarks})" if new_remarks else new_status,
+            payload.reason.strip(),
+            "Direct Admin Edit",
+            None,
+            now_iso
+        ))
+
+        conn.commit()
+
+        return {
+            "success": True,
+            "message": f"Attendance record for {att.get('attendance_date')} corrected successfully.",
+            "attendance_id": attendance_id,
+            "previous_status": old_status,
+            "new_status": new_status,
+            "updated_at": now_iso
+        }
+    finally:
+        conn.close()
+
+
+@app.put("/institution/{institution_id}/students/{student_id}/results/{result_id}")
+def correct_student_examination_result(
+    institution_id: str,
+    student_id: str,
+    result_id: str,
+    payload: ExamResultCorrectionPayload,
+    user: dict = Depends(require_school_admin)
+):
+    """Authorised Examination Result Correction by Institution Admin."""
+    inst_id = institution_id.strip()
+    if user["role"] != "platform_admin" and user.get("school_id") != inst_id:
+        raise HTTPException(status_code=403, detail="Access denied: You are not assigned to this institution.")
+
+    admin_id = user.get("user_id", "ADMIN")
+    admin_name = user.get("full_name") or user.get("email") or "Institution Administrator"
+
+    conn = get_connection()
+    try:
+        s_row = conn.execute("SELECT student_id, permanent_student_id FROM students WHERE (student_id = ? OR permanent_student_id = ?) AND school_id = ?", (student_id, student_id, inst_id)).fetchone()
+        if not s_row:
+            raise HTTPException(404, f"Student '{student_id}' not found in institution '{inst_id}'.")
+        perm_id = s_row["permanent_student_id"]
+        actual_sid = s_row["student_id"]
+
+        res_row = conn.execute("SELECT * FROM academic_results WHERE result_id = ? AND permanent_student_id = ?", (result_id, perm_id)).fetchone()
+        if not res_row:
+            raise HTTPException(404, f"Examination result '{result_id}' not found for this student.")
+
+        res = dict(res_row)
+        old_marks = float(res["marks_obtained"])
+        old_max = float(res.get("maximum_marks") or 100.0)
+        old_grade = res.get("grade") or "N/A"
+
+        new_marks = float(payload.marks_obtained)
+        new_max = float(payload.maximum_marks) if payload.maximum_marks is not None else old_max
+        if new_marks > new_max:
+            raise HTTPException(status_code=400, detail=f"Marks obtained ({new_marks}) cannot exceed maximum marks ({new_max}).")
+
+        new_pct = round((new_marks / new_max) * 100, 1) if new_max > 0 else 0
+        if payload.grade and payload.grade.strip():
+            new_grade = payload.grade.strip()
+        else:
+            if new_pct >= 85:
+                new_grade = "A+"
+            elif new_pct >= 70:
+                new_grade = "A"
+            elif new_pct >= 60:
+                new_grade = "B+"
+            elif new_pct >= 50:
+                new_grade = "B"
+            elif new_pct >= 35:
+                new_grade = "C"
+            else:
+                new_grade = "F"
+
+        now_iso = datetime.now().isoformat()
+        conn.execute("""
+            UPDATE academic_results
+            SET marks_obtained = ?, maximum_marks = ?, percentage = ?, grade = ?,
+                updated_at = ?, recorded_by_user_id = ?
+            WHERE result_id = ?
+        """, (new_marks, new_max, new_pct, new_grade, now_iso, admin_id, result_id))
+
+        conn.execute("""
+            INSERT INTO academic_result_audits (
+                audit_id, result_id, previous_marks, new_marks,
+                previous_max_marks, new_max_marks, reason_for_change,
+                modified_by_user_id, modified_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            f"ARA-{uuid.uuid4().hex[:8].upper()}",
+            result_id,
+            old_marks,
+            new_marks,
+            old_max,
+            new_max,
+            payload.reason.strip(),
+            admin_id,
+            now_iso
+        ))
+
+        conn.execute("""
+            INSERT INTO student_record_audits (
+                audit_id, student_id, permanent_student_id, institution_id,
+                admin_user_id, admin_name, field_modified, previous_value,
+                updated_value, reason, source, request_id, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            f"AUD-{uuid.uuid4().hex[:12].upper()}",
+            actual_sid,
+            perm_id,
+            inst_id,
+            admin_id,
+            admin_name,
+            f"result_{res.get('subject_name', 'subject')}",
+            f"{old_marks}/{old_max} ({old_grade})",
+            f"{new_marks}/{new_max} ({new_grade})",
+            payload.reason.strip(),
+            "Direct Admin Edit",
+            None,
+            now_iso
+        ))
+
+        conn.commit()
+
+        return {
+            "success": True,
+            "message": f"Examination result for '{res.get('subject_name')}' updated successfully.",
+            "result_id": result_id,
+            "marks_obtained": new_marks,
+            "maximum_marks": new_max,
+            "percentage": new_pct,
+            "grade": new_grade,
+            "updated_at": now_iso
+        }
+    finally:
+        conn.close()
+
+
+@app.get("/institution/{institution_id}/students/{student_id}/audit-history")
+def get_student_audit_history(
+    institution_id: str,
+    student_id: str,
+    user: dict = Depends(require_school_admin)
+):
+    """Returns immutable change history and audit trail for a student record."""
+    inst_id = institution_id.strip()
+    if user["role"] != "platform_admin" and user.get("school_id") != inst_id:
+        raise HTTPException(status_code=403, detail="Access denied: You are not assigned to this institution.")
+
+    conn = get_connection()
+    try:
+        s_row = conn.execute("SELECT student_id, permanent_student_id, student_name FROM students WHERE (student_id = ? OR permanent_student_id = ?) AND school_id = ?", (student_id, student_id, inst_id)).fetchone()
+        if not s_row:
+            raise HTTPException(404, f"Student '{student_id}' not found in institution '{inst_id}'.")
+
+        aud_rows = conn.execute("""
+            SELECT audit_id, student_id, permanent_student_id, field_modified,
+                   previous_value, updated_value, reason, source, admin_name, created_at
+            FROM student_record_audits
+            WHERE student_id = ? OR permanent_student_id = ?
+            ORDER BY created_at DESC
+        """, (s_row["student_id"], s_row["permanent_student_id"])).fetchall()
+
+        return {
+            "student_id": s_row["student_id"],
+            "student_name": s_row["student_name"],
+            "total_audit_events": len(aud_rows),
+            "audit_trail": [dict(a) for a in aud_rows]
+        }
+    finally:
+        conn.close()
+
+
+@app.post("/institution/{institution_id}/students/{student_id}/documents")
+def add_student_document(
+    institution_id: str,
+    student_id: str,
+    payload: StudentDocumentUploadPayload,
+    user: dict = Depends(require_school_admin)
+):
+    """Adds or uploads a replacement verified document entry to student dossier."""
+    inst_id = institution_id.strip()
+    if user["role"] != "platform_admin" and user.get("school_id") != inst_id:
+        raise HTTPException(status_code=403, detail="Access denied: You are not assigned to this institution.")
+
+    admin_id = user.get("user_id", "ADMIN")
+    admin_name = user.get("full_name") or "Institution Administrator"
+
+    conn = get_connection()
+    try:
+        s_row = conn.execute("SELECT student_id, permanent_student_id FROM students WHERE (student_id = ? OR permanent_student_id = ?) AND school_id = ?", (student_id, student_id, inst_id)).fetchone()
+        if not s_row:
+            raise HTTPException(404, f"Student '{student_id}' not found in institution '{inst_id}'.")
+
+        doc_id = f"DOC-{uuid.uuid4().hex[:10].upper()}"
+        now_iso = datetime.now().isoformat()
+
+        conn.execute("""
+            INSERT INTO student_documents (
+                document_id, permanent_student_id, document_type, file_name,
+                verification_status, uploaded_by_user_id, verified_by_user_id, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            doc_id, s_row["permanent_student_id"], payload.document_type, payload.file_name,
+            payload.verification_status or "verified", admin_id, admin_id, now_iso
+        ))
+
+        conn.execute("""
+            INSERT INTO student_record_audits (
+                audit_id, student_id, permanent_student_id, institution_id,
+                admin_user_id, admin_name, field_modified, previous_value,
+                updated_value, reason, source, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            f"AUD-{uuid.uuid4().hex[:12].upper()}", s_row["student_id"], s_row["permanent_student_id"], inst_id,
+            admin_id, admin_name, f"document_{payload.document_type}", "(none)",
+            payload.file_name, payload.reason.strip(), "Direct Admin Edit", now_iso
+        ))
+
+        conn.commit()
+
+        return {
+            "success": True,
+            "document_id": doc_id,
+            "message": f"Document '{payload.document_name}' added to student dossier successfully."
+        }
     finally:
         conn.close()

@@ -24,6 +24,9 @@ import AdminDashboard from './pages/admin/AdminDashboard.jsx'
 import InstitutionAdminDashboard from './pages/admin/InstitutionAdminDashboard.jsx'
 import NotificationCenterPage from './pages/notifications/NotificationCenterPage.jsx'
 import InfoPage from './pages/public/InfoPage.jsx'
+import AiAssistancePage from './pages/public/AiAssistancePage.jsx'
+import ApplyInstitutionPage from './pages/public/ApplyInstitutionPage.jsx'
+import AiAssistanceWidget from './components/ai/AiAssistanceWidget.jsx'
 
 import './App.css'
 
@@ -36,10 +39,13 @@ export default function App() {
           <main style={{ flex: '1 0 auto' }}>
             <Routes>
               <Route path="/" element={<LandingRoute />} />
+              <Route path="/ai-assistance" element={<AiAssistancePage />} />
+              <Route path="/chat" element={<Navigate to="/ai-assistance" replace />} />
               <Route path="/schools" element={<SchoolDirectoryPage />} />
               <Route path="/schools/:schoolId" element={<SchoolDetailsPage />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/select-institution" element={<SelectInstitutionPage />} />
+              <Route path="/apply-institution" element={<ApplyInstitutionPage />} />
               <Route path="/register" element={<RegisterPage />} />
               <Route path="/select-workspace" element={<SelectWorkspacePage />} />
               <Route path="/accept-invitation" element={<AcceptInvitationPage />} />
@@ -66,6 +72,7 @@ export default function App() {
             </Routes>
           </main>
           <Footer />
+          <AiAssistanceWidget />
         </div>
       </Router>
     </AuthProvider>

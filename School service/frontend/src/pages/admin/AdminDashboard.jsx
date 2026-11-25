@@ -6,6 +6,7 @@ import LoadingSpinner from '../../components/ui/LoadingSpinner.jsx'
 import Alert from '../../components/ui/Alert.jsx'
 import StatusBadge from '../../components/ui/StatusBadge.jsx'
 import Breadcrumbs from '../../components/layout/Breadcrumbs.jsx'
+import PlatformRequestOversightDesk from '../../components/requests/PlatformRequestOversightDesk.jsx'
 
 export default function AdminDashboard() {
   const { user, token, isAuthenticated } = useAuth()
@@ -47,6 +48,14 @@ export default function AdminDashboard() {
   const [schools, setSchools] = useState([])
   const [loadingSchools, setLoadingSchools] = useState(false)
   const [admins, setAdmins] = useState([])
+  const [applications, setApplications] = useState([])
+  const [loadingApplications, setLoadingApplications] = useState(false)
+  const [appFilter, setAppFilter] = useState('ALL')
+  const [selectedAppModal, setSelectedAppModal] = useState(null)
+  const [actionAppModal, setActionAppModal] = useState(null)
+  const [actionType, setActionType] = useState('approve') // approve | reject | request_info
+  const [actionComments, setActionComments] = useState('')
+  const [actionSubmitting, setActionSubmitting] = useState(false)
   const [loadingAdmins, setLoadingAdmins] = useState(false)
   const [showInviteModal, setShowInviteModal] = useState(() => {
     if (typeof window !== 'undefined') return window.location.href.includes('modal=invite')
@@ -275,6 +284,70 @@ export default function AdminDashboard() {
     }
   }, [token, isPlatformAdmin])
 
+  const loadApplications = useCallback(async () => {
+    if (!token || !isPlatformAdmin) return
+    try {
+      setLoadingApplications(true)
+      const data = await apiGet('/admin/institution-applications', token)
+      setApplications(Array.isArray(data) ? data : [])
+    } catch (err) {
+      setError(err.message || 'Failed to fetch institution applications.')
+    } finally {
+      setLoadingApplications(false)
+    }
+  }, [token, isPlatformAdmin])
+
+  const handleApproveApplication = async (appId, comments) => {
+    setActionSubmitting(true)
+    try {
+      const res = await apiPost(`/admin/institution-applications/${appId}/approve`, { comments: comments || null }, token)
+      setSuccess(`Application for ${res.institution_name || 'institution'} approved successfully! Administrative node and administrator account activated.`)
+      setActionAppModal(null)
+      loadApplications()
+      loadHealthAndSchools()
+    } catch (err) {
+      setError(err.message || 'Failed to approve application.')
+    } finally {
+      setActionSubmitting(false)
+    }
+  }
+
+  const handleRejectApplication = async (appId, comments) => {
+    if (!comments || !comments.trim()) {
+      alert('Please provide a reason for rejecting the application.')
+      return
+    }
+    setActionSubmitting(true)
+    try {
+      const res = await apiPost(`/admin/institution-applications/${appId}/reject`, { comments: comments.trim() }, token)
+      setSuccess(`Application ${res.application_ref} has been marked as rejected.`)
+      setActionAppModal(null)
+      loadApplications()
+    } catch (err) {
+      setError(err.message || 'Failed to reject application.')
+    } finally {
+      setActionSubmitting(false)
+    }
+  }
+
+  const handleRequestInfoApplication = async (appId, comments) => {
+    if (!comments || !comments.trim()) {
+      alert('Please specify what additional information or documents are required.')
+      return
+    }
+    setActionSubmitting(true)
+    try {
+      const res = await apiPost(`/admin/institution-applications/${appId}/request-info`, { comments: comments.trim() }, token)
+      setSuccess(`Additional information requested for application ${res.application_ref}.`)
+      setActionAppModal(null)
+      loadApplications()
+    } catch (err) {
+      setError(err.message || 'Failed to request additional information.')
+    } finally {
+      setActionSubmitting(false)
+    }
+  }
+
   const loadAdmins = useCallback(async () => {
     if (!token || !isPlatformAdmin) return
     try {
@@ -321,7 +394,7 @@ export default function AdminDashboard() {
     if (activeTab === 'academic-monitoring') loadAcademic()
     if (activeTab === 'reports-analytics') loadAnalytics()
     if (activeTab === 'institutions') {
-      if (institutionSubTab === 'admins') loadAdmins()
+      if (institutionSubTab === 'admins' || institutionSubTab === 'applications') { loadAdmins(); loadApplications(); }
       else loadHealthAndSchools()
     }
   }, [
@@ -603,6 +676,7 @@ export default function AdminDashboard() {
           { id: 'staff-activity', label: 'User & Staff Activity', icon: '👥' },
           { id: 'academic-monitoring', label: 'Academic Monitoring', icon: '🎓' },
           { id: 'reports-analytics', label: 'Reports & Analytics', icon: '📈' },
+          { id: 'requests', label: 'Platform Request Oversight', icon: '⚖️' },
         ].map(tab => (
           <button
             key={tab.id}
@@ -815,11 +889,11 @@ export default function AdminDashboard() {
               Institutional Nodes & Profiles ({schools.length})
             </button>
             <button
-              onClick={() => { setInstitutionSubTab('admins'); loadAdmins(); }}
-              className={`btn btn--sm ${institutionSubTab === 'admins' ? 'btn--primary' : 'btn--ghost'}`}
+              onClick={() => { setInstitutionSubTab('applications'); loadApplications(); }}
+              className={`btn btn--sm ${institutionSubTab === 'applications' || institutionSubTab === 'admins' ? 'btn--primary' : 'btn--ghost'}`}
               style={{ fontWeight: 600 }}
             >
-              Academic Administrator Accounts & Invitations ({admins.length})
+              Institution Registration Applications ({applications.length})
             </button>
           </div>
 
@@ -851,9 +925,9 @@ export default function AdminDashboard() {
                             s.category === 'pu_college' ? 'badge--warning' :
                             s.category === 'degree_college' ? 'badge--success' : 'badge--primary'
                           }`} style={{ fontSize: '0.75rem' }}>
-                            {s.category === 'k10_school' ? 'School (K-10)' :
-                             s.category === 'pu_college' ? 'PU College (11-12)' :
-                             s.category === 'degree_college' ? 'Degree College' : 'University'}
+                            {s.category === 'k10_school' ? 'Schools' :
+                             s.category === 'pu_college' ? 'PU Colleges' :
+                             s.category === 'degree_college' ? 'Degree Colleges' : 'Universities'}
                           </span>
                         </td>
                         <td style={{ padding: '0.75rem 1rem', fontFamily: 'monospace', fontWeight: 700 }}>{s.school_id}</td>
@@ -881,257 +955,223 @@ export default function AdminDashboard() {
             </div>
           )}
 
-          {/* SUB-TAB B: ACADEMIC ADMINISTRATORS & INVITATIONS */}
-          {institutionSubTab === 'admins' && (() => {
-            const pendingInvitations = admins.filter(a => a.is_pending || a.invitation_status === 'pending' || a.status === 'invited')
-            const activeAdmins = admins.filter(a => !a.is_pending && a.invitation_status !== 'pending' && a.status !== 'invited')
+          {/* SUB-TAB B: INSTITUTION REGISTRATION APPLICATIONS */}
+          {(institutionSubTab === 'applications' || institutionSubTab === 'admins') && (() => {
+            const pendingApps = applications.filter(a => a.status === 'pending')
+            const approvedApps = applications.filter(a => a.status === 'approved')
+            const rejectedApps = applications.filter(a => a.status === 'rejected')
+            const infoReqApps = applications.filter(a => a.status === 'additional_info_required')
+
+            const filteredApps = applications.filter(a => {
+              if (appFilter === 'ALL') return true
+              if (appFilter === 'pending') return a.status === 'pending'
+              if (appFilter === 'approved') return a.status === 'approved'
+              if (appFilter === 'rejected') return a.status === 'rejected'
+              if (appFilter === 'additional_info_required') return a.status === 'additional_info_required'
+              return true
+            })
 
             return (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                {/* Header & Stats Bar */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                {/* Header & Stats Banner */}
                 <div className="card" style={{ padding: '1.25rem 1.5rem', background: '#ffffff', border: '1px solid #d0d5dd', borderRadius: '8px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
                     <div>
                       <h3 style={{ margin: 0, fontSize: '1.2rem', color: '#1a3a6b', fontWeight: 700 }}>
-                        Academic Administrator Accounts
+                        Institution Registration Applications
                       </h3>
                       <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.85rem', color: '#64748b' }}>
-                        1-to-1 Institution Assignment Workflow strictly for Academic Administrators across Karnataka
+                        Review, verify, and approve onboarding applications submitted by Schools, PU Colleges, Degree Colleges, and Universities.
                       </p>
                     </div>
 
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
-                      <div style={{ display: 'flex', gap: '0.5rem', marginRight: '0.5rem' }}>
-                        <span className="badge" style={{ background: '#f0fdf4', color: '#166534', border: '1px solid #bbf7d0', fontSize: '0.8rem', padding: '0.35rem 0.65rem' }}>
-                          Available: <strong>{eligibleInstitutions.length} / 30</strong>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                      <span className="badge" style={{ background: '#f8fafc', color: '#334155', border: '1px solid #cbd5e1', fontSize: '0.8rem', padding: '0.35rem 0.65rem' }}>
+                        Total: <strong>{applications.length}</strong>
+                      </span>
+                      <span className="badge" style={{ background: '#fef3c7', color: '#92400e', border: '1px solid #fde68a', fontSize: '0.8rem', padding: '0.35rem 0.65rem' }}>
+                        Pending Review: <strong>{pendingApps.length}</strong>
+                      </span>
+                      <span className="badge" style={{ background: '#f0fdf4', color: '#166534', border: '1px solid #bbf7d0', fontSize: '0.8rem', padding: '0.35rem 0.65rem' }}>
+                        Approved: <strong>{approvedApps.length}</strong>
+                      </span>
+                      {infoReqApps.length > 0 && (
+                        <span className="badge" style={{ background: '#f9f5ff', color: '#6941c6', border: '1px solid #e9d7fe', fontSize: '0.8rem', padding: '0.35rem 0.65rem' }}>
+                          Action Req: <strong>{infoReqApps.length}</strong>
                         </span>
-                        <span className="badge" style={{ background: '#fef3c7', color: '#92400e', border: '1px solid #fde68a', fontSize: '0.8rem', padding: '0.35rem 0.65rem' }}>
-                          Pending: <strong>{pendingInvitations.length}</strong>
+                      )}
+                      {rejectedApps.length > 0 && (
+                        <span className="badge" style={{ background: '#fef2f2', color: '#991b1b', border: '1px solid #fecaca', fontSize: '0.8rem', padding: '0.35rem 0.65rem' }}>
+                          Rejected: <strong>{rejectedApps.length}</strong>
                         </span>
-                        <span className="badge" style={{ background: '#eff6ff', color: '#1d4ed8', border: '1px solid #bfdbfe', fontSize: '0.8rem', padding: '0.35rem 0.65rem' }}>
-                          Active: <strong>{activeAdmins.length}</strong>
-                        </span>
-                      </div>
-
+                      )}
                       <button
-                        onClick={handleResetAllAssignments}
+                        onClick={loadApplications}
+                        disabled={loadingApplications}
                         className="btn btn--sm btn--outline"
-                        style={{ color: '#b91c1c', borderColor: '#fca5a5', fontWeight: 600 }}
-                        title="Safely revoke all assignments and release all 30 institutions"
+                        style={{ marginLeft: '0.5rem' }}
                       >
-                        Reset All Assignments
-                      </button>
-
-                      <button
-                        onClick={handleOpenInviteModal}
-                        className="btn btn--sm btn--primary"
-                        style={{ fontWeight: 600 }}
-                      >
-                        + Invite Academic Administrator
+                        {loadingApplications ? 'Refreshing...' : '↻ Refresh'}
                       </button>
                     </div>
                   </div>
+
+                  {/* Filter Pills */}
+                  <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem', flexWrap: 'wrap' }}>
+                    {[
+                      { id: 'ALL', label: 'All Applications', count: applications.length },
+                      { id: 'pending', label: 'Pending Review', count: pendingApps.length },
+                      { id: 'approved', label: 'Approved', count: approvedApps.length },
+                      { id: 'additional_info_required', label: 'Action Required', count: infoReqApps.length },
+                      { id: 'rejected', label: 'Rejected', count: rejectedApps.length }
+                    ].map(tab => (
+                      <button
+                        key={tab.id}
+                        onClick={() => setAppFilter(tab.id)}
+                        className={`btn btn--xs ${appFilter === tab.id ? 'btn--primary' : 'btn--ghost'}`}
+                        style={{ borderRadius: '20px', padding: '0.25rem 0.65rem', fontWeight: 600 }}
+                      >
+                        {tab.label} ({tab.count})
+                      </button>
+                    ))}
+                  </div>
                 </div>
 
-                {loadingAdmins ? (
-                  <div style={{ textAlign: 'center', padding: '3rem' }}><LoadingSpinner /></div>
-                ) : (
-                  <>
-                    {/* SECTION A: PENDING INVITATIONS */}
-                    <div className="card" style={{ border: '1px solid #fed7aa', borderRadius: '8px', overflow: 'hidden', background: '#ffffff' }}>
-                      <div style={{ padding: '0.85rem 1.25rem', borderBottom: '1px solid #fed7aa', background: '#fff7ed', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                          <span style={{ fontSize: '1rem' }}>✉️</span>
-                          <h4 style={{ margin: 0, fontSize: '1rem', color: '#9a3412', fontWeight: 700 }}>
-                            Section A: Pending Invitations
-                          </h4>
-                          <span className="badge" style={{ background: '#ffedd5', color: '#c2410c', fontWeight: 700, fontSize: '0.75rem' }}>
-                            {pendingInvitations.length} Pending
-                          </span>
-                        </div>
-                        <span style={{ fontSize: '0.8rem', color: '#c2410c' }}>
-                          Target institutions are reserved until accepted, declined, or revoked
-                        </span>
-                      </div>
-
-                      <div style={{ overflowX: 'auto' }}>
-                        <table className="table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem' }}>
-                          <thead>
-                            <tr style={{ background: '#fffbeb', borderBottom: '2px solid #fed7aa', textAlign: 'left' }}>
-                              <th style={{ padding: '0.75rem 1rem' }}>Administrator Name & Email</th>
-                              <th style={{ padding: '0.75rem 1rem' }}>Contact Number</th>
-                              <th style={{ padding: '0.75rem 1rem' }}>Target Institution</th>
-                              <th style={{ padding: '0.75rem 1rem' }}>Assigned Role</th>
-                              <th style={{ padding: '0.75rem 1rem' }}>Invitation Status</th>
-                              <th style={{ padding: '0.75rem 1rem' }}>Invitation Sent Date</th>
-                              <th style={{ padding: '0.75rem 1rem' }}>Available Actions</th>
+                {/* Applications Table Card */}
+                <div className="card" style={{ border: '1px solid #d0d5dd', borderRadius: '8px', overflow: 'hidden', background: '#ffffff' }}>
+                  <div style={{ overflowX: 'auto' }}>
+                    <table className="table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
+                      <thead>
+                        <tr style={{ background: '#f1f5f9', borderBottom: '2px solid #e2e8f0', textAlign: 'left' }}>
+                          <th style={{ padding: '0.75rem 1rem' }}>Application Ref</th>
+                          <th style={{ padding: '0.75rem 1rem' }}>Institution ID</th>
+                          <th style={{ padding: '0.75rem 1rem' }}>Institution Name</th>
+                          <th style={{ padding: '0.75rem 1rem' }}>Type & Tier</th>
+                          <th style={{ padding: '0.75rem 1rem' }}>District</th>
+                          <th style={{ padding: '0.75rem 1rem' }}>Applicant / Admin</th>
+                          <th style={{ padding: '0.75rem 1rem' }}>Submission Date</th>
+                          <th style={{ padding: '0.75rem 1rem' }}>Status</th>
+                          <th style={{ padding: '0.75rem 1rem', textAlign: 'right' }}>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {filteredApps.length === 0 ? (
+                          <tr>
+                            <td colSpan={9} style={{ textAlign: 'center', padding: '2.5rem', color: '#64748b' }}>
+                              {loadingApplications ? 'Loading applications from database...' : 'No institution applications found matching current filter.'}
+                            </td>
+                          </tr>
+                        ) : (
+                          filteredApps.map((app) => (
+                            <tr key={app.application_id} style={{ borderBottom: '1px solid #e2e8f0' }}>
+                              <td style={{ padding: '0.75rem 1rem', fontFamily: 'monospace', fontWeight: 700, color: '#155eef' }}>
+                                {app.application_ref}
+                              </td>
+                              <td style={{ padding: '0.75rem 1rem', fontFamily: 'monospace', fontWeight: 700 }}>
+                                {app.institution_id}
+                              </td>
+                              <td style={{ padding: '0.75rem 1rem', fontWeight: 600, color: '#0f172a' }}>
+                                {app.institution_name}
+                              </td>
+                              <td style={{ padding: '0.75rem 1rem' }}>
+                                <span className={`badge ${
+                                  app.institution_category?.includes('School') ? 'badge--info' :
+                                  app.institution_category?.includes('PU') ? 'badge--warning' :
+                                  app.institution_category?.includes('Degree') ? 'badge--success' : 'badge--primary'
+                                }`} style={{ fontSize: '0.75rem' }}>
+                                  {app.institution_type || app.institution_category}
+                                </span>
+                              </td>
+                              <td style={{ padding: '0.75rem 1rem', color: '#64748b' }}>
+                                {app.district}
+                              </td>
+                              <td style={{ padding: '0.75rem 1rem' }}>
+                                <div style={{ fontWeight: 600 }}>{app.applicant_name}</div>
+                                <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{app.applicant_email}</div>
+                              </td>
+                              <td style={{ padding: '0.75rem 1rem', color: '#64748b', whiteSpace: 'nowrap' }}>
+                                {app.created_at ? new Date(app.created_at).toLocaleDateString() : 'N/A'}
+                              </td>
+                              <td style={{ padding: '0.75rem 1rem' }}>
+                                {app.status === 'pending' && (
+                                  <span className="badge" style={{ background: '#fef3c7', color: '#92400e', border: '1px solid #fde68a', fontWeight: 700 }}>
+                                    Pending Review
+                                  </span>
+                                )}
+                                {app.status === 'approved' && (
+                                  <span className="badge" style={{ background: '#f0fdf4', color: '#166534', border: '1px solid #bbf7d0', fontWeight: 700 }}>
+                                    Approved
+                                  </span>
+                                )}
+                                {app.status === 'rejected' && (
+                                  <span className="badge" style={{ background: '#fef2f2', color: '#991b1b', border: '1px solid #fecaca', fontWeight: 700 }}>
+                                    Rejected
+                                  </span>
+                                )}
+                                {app.status === 'additional_info_required' && (
+                                  <span className="badge" style={{ background: '#f9f5ff', color: '#6941c6', border: '1px solid #e9d7fe', fontWeight: 700 }}>
+                                    Action Required
+                                  </span>
+                                )}
+                              </td>
+                              <td style={{ padding: '0.75rem 1rem', textAlign: 'right', whiteSpace: 'nowrap' }}>
+                                <div style={{ display: 'inline-flex', gap: '0.4rem' }}>
+                                  <button
+                                    onClick={() => setSelectedAppModal(app)}
+                                    className="btn btn--xs btn--outline"
+                                    title="View complete application details"
+                                  >
+                                    View Details
+                                  </button>
+                                  {app.status !== 'approved' && (
+                                    <>
+                                      <button
+                                        onClick={() => {
+                                          setActionAppModal(app)
+                                          setActionType('approve')
+                                          setActionComments('')
+                                        }}
+                                        className="btn btn--xs btn--primary"
+                                        style={{ background: '#16a34a', borderColor: '#16a34a' }}
+                                        title="Approve and activate institution"
+                                      >
+                                        Approve
+                                      </button>
+                                      <button
+                                        onClick={() => {
+                                          setActionAppModal(app)
+                                          setActionType('request_info')
+                                          setActionComments('')
+                                        }}
+                                        className="btn btn--xs btn--outline"
+                                        style={{ color: '#d97706', borderColor: '#fcd34d' }}
+                                        title="Request additional information from applicant"
+                                      >
+                                        Request Info
+                                      </button>
+                                      <button
+                                        onClick={() => {
+                                          setActionAppModal(app)
+                                          setActionType('reject')
+                                          setActionComments('')
+                                        }}
+                                        className="btn btn--xs btn--outline"
+                                        style={{ color: '#dc2626', borderColor: '#fca5a5' }}
+                                        title="Reject this application"
+                                      >
+                                        Reject
+                                      </button>
+                                    </>
+                                  )}
+                                </div>
+                              </td>
                             </tr>
-                          </thead>
-                          <tbody>
-                            {pendingInvitations.length === 0 ? (
-                              <tr>
-                                <td colSpan={7} style={{ textAlign: 'center', padding: '2rem', color: '#94a3b8' }}>
-                                  No pending invitations. All invited administrators have either accepted or no invitations are currently pending.
-                                </td>
-                              </tr>
-                            ) : (
-                              pendingInvitations.map((adm) => (
-                                <tr key={adm.mapping_id || adm.user_id} style={{ borderBottom: '1px solid #fed7aa' }}>
-                                  <td style={{ padding: '0.75rem 1rem' }}>
-                                    <div style={{ fontWeight: 600, color: '#0f172a' }}>{adm.full_name || 'Invited Administrator'}</div>
-                                    <div style={{ color: '#64748b', fontSize: '0.8rem' }}>{adm.email}</div>
-                                  </td>
-                                  <td style={{ padding: '0.75rem 1rem', color: '#475569', fontSize: '0.85rem' }}>
-                                    {adm.phone || '—'}
-                                  </td>
-                                  <td style={{ padding: '0.75rem 1rem' }}>
-                                    <span style={{ fontWeight: 600, color: '#1e3a8a' }}>{adm.school_name || adm.institution_id}</span>
-                                    <span style={{ color: '#64748b', fontSize: '0.8rem', marginLeft: '0.4rem', fontFamily: 'monospace' }}>({adm.institution_id})</span>
-                                    {adm.category && (
-                                      <div style={{ fontSize: '0.72rem', color: '#64748b' }}>{adm.category}</div>
-                                    )}
-                                  </td>
-                                  <td style={{ padding: '0.75rem 1rem' }}>
-                                    <span className="badge" style={{ background: '#f0fdf4', color: '#166534', border: '1px solid #bbf7d0', fontSize: '0.75rem' }}>
-                                      Academic Administrator
-                                    </span>
-                                  </td>
-                                  <td style={{ padding: '0.75rem 1rem' }}>
-                                    <span className="badge" style={{ background: '#fef3c7', color: '#92400e', border: '1px solid #fde68a', fontSize: '0.75rem', fontWeight: 600 }}>
-                                      Pending
-                                    </span>
-                                  </td>
-                                  <td style={{ padding: '0.75rem 1rem', color: '#475569', fontSize: '0.8rem' }}>
-                                    {adm.invitation_sent_at || adm.created_at ? new Date(adm.invitation_sent_at || adm.created_at).toLocaleString() : '—'}
-                                  </td>
-                                  <td style={{ padding: '0.75rem 1rem' }}>
-                                    <button
-                                      onClick={() => handleRevokeInvitation(adm)}
-                                      className="btn btn--xs btn--danger"
-                                      style={{ fontWeight: 600 }}
-                                      title="Revoke invitation and release target institution immediately"
-                                    >
-                                      Revoke Invitation
-                                    </button>
-                                  </td>
-                                </tr>
-                              ))
-                            )}
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-
-                    {/* SECTION B: ACTIVE ACADEMIC ADMINISTRATORS */}
-                    <div className="card" style={{ border: '1px solid #bbf7d0', borderRadius: '8px', overflow: 'hidden', background: '#ffffff' }}>
-                      <div style={{ padding: '0.85rem 1.25rem', borderBottom: '1px solid #bbf7d0', background: '#f0fdf4', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                          <span style={{ fontSize: '1rem' }}>🏛️</span>
-                          <h4 style={{ margin: 0, fontSize: '1rem', color: '#166534', fontWeight: 700 }}>
-                            Section B: Active Academic Administrators
-                          </h4>
-                          <span className="badge" style={{ background: '#dcfce7', color: '#15803d', fontWeight: 700, fontSize: '0.75rem' }}>
-                            {activeAdmins.length} Active / Assigned
-                          </span>
-                        </div>
-                        <span style={{ fontSize: '0.8rem', color: '#15803d' }}>
-                          Confirmed institutional assignments across all educational tiers
-                        </span>
-                      </div>
-
-                      <div style={{ overflowX: 'auto' }}>
-                        <table className="table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem' }}>
-                          <thead>
-                            <tr style={{ background: '#f8fafc', borderBottom: '2px solid #bbf7d0', textAlign: 'left' }}>
-                              <th style={{ padding: '0.75rem 1rem' }}>Administrator Full Name & Email</th>
-                              <th style={{ padding: '0.75rem 1rem' }}>Contact Number</th>
-                              <th style={{ padding: '0.75rem 1rem' }}>Institution Name & ID</th>
-                              <th style={{ padding: '0.75rem 1rem' }}>Institution Category</th>
-                              <th style={{ padding: '0.75rem 1rem' }}>Assigned Role</th>
-                              <th style={{ padding: '0.75rem 1rem' }}>Invitation Status</th>
-                              <th style={{ padding: '0.75rem 1rem' }}>Account Status</th>
-                              <th style={{ padding: '0.75rem 1rem' }}>Sent Date</th>
-                              <th style={{ padding: '0.75rem 1rem' }}>Accepted / Activated</th>
-                              <th style={{ padding: '0.75rem 1rem' }}>Actions</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {activeAdmins.length === 0 ? (
-                              <tr>
-                                <td colSpan={10} style={{ textAlign: 'center', padding: '2rem', color: '#94a3b8' }}>
-                                  No active Academic Administrators assigned yet. Send invitations to assign administrators.
-                                </td>
-                              </tr>
-                            ) : (
-                              activeAdmins.map((adm) => (
-                                <tr key={adm.mapping_id || adm.user_id} style={{ borderBottom: '1px solid #e2e8f0' }}>
-                                  <td style={{ padding: '0.75rem 1rem' }}>
-                                    <div style={{ fontWeight: 600, color: '#0f172a' }}>{adm.full_name || 'Academic Administrator'}</div>
-                                    <div style={{ color: '#64748b', fontSize: '0.8rem' }}>{adm.email}</div>
-                                  </td>
-                                  <td style={{ padding: '0.75rem 1rem', color: '#475569', fontSize: '0.85rem' }}>
-                                    {adm.phone || '—'}
-                                  </td>
-                                  <td style={{ padding: '0.75rem 1rem' }}>
-                                    <span style={{ fontWeight: 600, color: '#1e3a8a' }}>{adm.school_name || adm.institution_id}</span>
-                                    <span style={{ color: '#64748b', fontSize: '0.8rem', marginLeft: '0.4rem', fontFamily: 'monospace' }}>({adm.institution_id})</span>
-                                  </td>
-                                  <td style={{ padding: '0.75rem 1rem' }}>
-                                    <span className="badge" style={{ background: '#f1f5f9', color: '#334155', border: '1px solid #cbd5e1', fontSize: '0.75rem' }}>
-                                      {adm.category || adm.school_type || 'Institution'}
-                                    </span>
-                                  </td>
-                                  <td style={{ padding: '0.75rem 1rem' }}>
-                                    <span className="badge" style={{ background: '#f0fdf4', color: '#166534', border: '1px solid #bbf7d0', fontSize: '0.75rem' }}>
-                                      Academic Administrator
-                                    </span>
-                                  </td>
-                                  <td style={{ padding: '0.75rem 1rem' }}>
-                                    <span className="badge" style={{ background: '#dcfce7', color: '#15803d', border: '1px solid #86efac', fontSize: '0.75rem', fontWeight: 600 }}>
-                                      Accepted
-                                    </span>
-                                  </td>
-                                  <td style={{ padding: '0.75rem 1rem' }}>
-                                    <StatusBadge status={adm.status || 'active'} />
-                                  </td>
-                                  <td style={{ padding: '0.75rem 1rem', color: '#475569', fontSize: '0.8rem' }}>
-                                    {adm.invitation_sent_at || adm.created_at ? new Date(adm.invitation_sent_at || adm.created_at).toLocaleDateString() : '—'}
-                                  </td>
-                                  <td style={{ padding: '0.75rem 1rem', color: '#475569', fontSize: '0.8rem' }}>
-                                    {adm.account_activated_at || adm.invitation_accepted_at ? new Date(adm.account_activated_at || adm.invitation_accepted_at).toLocaleDateString() : 'Active'}
-                                  </td>
-                                  <td style={{ padding: '0.75rem 1rem' }}>
-                                    <div style={{ display: 'flex', gap: '0.4rem' }}>
-                                      {adm.status === 'active' ? (
-                                        <button
-                                          onClick={() => handleSuspendAdmin(adm)}
-                                          className="btn btn--xs btn--outline"
-                                          style={{ color: '#b91c1c', borderColor: '#fca5a5' }}
-                                          title="Suspend account (institution assignment retained)"
-                                        >
-                                          Suspend
-                                        </button>
-                                      ) : (
-                                        <button
-                                          onClick={() => handleReactivateAdmin(adm)}
-                                          className="btn btn--xs btn--outline"
-                                          style={{ color: '#15803d', borderColor: '#86efac' }}
-                                          title="Reactivate administrator account"
-                                        >
-                                          Reactivate
-                                        </button>
-                                      )}
-                                    </div>
-                                  </td>
-                                </tr>
-                              ))
-                            )}
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-                  </>
-                )}
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
               </div>
             )
           })()}
@@ -1167,8 +1207,8 @@ export default function AdminDashboard() {
                   style={{ width: '100%' }}
                 >
                   <option value="all">All Tiers (Schools, PU, Degree, Univ)</option>
-                  <option value="k10_school">Schools (K-10)</option>
-                  <option value="pu_college">PU Colleges (11-12)</option>
+                  <option value="k10_school">Schools</option>
+                  <option value="pu_college">PU Colleges</option>
                   <option value="degree_college">Degree Colleges</option>
                   <option value="university">Universities</option>
                 </select>
@@ -1648,8 +1688,8 @@ export default function AdminDashboard() {
                   className="select select--sm"
                 >
                   <option value="all">All Tiers</option>
-                  <option value="k10_school">Schools (K-10)</option>
-                  <option value="pu_college">PU Colleges (11-12)</option>
+                  <option value="k10_school">Schools</option>
+                  <option value="pu_college">PU Colleges</option>
                   <option value="degree_college">Degree Colleges</option>
                   <option value="university">Universities</option>
                 </select>
@@ -1681,7 +1721,9 @@ export default function AdminDashboard() {
                               {inst.school_name} <span style={{ color: '#64748b', fontSize: '0.75rem' }}>({inst.school_id})</span>
                             </td>
                             <td style={{ padding: '0.6rem 0.8rem' }}>
-                              <span className="badge badge--neutral" style={{ fontSize: '0.7rem' }}>{inst.category}</span>
+                              <span className="badge badge--neutral" style={{ fontSize: '0.7rem' }}>
+                                {(inst.category || '').replace(/\s*\([Kk][-–—]?10\)/gi, '').replace(/\s*\(11[-–—]?12\)/gi, '')}
+                              </span>
                             </td>
                             <td style={{ padding: '0.6rem 0.8rem' }}>{inst.admin_count || 1}</td>
                             <td style={{ padding: '0.6rem 0.8rem' }}>{inst.staff_count || 0}</td>
@@ -1913,6 +1955,13 @@ export default function AdminDashboard() {
             </>
           )}
         </div>
+      )}
+
+      {/* ======================================================== */}
+      {/* SECTION 9: PLATFORM REQUEST & COMPLAINTS OVERSIGHT */}
+      {/* ======================================================== */}
+      {activeTab === 'requests' && (
+        <PlatformRequestOversightDesk token={token} />
       )}
 
       {/* ======================================================== */}
@@ -2286,7 +2335,7 @@ export default function AdminDashboard() {
                       <option value="">-- Select Unassigned Institution ({filteredEligible.length} available) --</option>
                       {filteredEligible.map(inst => (
                         <option key={inst.school_id} value={inst.school_id}>
-                          [{inst.school_id}] {inst.school_name} — ({inst.category?.toUpperCase() || inst.school_type})
+                          [{inst.school_id}] {inst.school_name} — ({(inst.category || '').replace(/\s*\([Kk][-–—]?10\)/gi, '').replace(/\s*\(11[-–—]?12\)/gi, '').toUpperCase() || inst.school_type}
                         </option>
                       ))}
                     </select>
@@ -2311,6 +2360,273 @@ export default function AdminDashboard() {
                 </form>
               )}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ======================================================== */}
+      {/* MODAL: APPLICATION FULL DETAILS MODAL */}
+      {/* ======================================================== */}
+      {selectedAppModal && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(15, 23, 42, 0.65)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          zIndex: 1000, padding: '1rem'
+        }}>
+          <div className="card" style={{
+            background: '#ffffff', maxWidth: '780px', width: '100%',
+            maxHeight: '90vh', overflowY: 'auto', borderRadius: '12px',
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)'
+          }}>
+            <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid #e2e8f0', background: '#f8fafc', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: 0, zIndex: 10 }}>
+              <div>
+                <h3 style={{ margin: 0, fontSize: '1.2rem', color: '#0f172a', fontWeight: 700 }}>
+                  Application Dossier: {selectedAppModal.institution_name}
+                </h3>
+                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginTop: '0.25rem' }}>
+                  <span style={{ fontFamily: 'monospace', fontWeight: 700, color: '#155eef', fontSize: '0.85rem' }}>
+                    {selectedAppModal.application_ref}
+                  </span>
+                  <span style={{ color: '#94a3b8' }}>•</span>
+                  <span style={{ fontSize: '0.85rem', color: '#64748b' }}>
+                    Code: <strong>{selectedAppModal.institution_id}</strong>
+                  </span>
+                  <span style={{ color: '#94a3b8' }}>•</span>
+                  <span className={`badge ${
+                    selectedAppModal.status === 'approved' ? 'badge--success' :
+                    selectedAppModal.status === 'rejected' ? 'badge--error' :
+                    selectedAppModal.status === 'additional_info_required' ? 'badge--warning' : 'badge--neutral'
+                  }`} style={{ fontSize: '0.75rem', fontWeight: 700 }}>
+                    {selectedAppModal.status?.toUpperCase()}
+                  </span>
+                </div>
+              </div>
+              <button onClick={() => setSelectedAppModal(null)} className="btn btn--sm btn--ghost" style={{ fontSize: '1.2rem', padding: '0.2rem 0.6rem' }}>×</button>
+            </div>
+
+            <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem', fontSize: '0.875rem' }}>
+              {/* Section A */}
+              <div style={{ border: '1px solid #e2e8f0', borderRadius: '8px', padding: '1rem' }}>
+                <h4 style={{ margin: '0 0 0.5rem 0', color: '#1e3a8a', fontSize: '0.95rem' }}>Section A: Institution Profile</h4>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.5rem' }}>
+                  <div><span style={{ color: '#64748b' }}>Legal Name:</span> <strong>{selectedAppModal.institution_name}</strong></div>
+                  <div><span style={{ color: '#64748b' }}>Type:</span> <strong>{selectedAppModal.institution_type}</strong></div>
+                  <div><span style={{ color: '#64748b' }}>Category:</span> <strong>{selectedAppModal.institution_category}</strong></div>
+                  <div><span style={{ color: '#64748b' }}>Established Year:</span> <strong>{selectedAppModal.established_year || 'N/A'}</strong></div>
+                  <div><span style={{ color: '#64748b' }}>Affiliation:</span> <strong>{selectedAppModal.affiliation || 'N/A'}</strong></div>
+                  <div><span style={{ color: '#64748b' }}>Recognition/Reg No:</span> <strong>{selectedAppModal.recognition || 'N/A'}</strong></div>
+                </div>
+              </div>
+
+              {/* Section B */}
+              <div style={{ border: '1px solid #e2e8f0', borderRadius: '8px', padding: '1rem' }}>
+                <h4 style={{ margin: '0 0 0.5rem 0', color: '#1e3a8a', fontSize: '0.95rem' }}>Section B: Address Details</h4>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.5rem' }}>
+                  <div><span style={{ color: '#64748b' }}>Line 1:</span> {selectedAppModal.address_line1}</div>
+                  <div><span style={{ color: '#64748b' }}>Line 2:</span> {selectedAppModal.address_line2 || 'None'}</div>
+                  <div><span style={{ color: '#64748b' }}>City:</span> {selectedAppModal.city}</div>
+                  <div><span style={{ color: '#64748b' }}>District:</span> <strong>{selectedAppModal.district}</strong></div>
+                  <div><span style={{ color: '#64748b' }}>State:</span> {selectedAppModal.state}</div>
+                  <div><span style={{ color: '#64748b' }}>PIN:</span> <strong>{selectedAppModal.pincode}</strong></div>
+                </div>
+              </div>
+
+              {/* Section C */}
+              <div style={{ border: '1px solid #e2e8f0', borderRadius: '8px', padding: '1rem' }}>
+                <h4 style={{ margin: '0 0 0.5rem 0', color: '#1e3a8a', fontSize: '0.95rem' }}>Section C: Contact Information</h4>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.5rem' }}>
+                  <div><span style={{ color: '#64748b' }}>Official Email:</span> <strong>{selectedAppModal.official_email}</strong></div>
+                  <div><span style={{ color: '#64748b' }}>Official Phone:</span> <strong>{selectedAppModal.official_phone}</strong></div>
+                  <div><span style={{ color: '#64748b' }}>Website:</span> {selectedAppModal.website ? <a href={selectedAppModal.website} target="_blank" rel="noreferrer">{selectedAppModal.website}</a> : 'N/A'}</div>
+                </div>
+              </div>
+
+              {/* Section D: Academic Information */}
+              <div style={{ border: '1px solid #e2e8f0', borderRadius: '8px', padding: '1rem' }}>
+                <h4 style={{ margin: '0 0 0.5rem 0', color: '#1e3a8a', fontSize: '0.95rem' }}>Section D: Academic Offerings</h4>
+                {(() => {
+                  try {
+                    const parsed = JSON.parse(selectedAppModal.academic_info_json || '{}')
+                    return (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                        {parsed.school_standards && <div><span style={{ color: '#64748b' }}>Grades/Standards:</span> <strong>{parsed.school_standards}</strong></div>}
+                        {parsed.school_medium && <div><span style={{ color: '#64748b' }}>Medium of Instruction:</span> <strong>{parsed.school_medium}</strong></div>}
+                        {parsed.pu_streams && <div><span style={{ color: '#64748b' }}>PU Streams:</span> <strong>{parsed.pu_streams.join(', ')}</strong></div>}
+                        {parsed.pu_combinations && <div><span style={{ color: '#64748b' }}>Combinations:</span> <strong>{parsed.pu_combinations.join(', ')}</strong></div>}
+                        {parsed.degree_programmes && Array.isArray(parsed.degree_programmes) && (
+                          <div style={{ marginTop: '0.4rem' }}>
+                            <div style={{ fontWeight: 600, color: '#64748b', marginBottom: '0.2rem' }}>Programmes & Intake:</div>
+                            <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
+                              {parsed.degree_programmes.map((p, i) => (
+                                <li key={i}>{p.code}: {p.name} ({p.duration}, {p.intake} seats)</li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                      </div>
+                    )
+                  } catch {
+                    return <div style={{ color: '#64748b' }}>{selectedAppModal.academic_info_json || 'Standard curriculum'}</div>
+                  }
+                })()}
+              </div>
+
+              {/* Section E: Authorized Administrator */}
+              <div style={{ border: '1px solid #e2e8f0', borderRadius: '8px', padding: '1rem', background: '#f8fafc' }}>
+                <h4 style={{ margin: '0 0 0.5rem 0', color: '#1e3a8a', fontSize: '0.95rem' }}>Section E: Authorized Institution Administrator</h4>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.5rem' }}>
+                  <div><span style={{ color: '#64748b' }}>Administrator Name:</span> <strong>{selectedAppModal.applicant_name}</strong></div>
+                  <div><span style={{ color: '#64748b' }}>Designation:</span> <strong>{selectedAppModal.applicant_designation}</strong></div>
+                  <div><span style={{ color: '#64748b' }}>Login Email:</span> <strong style={{ color: '#155eef' }}>{selectedAppModal.applicant_email}</strong></div>
+                  <div><span style={{ color: '#64748b' }}>Contact Mobile:</span> <strong>{selectedAppModal.applicant_phone}</strong></div>
+                </div>
+              </div>
+
+              {/* Review History Notes */}
+              {selectedAppModal.review_comments && (
+                <div style={{ background: '#fffbeb', border: '1px solid #fef3c7', borderRadius: '8px', padding: '1rem' }}>
+                  <div style={{ fontWeight: 700, color: '#b45309', marginBottom: '0.25rem' }}>Reviewer Comments / Instructions:</div>
+                  <div style={{ color: '#78350f' }}>{selectedAppModal.review_comments}</div>
+                  <div style={{ fontSize: '0.75rem', color: '#92400e', marginTop: '0.4rem' }}>
+                    Reviewed by {selectedAppModal.reviewed_by || 'Admin'} at {selectedAppModal.reviewed_at || 'recent'}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div style={{ padding: '1rem 1.5rem', borderTop: '1px solid #e2e8f0', background: '#f8fafc', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <button onClick={() => setSelectedAppModal(null)} className="btn btn--outline btn--sm">
+                Close Dossier
+              </button>
+              {selectedAppModal.status !== 'approved' && (
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <button
+                    onClick={() => {
+                      setActionAppModal(selectedAppModal)
+                      setActionType('approve')
+                      setActionComments('')
+                    }}
+                    className="btn btn--sm btn--primary"
+                    style={{ background: '#16a34a', borderColor: '#16a34a' }}
+                  >
+                    Approve Application →
+                  </button>
+                  <button
+                    onClick={() => {
+                      setActionAppModal(selectedAppModal)
+                      setActionType('reject')
+                      setActionComments('')
+                    }}
+                    className="btn btn--sm btn--outline"
+                    style={{ color: '#dc2626', borderColor: '#fca5a5' }}
+                  >
+                    Reject
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ======================================================== */}
+      {/* MODAL: APPLICATION REVIEW ACTION (APPROVE / REJECT / REQUEST INFO) */}
+      {/* ======================================================== */}
+      {actionAppModal && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(15, 23, 42, 0.65)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          zIndex: 1010, padding: '1rem'
+        }}>
+          <div className="card" style={{
+            background: '#ffffff', maxWidth: '520px', width: '100%',
+            borderRadius: '12px', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+            overflow: 'hidden'
+          }}>
+            <div style={{
+              padding: '1.25rem 1.5rem',
+              borderBottom: '1px solid #e2e8f0',
+              background: actionType === 'approve' ? '#f0fdf4' : actionType === 'reject' ? '#fef2f2' : '#fffbeb',
+              display: 'flex', justifyContent: 'space-between', alignItems: 'center'
+            }}>
+              <div>
+                <h3 style={{
+                  margin: 0, fontSize: '1.15rem', fontWeight: 700,
+                  color: actionType === 'approve' ? '#166534' : actionType === 'reject' ? '#991b1b' : '#92400e'
+                }}>
+                  {actionType === 'approve' && 'Approve Institution Application'}
+                  {actionType === 'reject' && 'Reject Institution Application'}
+                  {actionType === 'request_info' && 'Request Additional Information'}
+                </h3>
+                <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.85rem', color: '#64748b' }}>
+                  {actionAppModal.institution_name} ({actionAppModal.application_ref})
+                </p>
+              </div>
+              <button onClick={() => setActionAppModal(null)} className="btn btn--sm btn--ghost" style={{ fontSize: '1.2rem', padding: '0.2rem 0.6rem' }}>×</button>
+            </div>
+
+            <form onSubmit={(e) => {
+              e.preventDefault()
+              if (actionType === 'approve') handleApproveApplication(actionAppModal.application_id, actionComments)
+              else if (actionType === 'reject') handleRejectApplication(actionAppModal.application_id, actionComments)
+              else if (actionType === 'request_info') handleRequestInfoApplication(actionAppModal.application_id, actionComments)
+            }} style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              {actionType === 'approve' && (
+                <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '8px', padding: '0.85rem', fontSize: '0.85rem', color: '#166534' }}>
+                  <strong>Platform Approval Effect:</strong>
+                  <ul style={{ margin: '0.4rem 0 0 0', paddingLeft: '1.25rem' }}>
+                    <li>Adds <strong>{actionAppModal.institution_name}</strong> ({actionAppModal.institution_id}) to verified institutions.</li>
+                    <li>Provisions <strong>{actionAppModal.applicant_email}</strong> as authorized School Administrator.</li>
+                    <li>Enables immediate Administrator Desk login for applicant.</li>
+                  </ul>
+                </div>
+              )}
+
+              <div>
+                <label style={{ fontSize: '0.85rem', fontWeight: 700, color: '#334155', display: 'block', marginBottom: '0.35rem' }}>
+                  {actionType === 'approve' ? 'Approval Comments (Optional):' :
+                   actionType === 'reject' ? 'Rejection Reason (Required):' : 'Information Required Details (Required):'}
+                </label>
+                <textarea
+                  required={actionType !== 'approve'}
+                  rows={4}
+                  value={actionComments}
+                  onChange={(e) => setActionComments(e.target.value)}
+                  placeholder={
+                    actionType === 'approve' ? 'e.g. Documentation verified. Approved for Karnataka Education Platform onboarding.' :
+                    actionType === 'reject' ? 'e.g. Recognition document invalid or unrecognized board affiliation.' :
+                    'e.g. Please submit latest government recognition order and updated building occupancy certificate.'
+                  }
+                  style={{ width: '100%', padding: '0.65rem', border: '1px solid #cbd5e1', borderRadius: '6px', fontSize: '0.875rem', boxSizing: 'border-box' }}
+                />
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '0.5rem' }}>
+                <button
+                  type="button"
+                  onClick={() => setActionAppModal(null)}
+                  className="btn btn--outline btn--sm"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={actionSubmitting}
+                  className="btn btn--sm btn--primary"
+                  style={{
+                    background: actionType === 'approve' ? '#16a34a' : actionType === 'reject' ? '#dc2626' : '#d97706',
+                    borderColor: actionType === 'approve' ? '#16a34a' : actionType === 'reject' ? '#dc2626' : '#d97706'
+                  }}
+                >
+                  {actionSubmitting ? 'Processing...' : (
+                    actionType === 'approve' ? 'Confirm Approval →' :
+                    actionType === 'reject' ? 'Confirm Rejection' : 'Send Request'
+                  )}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

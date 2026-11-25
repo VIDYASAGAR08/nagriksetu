@@ -1,3 +1,8 @@
 import sqlite3
-c = sqlite3.connect('C:/Users/callm/nagriksetu/backend/data/nagriksetu.db')
-print([row[0] for row in c.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()])
+
+conn = sqlite3.connect(r"C:\Users\callm\nagriksetu\backend\data\nagriksetu.db")
+cur = conn.cursor()
+cur.execute("SELECT name FROM sqlite_master WHERE type='table'")
+tables = [r[0] for r in cur.fetchall()]
+print("Tables in nagriksetu.db:", tables)
+conn.close()

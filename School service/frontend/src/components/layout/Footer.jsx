@@ -4,34 +4,20 @@ export default function Footer() {
   const year = new Date().getFullYear()
 
   return (
-    <footer className="gov-footer" role="contentinfo" style={{ background: '#081c33', color: '#f8fafc', borderTop: 'none' }}>
-      {/* Tricolor Ribbon */}
-      <div style={{ height: '4px', width: '100%', background: 'linear-gradient(to right, #FF9933 0%, #FF9933 33.3%, #FFFFFF 33.3%, #FFFFFF 66.6%, #138808 66.6%, #138808 100%)' }} />
-      <div className="container" style={{ paddingTop: '2.5rem', paddingBottom: '2.5rem' }}>
+    <footer className="gov-footer" role="contentinfo">
+      <div className="container">
         <div className="gov-footer__grid">
           <div className="gov-footer__brand">
-            <h3 style={{ color: '#ffffff', fontSize: '1.4rem', fontWeight: 800 }}>
-              नागरिक सेतु <span style={{ color: '#FF9933' }}>· NagrikSetu</span>
-            </h3>
-            <p style={{ color: '#94a3b8', fontSize: '0.82rem', lineHeight: 1.6 }}>
-              Unified Citizen School Services Network providing public school
-              discovery, student enrolment verification, and parent services for Karnataka institutions.
+            <h3>NagrikSetu</h3>
+            <p>
+              A citizen-facing school services portal providing public school
+              discovery, parent-child record access, and student information
+              management for Karnataka schools.
             </p>
             <p style={{ marginTop: '1rem' }}>
-              <a
-                href="http://localhost:5173"
-                style={{
-                  color: '#FF9933',
-                  fontWeight: 700,
-                  fontSize: '0.85rem',
-                  textDecoration: 'none',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '0.4rem',
-                }}
-              >
-                ← Return to NagrikSetu Central Portal (localhost:5173)
-              </a>
+              <span className="gov-footer__demo-notice">
+                ⚠ Demonstration application · Synthetic data · Not an official government service
+              </span>
             </p>
           </div>
 

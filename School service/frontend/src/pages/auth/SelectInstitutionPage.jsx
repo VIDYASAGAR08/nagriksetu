@@ -70,12 +70,8 @@ export default function SelectInstitutionPage() {
     if (autoSchoolId && institutions.length > 0) {
       const match = institutions.find(s => s.school_id === autoSchoolId)
       if (match) {
-        // If active, proceed to login; otherwise open guidance or select
-        if (match.admin_status?.can_login) {
-          handleContinueToLogin(match)
-        } else {
-          setSelectedInst(match)
-        }
+        // Proceed directly to login
+        handleContinueToLogin(match)
       }
     }
   }, [institutions, searchParams])
@@ -142,27 +138,10 @@ export default function SelectInstitutionPage() {
     }
   }
 
-  // Handle Card Action Button Click
+  // Handle Card Action Button Click - Direct Administrator Login
   function handleCardAction(e, inst) {
     e.stopPropagation()
-    const status = inst.admin_status?.status || 'NOT_INVITED'
-
-    if (status === 'ACTIVE') {
-      handleContinueToLogin(inst)
-    } else if (status === 'INVITED') {
-      setModalTokenInput('')
-      setModalTokenError('')
-      setActiveModal({ type: 'INVITED', inst })
-    } else if (status === 'ACCEPTED_PENDING_PASSWORD') {
-      setModalTokenInput('')
-      setModalTokenError('')
-      setActiveModal({ type: 'ACCEPTED_PENDING_PASSWORD', inst })
-    } else if (status === 'SUSPENDED') {
-      setActiveModal({ type: 'SUSPENDED', inst })
-    } else {
-      // NOT_INVITED or EXPIRED
-      setActiveModal({ type: 'NOT_INVITED', inst })
-    }
+    handleContinueToLogin(inst)
   }
 
   // Handle Token Verification from Modal
@@ -202,100 +181,45 @@ export default function SelectInstitutionPage() {
     }
   }
 
-  // Helper for Status Badge
+  // Helper for Status Badge - Registered & Approved Active Administrator
   function renderStatusPill(status) {
-    switch (status) {
-      case 'ACTIVE':
-        return (
-          <span style={{
-            fontSize: '0.72rem',
-            fontWeight: 700,
-            background: '#ECFDF3',
-            color: '#027A48',
-            border: '1px solid #ABEFC6',
-            padding: '0.15rem 0.5rem',
-            borderRadius: '12px',
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '0.3rem'
-          }}>
-            <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#12B76A' }}></span>
-            Active Administrator
-          </span>
-        )
-      case 'INVITED':
-        return (
-          <span style={{
-            fontSize: '0.72rem',
-            fontWeight: 700,
-            background: '#F0F9FF',
-            color: '#026AA2',
-            border: '1px solid #B9E6FE',
-            padding: '0.15rem 0.5rem',
-            borderRadius: '12px',
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '0.3rem'
-          }}>
-            <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#0BA5EC' }}></span>
-            Invitation Dispatched
-          </span>
-        )
-      case 'ACCEPTED_PENDING_PASSWORD':
-        return (
-          <span style={{
-            fontSize: '0.72rem',
-            fontWeight: 700,
-            background: '#F9F5FF',
-            color: '#6941C6',
-            border: '1px solid #E9D7FE',
-            padding: '0.15rem 0.5rem',
-            borderRadius: '12px',
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '0.3rem'
-          }}>
-            <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#9E77ED' }}></span>
-            Complete Setup Pending
-          </span>
-        )
-      case 'SUSPENDED':
-        return (
-          <span style={{
-            fontSize: '0.72rem',
-            fontWeight: 700,
-            background: '#FEF3F2',
-            color: '#B42318',
-            border: '1px solid #FECDCA',
-            padding: '0.15rem 0.5rem',
-            borderRadius: '12px',
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '0.3rem'
-          }}>
-            <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#F04438' }}></span>
-            Access Suspended
-          </span>
-        )
-      default:
-        return (
-          <span style={{
-            fontSize: '0.72rem',
-            fontWeight: 600,
-            background: '#F8F9FA',
-            color: '#667085',
-            border: '1px solid #EAECF0',
-            padding: '0.15rem 0.5rem',
-            borderRadius: '12px',
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '0.3rem'
-          }}>
-            <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#98A2B3' }}></span>
-            Not Provisioned
-          </span>
-        )
-    }
+    return (
+      <span style={{
+        fontSize: '0.72rem',
+        fontWeight: 700,
+        background: '#ECFDF3',
+        color: '#027A48',
+        border: '1px solid #ABEFC6',
+        padding: '0.15rem 0.5rem',
+        borderRadius: '12px',
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: '0.3rem'
+      }}>
+        <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#12B76A' }}></span>
+        Active Administrator
+      </span>
+    )
+  }
+
+  function renderStatusBadge(status) {
+    return (
+      <span style={{
+        fontSize: '0.72rem',
+        fontWeight: 700,
+        background: '#ECFDF3',
+        color: '#027A48',
+        border: '1px solid #ABEFC6',
+        padding: '0.15rem 0.5rem',
+        borderRadius: '12px',
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: '0.3rem'
+      }}>
+        <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#12B76A' }}></span>
+        Active Administrator
+      </span>
+    )
   }
 
   return (
@@ -329,6 +253,61 @@ export default function SelectInstitutionPage() {
             </div>
 
             {error && <Alert type="error" title="Error Loading Institutions" style={{ marginBottom: '1.5rem' }}>{error}</Alert>}
+
+            {/* Apply Institution Banner */}
+            <div style={{
+              background: 'linear-gradient(135deg, #F0F9FF 0%, #E0F2FE 100%)',
+              border: '2px dashed #0BA5EC',
+              borderRadius: '12px',
+              padding: '1.5rem 2rem',
+              marginBottom: '1.5rem',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              flexWrap: 'wrap',
+              gap: '1.25rem',
+              boxShadow: '0 2px 8px rgba(11, 165, 236, 0.1)'
+            }}>
+              <div style={{ maxWidth: '650px' }}>
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', background: '#026AA2', color: '#FFFFFF', fontSize: '0.72rem', fontWeight: 700, padding: '0.2rem 0.55rem', borderRadius: '4px', textTransform: 'uppercase', marginBottom: '0.4rem' }}>
+                  <span>🏛️</span> Institutional Self-Registration
+                </div>
+                <h2 style={{ fontSize: '1.4rem', fontWeight: 800, color: '#0C4A6E', margin: '0 0 0.35rem 0' }}>
+                  Apply Institution
+                </h2>
+                <p style={{ margin: 0, fontSize: '0.95rem', color: '#0369A1', lineHeight: 1.5 }}>
+                  Register your school, college or university with NagrikSetu.
+                </p>
+                <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem', flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: '0.75rem', background: '#FFFFFF', color: '#026AA2', padding: '0.15rem 0.5rem', borderRadius: '4px', fontWeight: 600, border: '1px solid #B9E6FE' }}>Schools</span>
+                  <span style={{ fontSize: '0.75rem', background: '#FFFFFF', color: '#026AA2', padding: '0.15rem 0.5rem', borderRadius: '4px', fontWeight: 600, border: '1px solid #B9E6FE' }}>PU Colleges</span>
+                  <span style={{ fontSize: '0.75rem', background: '#FFFFFF', color: '#026AA2', padding: '0.15rem 0.5rem', borderRadius: '4px', fontWeight: 600, border: '1px solid #B9E6FE' }}>Degree Colleges</span>
+                  <span style={{ fontSize: '0.75rem', background: '#FFFFFF', color: '#026AA2', padding: '0.15rem 0.5rem', borderRadius: '4px', fontWeight: 600, border: '1px solid #B9E6FE' }}>Universities</span>
+                </div>
+              </div>
+
+              <div>
+                <Link
+                  to="/apply-institution"
+                  className="btn btn--primary"
+                  style={{
+                    padding: '0.85rem 1.75rem',
+                    fontSize: '0.95rem',
+                    fontWeight: 700,
+                    background: '#0284C7',
+                    borderColor: '#0284C7',
+                    boxShadow: '0 4px 10px rgba(2, 132, 199, 0.25)',
+                    whiteSpace: 'nowrap',
+                    textDecoration: 'none',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.5rem'
+                  }}
+                >
+                  Register Your Institution →
+                </Link>
+              </div>
+            </div>
 
             {/* Filter Controls Bar */}
             <div style={{
@@ -456,45 +435,12 @@ export default function SelectInstitutionPage() {
                   }
                   const status = adminStatusObj.status
 
-                  // Dynamic Button Styling based on verified backend status
-                  let buttonBg = '#F8F9FA'
-                  let buttonColor = '#344054'
-                  let buttonBorder = '1px solid #D0D5DD'
-                  let buttonLabel = adminStatusObj.button_label || 'Invitation Required'
-                  let buttonBoxShadow = 'none'
-
-                  if (status === 'ACTIVE') {
-                    buttonBg = isSelected ? '#155EEF' : '#102B46'
-                    buttonColor = '#FFFFFF'
-                    buttonBorder = 'none'
-                    buttonLabel = 'Continue to Administrator Login →'
-                    buttonBoxShadow = '0 2px 4px rgba(16,43,70,0.2)'
-                  } else if (status === 'INVITED') {
-                    buttonBg = '#026AA2'
-                    buttonColor = '#FFFFFF'
-                    buttonBorder = 'none'
-                    buttonLabel = 'Invitation Available'
-                    buttonBoxShadow = '0 2px 4px rgba(2,106,162,0.2)'
-                  } else if (status === 'ACCEPTED_PENDING_PASSWORD') {
-                    buttonBg = '#6941C6'
-                    buttonColor = '#FFFFFF'
-                    buttonBorder = 'none'
-                    buttonLabel = 'Complete Account Setup'
-                    buttonBoxShadow = '0 2px 4px rgba(105,65,198,0.2)'
-                  } else if (status === 'SUSPENDED') {
-                    buttonBg = '#FEF3F2'
-                    buttonColor = '#B42318'
-                    buttonBorder = '1px solid #FECDCA'
-                    buttonLabel = 'Account Suspended'
-                    buttonBoxShadow = 'none'
-                  } else {
-                    // NOT_INVITED / EXPIRED
-                    buttonBg = '#F8F9FA'
-                    buttonColor = '#475467'
-                    buttonBorder = '1px solid #D0D5DD'
-                    buttonLabel = 'Invitation Required'
-                    buttonBoxShadow = 'none'
-                  }
+                  // All approved institutions have direct administrator login
+                  const buttonBg = isSelected ? '#155EEF' : '#102B46'
+                  const buttonColor = '#FFFFFF'
+                  const buttonBorder = 'none'
+                  const buttonLabel = 'Continue to Administrator Login →'
+                  const buttonBoxShadow = '0 2px 4px rgba(16,43,70,0.2)'
 
                   return (
                     <div
@@ -538,7 +484,7 @@ export default function SelectInstitutionPage() {
                               padding: '0.2rem 0.55rem',
                               borderRadius: '4px'
                             }}>
-                              {inst.category || inst.school_type}
+                              {(inst.category || inst.school_type || '').replace(/\s*\([Kk][-–—]?10\)/gi, '').replace(/\s*\(11[-–—]?12\)/gi, '')}
                             </span>
                           </div>
 
@@ -558,6 +504,7 @@ export default function SelectInstitutionPage() {
                         <div style={{ fontSize: '0.8rem', color: '#344054', marginBottom: '0.5rem' }}>
                           🏛️ Type: <strong>{inst.school_type}</strong>
                         </div>
+
 
                         {inst.affiliation && (
                           <div style={{ fontSize: '0.78rem', color: '#155EEF', fontWeight: 500, marginBottom: '0.75rem' }}>
@@ -641,12 +588,18 @@ export default function SelectInstitutionPage() {
                     justifyContent: 'space-between',
                     background: 
                       activeModal.type === 'SUSPENDED' ? '#FEF3F2' :
+                      activeModal.type === 'APPLICATION_PENDING' ? '#FEF0C7' :
+                      activeModal.type === 'REJECTED' ? '#FEF3F2' :
+                      activeModal.type === 'ADDITIONAL_INFO_REQUIRED' ? '#F9F5FF' :
                       activeModal.type === 'INVITED' ? '#F0F9FF' :
                       activeModal.type === 'ACCEPTED_PENDING_PASSWORD' ? '#F9F5FF' : '#F8F9FA'
                   }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
                       <span style={{ fontSize: '1.25rem' }}>
                         {activeModal.type === 'SUSPENDED' ? '⛔' :
+                         activeModal.type === 'APPLICATION_PENDING' ? '⏳' :
+                         activeModal.type === 'REJECTED' ? '❌' :
+                         activeModal.type === 'ADDITIONAL_INFO_REQUIRED' ? 'ℹ️' :
                          activeModal.type === 'INVITED' ? '✉️' :
                          activeModal.type === 'ACCEPTED_PENDING_PASSWORD' ? '⚙️' : '🔒'}
                       </span>
@@ -654,8 +607,11 @@ export default function SelectInstitutionPage() {
                         margin: 0,
                         fontSize: '1.1rem',
                         fontWeight: 700,
-                        color: activeModal.type === 'SUSPENDED' ? '#B42318' : '#102B46'
+                        color: (activeModal.type === 'SUSPENDED' || activeModal.type === 'REJECTED') ? '#B42318' : '#102B46'
                       }}>
+                        {activeModal.type === 'APPLICATION_PENDING' && 'Application Under Review'}
+                        {activeModal.type === 'REJECTED' && 'Institution Application Rejected'}
+                        {activeModal.type === 'ADDITIONAL_INFO_REQUIRED' && 'Action Required on Application'}
                         {activeModal.type === 'SUSPENDED' && 'Administrative Access Suspended'}
                         {activeModal.type === 'INVITED' && 'Administrator Invitation Available'}
                         {activeModal.type === 'ACCEPTED_PENDING_PASSWORD' && 'Complete Account Setup'}
@@ -680,6 +636,47 @@ export default function SelectInstitutionPage() {
 
                   {/* Modal Body */}
                   <div style={{ padding: '1.5rem' }}>
+                    {(activeModal.type === 'APPLICATION_PENDING' || activeModal.type === 'REJECTED' || activeModal.type === 'ADDITIONAL_INFO_REQUIRED') && (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                        <div style={{
+                          background: activeModal.type === 'APPLICATION_PENDING' ? '#FFFAEB' :
+                                      activeModal.type === 'REJECTED' ? '#FEF3F2' : '#F9F5FF',
+                          border: activeModal.type === 'APPLICATION_PENDING' ? '1px solid #FEDF89' :
+                                  activeModal.type === 'REJECTED' ? '1px solid #FECDCA' : '1px solid #E9D7FE',
+                          borderRadius: '8px',
+                          padding: '1rem'
+                        }}>
+                          <div style={{ fontSize: '0.8rem', fontWeight: 700, textTransform: 'uppercase', color: '#667085', marginBottom: '0.35rem' }}>
+                            Registration Application Status
+                          </div>
+                          <div style={{ fontSize: '0.95rem', fontWeight: 600, color: '#102B46', marginBottom: '0.5rem' }}>
+                            {activeModal.inst.admin_status?.status_description || 'Application is being processed by Platform Administration.'}
+                          </div>
+                          {activeModal.inst.admin_status?.application_ref && (
+                            <div style={{ fontSize: '0.85rem', color: '#155EEF', fontFamily: 'monospace', fontWeight: 700 }}>
+                              Reference: {activeModal.inst.admin_status.application_ref}
+                            </div>
+                          )}
+                        </div>
+
+                        <div style={{ fontSize: '0.85rem', color: '#475467', lineHeight: 1.5 }}>
+                          {activeModal.type === 'APPLICATION_PENDING' && 'Once approved by NagrikSetu Platform Administration, the administrator account will be activated and you will be able to log in using your registered credentials.'}
+                          {activeModal.type === 'REJECTED' && 'This application was reviewed and not approved. For inquiries or appeal, please contact the NagrikSetu Central Support Team.'}
+                          {activeModal.type === 'ADDITIONAL_INFO_REQUIRED' && 'Platform Administration has requested additional information or verification documents before this application can be approved.'}
+                        </div>
+
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
+                          <button
+                            type="button"
+                            onClick={() => setActiveModal(null)}
+                            className="btn btn--secondary"
+                            style={{ fontSize: '0.85rem' }}
+                          >
+                            Close
+                          </button>
+                        </div>
+                      </div>
+                    )}
                     {/* Institution Meta Banner */}
                     <div style={{
                       background: '#F8F9FA',
@@ -950,7 +947,7 @@ export default function SelectInstitutionPage() {
                     padding: '0.2rem 0.5rem',
                     borderRadius: '4px'
                   }}>
-                    {selectedInst?.category || selectedInst?.school_type}
+                    {(selectedInst?.category || selectedInst?.school_type || '').replace(/\s*\([Kk][-–—]?10\)/gi, '').replace(/\s*\(11[-–—]?12\)/gi, '')}
                   </span>
                 </div>
 
@@ -988,57 +985,8 @@ export default function SelectInstitutionPage() {
                 </Alert>
               )}
 
-              {/* Verify administrator provisioning status */}
-              {checkingStatus ? (
-                <div style={{ textAlign: 'center', padding: '2rem 1rem' }}>
-                  <LoadingSpinner size="md" />
-                  <p style={{ marginTop: '0.5rem', color: '#667085', fontSize: '0.85rem' }}>
-                    Verifying administrator provisioning status...
-                  </p>
-                </div>
-              ) : adminStatus && !adminStatus.can_login ? (
-                /* Non-loginable State Guard in Step 2 */
-                <div style={{
-                  background: adminStatus.status === 'SUSPENDED' ? '#FEF3F2' : '#FEF0C7',
-                  border: `1px solid ${adminStatus.status === 'SUSPENDED' ? '#FECDCA' : '#FDB022'}`,
-                  borderRadius: '8px',
-                  padding: '1.25rem',
-                  marginBottom: '1.5rem'
-                }}>
-                  <div style={{ display: 'flex', gap: '0.6rem', alignItems: 'flex-start' }}>
-                    <span style={{ fontSize: '1.3rem' }}>
-                      {adminStatus.status === 'SUSPENDED' ? '⛔' : '⚠️'}
-                    </span>
-                    <div>
-                      <h4 style={{
-                        margin: '0 0 0.35rem 0',
-                        color: adminStatus.status === 'SUSPENDED' ? '#B42318' : '#B54708',
-                        fontSize: '0.95rem',
-                        fontWeight: 700
-                      }}>
-                        {adminStatus.button_label || 'Login Not Permitted'}
-                      </h4>
-                      <p style={{
-                        margin: '0 0 0.85rem 0',
-                        color: adminStatus.status === 'SUSPENDED' ? '#7A271A' : '#7A271A',
-                        fontSize: '0.85rem',
-                        lineHeight: 1.45
-                      }}>
-                        {adminStatus.status_description || 'This institution does not currently have an active administrator account authorized for login.'}
-                      </p>
-                      <button
-                        onClick={() => setStep('select')}
-                        className="btn btn--secondary btn--sm"
-                        style={{ fontSize: '0.8rem' }}
-                      >
-                        ← Return to Institution Selection
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                /* ACTIVE: Show Administrator Login Form */
-                <form onSubmit={handleAdminLogin}>
+              {/* Administrator Login Form */}
+              <form onSubmit={handleAdminLogin}>
                   <div style={{ marginBottom: '1.25rem' }}>
                     <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: '#102B46', marginBottom: '0.35rem' }}>
                       Administrator Email or Registered Mobile
@@ -1106,7 +1054,7 @@ export default function SelectInstitutionPage() {
                       boxShadow: '0 2px 6px rgba(21,94,239,0.25)'
                     }}
                   >
-                    {loginLoading ? <LoadingSpinner size="sm" /> : 'Sign In as Institution Administrator →'}
+                    {loginLoading ? <LoadingSpinner size="sm" /> : 'Continue to Administrator Login →'}
                   </button>
 
                   {/* Security Notice */}
@@ -1123,7 +1071,6 @@ export default function SelectInstitutionPage() {
                     🔒 <strong>Strict Institution Isolation:</strong> Your account assignment will be authenticated against <strong>{selectedInst?.school_id}</strong> on the server. Cross-institution access attempts are strictly blocked and audited.
                   </div>
                 </form>
-              )}
             </div>
           </div>
         )}

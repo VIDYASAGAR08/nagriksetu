@@ -1,0 +1,201 @@
+﻿question_code,question_text,category,intended_role,intent,required_information,data_source,answer_method,expected_answer,is_active
+Q001,Which is the best government school near my location for my child?,School Discovery and Admissions,Citizen / Parent,,,,,,True
+Q002,Which schools are available within 5 km of my home?,School Discovery and Admissions,Citizen / Parent,,,,,,True
+Q003,Recommend schools based on my child's age.,School Discovery and Admissions,Citizen / Parent,,,,,,True
+Q004,Which school is suitable for my child entering 1st standard?,School Discovery and Admissions,Citizen / Parent,,,,,,True
+Q005,Which schools offer education from 1st to 10th standard?,School Discovery and Admissions,Citizen / Parent,,,,,,True
+Q006,Which government schools have English-medium education?,School Discovery and Admissions,Citizen / Parent,,,,,,True
+Q007,Which schools provide Kannada-medium education?,School Discovery and Admissions,Citizen / Parent,,,,,,True
+Q008,Which schools offer both Kannada and English medium?,School Discovery and Admissions,Citizen / Parent,,,,,,True
+Q009,Which schools have the lowest admission fees?,School Discovery and Admissions,Citizen / Parent,,,,,,True
+Q010,Which schools have better student-teacher ratios?,School Discovery and Admissions,Citizen / Parent,,,,,,True
+Q011,Which schools have good academic results?,School Discovery and Admissions,Citizen / Parent,,,,,,True
+Q012,Which schools have better infrastructure facilities?,School Discovery and Admissions,Citizen / Parent,,,,,,True
+Q013,Which schools have computer laboratories?,School Discovery and Admissions,Citizen / Parent,,,,,,True
+Q014,Which schools have science laboratories?,School Discovery and Admissions,Citizen / Parent,,,,,,True
+Q015,Which schools have libraries?,School Discovery and Admissions,Citizen / Parent,,,,,,True
+Q016,Which schools provide playground facilities?,School Discovery and Admissions,Citizen / Parent,,,,,,True
+Q017,Which schools provide transportation facilities?,School Discovery and Admissions,Citizen / Parent,,,,,,True
+Q018,Which schools provide hostel facilities?,School Discovery and Admissions,Citizen / Parent,,,,,,True
+Q019,Which schools have separate facilities for girls?,School Discovery and Admissions,Citizen / Parent,,,,,,True
+Q020,Which schools are suitable for children with disabilities?,School Discovery and Admissions,Citizen / Parent,,,,,,True
+Q021,Which nearby schools currently have admission availability?,School Discovery and Admissions,Citizen / Parent,,,,,,True
+Q022,Which schools accept admissions for 5th standard?,School Discovery and Admissions,Citizen / Parent,,,,,,True
+Q023,What documents are required for my child's admission?,School Discovery and Admissions,Citizen / Parent,,,,,,True
+Q024,Which schools are suitable based on my family's annual income?,School Discovery and Admissions,Citizen / Parent,,,,,,True
+Q025,Which schools provide scholarships?,School Discovery and Admissions,Citizen / Parent,,,,,,True
+Q026,Which schools are eligible for RTE admissions?,School Discovery and Admissions,Citizen / Parent,,,,,,True
+Q027,"Recommend schools based on distance, fees and facilities.",School Discovery and Admissions,Citizen / Parent,,,,,,True
+Q028,Compare three government schools near my location.,School Discovery and Admissions,Citizen / Parent,,,,,,True
+Q029,Which school is best for my child's educational requirements?,School Discovery and Admissions,Citizen / Parent,,,,,,True
+Q030,Can you recommend an alternative school if my preferred school has no seats?,School Discovery and Admissions,Citizen / Parent,,,,,,True
+Q031,Which subjects should I focus on to improve my grades?,Student Academic Guidance and Learning,Student,,,,,,True
+Q032,Recommend a study timetable based on my examination dates.,Student Academic Guidance and Learning,Student,,,,,,True
+Q033,Which subjects am I weak in based on my previous marks?,Student Academic Guidance and Learning,Student,,,,,,True
+Q034,How can I improve my mathematics performance?,Student Academic Guidance and Learning,Student,,,,,,True
+Q035,Recommend learning resources for science.,Student Academic Guidance and Learning,Student,,,,,,True
+Q036,Which free online learning platforms can I use?,Student Academic Guidance and Learning,Student,,,,,,True
+Q037,Recommend Kannada learning resources.,Student Academic Guidance and Learning,Student,,,,,,True
+Q038,How can I improve my English communication?,Student Academic Guidance and Learning,Student,,,,,,True
+Q039,Which books should I read for my current standard?,Student Academic Guidance and Learning,Student,,,,,,True
+Q040,Recommend practice questions based on my syllabus.,Student Academic Guidance and Learning,Student,,,,,,True
+Q041,Which topics should I revise before my examination?,Student Academic Guidance and Learning,Student,,,,,,True
+Q042,How can I improve my examination performance?,Student Academic Guidance and Learning,Student,,,,,,True
+Q043,Recommend a daily study schedule based on my available time.,Student Academic Guidance and Learning,Student,,,,,,True
+Q044,Which subjects should I prioritise based on my marks?,Student Academic Guidance and Learning,Student,,,,,,True
+Q045,Can you identify my learning gaps?,Student Academic Guidance and Learning,Student,,,,,,True
+Q046,Recommend additional practice for topics I find difficult.,Student Academic Guidance and Learning,Student,,,,,,True
+Q047,Which educational videos are suitable for my standard?,Student Academic Guidance and Learning,Student,,,,,,True
+Q048,How can I prepare for competitive examinations?,Student Academic Guidance and Learning,Student,,,,,,True
+Q049,Which Olympiads can I participate in?,Student Academic Guidance and Learning,Student,,,,,,True
+Q050,Recommend extracurricular activities based on my interests.,Student Academic Guidance and Learning,Student,,,,,,True
+Q051,Which science competitions are available for school students?,Student Academic Guidance and Learning,Student,,,,,,True
+Q052,Which scholarships can I apply for?,Student Academic Guidance and Learning,Student,,,,,,True
+Q053,Am I eligible for a merit scholarship?,Student Academic Guidance and Learning,Student,,,,,,True
+Q054,Which career paths are suitable based on my interests and academic performance?,Student Academic Guidance and Learning,Student,,,,,,True
+Q055,What skills should I develop before completing 10th standard?,Student Academic Guidance and Learning,Student,,,,,,True
+Q056,My child has low attendance. What should I do?,Parent and Child Support,Parent,,,,,,True
+Q057,My child is weak in mathematics. Which learning support is available?,Parent and Child Support,Parent,,,,,,True
+Q058,My child is performing poorly in examinations. What support can the school provide?,Parent and Child Support,Parent,,,,,,True
+Q059,How can I identify my child's learning difficulties?,Parent and Child Support,Parent,,,,,,True
+Q060,Which schools provide special education support?,Parent and Child Support,Parent,,,,,,True
+Q061,What facilities are available for children with disabilities?,Parent and Child Support,Parent,,,,,,True
+Q062,Which government schemes can support my child's education?,Parent and Child Support,Parent,,,,,,True
+Q063,Is my child eligible for the RTE scheme?,Parent and Child Support,Parent,,,,,,True
+Q064,Which scholarships are available based on our income?,Parent and Child Support,Parent,,,,,,True
+Q065,How can I apply for a pre-matric scholarship?,Parent and Child Support,Parent,,,,,,True
+Q066,Is there financial assistance for children from economically weaker families?,Parent and Child Support,Parent,,,,,,True
+Q067,What transportation support is available for my child?,Parent and Child Support,Parent,,,,,,True
+Q068,Is there a free textbook scheme for my child?,Parent and Child Support,Parent,,,,,,True
+Q069,Is my child eligible for a free uniform?,Parent and Child Support,Parent,,,,,,True
+Q070,What nutritional support is available through the school?,Parent and Child Support,Parent,,,,,,True
+Q071,What should I do if my child drops out of school?,Parent and Child Support,Parent,,,,,,True
+Q072,Which nearby schools can support my child in continuing education?,Parent and Child Support,Parent,,,,,,True
+Q073,How can I monitor my child's attendance?,Parent and Child Support,Parent,,,,,,True
+Q074,How can I track my child's academic progress?,Parent and Child Support,Parent,,,,,,True
+Q075,What government support is available if my family cannot afford school expenses?,Parent and Child Support,Parent,,,,,,True
+Q076,Which students are at high risk of dropping out?,School Administration,Principal / School Administrator,,,,,,True
+Q077,Which students have consistently low attendance?,School Administration,Principal / School Administrator,,,,,,True
+Q078,Which students need additional academic support?,School Administration,Principal / School Administrator,,,,,,True
+Q079,Which classes have the highest absenteeism?,School Administration,Principal / School Administrator,,,,,,True
+Q080,Which subjects have the lowest pass percentage?,School Administration,Principal / School Administrator,,,,,,True
+Q081,Recommend students who need remedial classes.,School Administration,Principal / School Administrator,,,,,,True
+Q082,Which students are eligible for government scholarships?,School Administration,Principal / School Administrator,,,,,,True
+Q083,Which students have not received their scholarship benefits?,School Administration,Principal / School Administrator,,,,,,True
+Q084,Which students are eligible for RTE-related benefits?,School Administration,Principal / School Administrator,,,,,,True
+Q085,Which students have incomplete admission documentation?,School Administration,Principal / School Administrator,,,,,,True
+Q086,Which students require special educational assistance?,School Administration,Principal / School Administrator,,,,,,True
+Q087,Which classrooms have overcrowding?,School Administration,Principal / School Administrator,,,,,,True
+Q088,Which standards need additional teachers?,School Administration,Principal / School Administrator,,,,,,True
+Q089,Which subjects have teacher shortages?,School Administration,Principal / School Administrator,,,,,,True
+Q090,Recommend optimal teacher allocation across classes.,School Administration,Principal / School Administrator,,,,,,True
+Q091,Which teachers have excessive workloads?,School Administration,Principal / School Administrator,,,,,,True
+Q092,Which classes need additional learning materials?,School Administration,Principal / School Administrator,,,,,,True
+Q093,Which infrastructure facilities require immediate attention?,School Administration,Principal / School Administrator,,,,,,True
+Q094,Which classrooms require repairs?,School Administration,Principal / School Administrator,,,,,,True
+Q095,Which schools or classes need additional computers?,School Administration,Principal / School Administrator,,,,,,True
+Q096,Recommend budget allocation based on infrastructure requirements.,School Administration,Principal / School Administrator,,,,,,True
+Q097,Which students should be prioritised for counselling?,School Administration,Principal / School Administrator,,,,,,True
+Q098,Which students may need parent-teacher meetings?,School Administration,Principal / School Administrator,,,,,,True
+Q099,Which students are at risk of not completing the academic year?,School Administration,Principal / School Administrator,,,,,,True
+Q100,What actions should our school prioritise to improve overall performance?,School Administration,Principal / School Administrator,,,,,,True
+Q101,Which students require individual attention?,Teacher Assistance,Teacher,,,,,,True
+Q102,Recommend remedial activities for students with low marks.,Teacher Assistance,Teacher,,,,,,True
+Q103,Which students are ready for advanced learning?,Teacher Assistance,Teacher,,,,,,True
+Q104,Which students have shown improvement over the last three months?,Teacher Assistance,Teacher,,,,,,True
+Q105,Which students have declining academic performance?,Teacher Assistance,Teacher,,,,,,True
+Q106,Recommend teaching methods for students who struggle with mathematics.,Teacher Assistance,Teacher,,,,,,True
+Q107,Which students should be grouped for collaborative learning?,Teacher Assistance,Teacher,,,,,,True
+Q108,Recommend classroom activities based on the current syllabus.,Teacher Assistance,Teacher,,,,,,True
+Q109,Which students need additional reading practice?,Teacher Assistance,Teacher,,,,,,True
+Q110,Which students need additional writing practice?,Teacher Assistance,Teacher,,,,,,True
+Q111,Recommend assessments to identify learning gaps.,Teacher Assistance,Teacher,,,,,,True
+Q112,Which topics should I revise with my class?,Teacher Assistance,Teacher,,,,,,True
+Q113,Which students need additional examination preparation?,Teacher Assistance,Teacher,,,,,,True
+Q114,Recommend educational materials for a particular standard.,Teacher Assistance,Teacher,,,,,,True
+Q115,Which students are frequently absent from my class?,Teacher Assistance,Teacher,,,,,,True
+Q116,Which students need parent interaction?,Teacher Assistance,Teacher,,,,,,True
+Q117,Recommend activities to improve student participation.,Teacher Assistance,Teacher,,,,,,True
+Q118,Which students have strengths in science or mathematics?,Teacher Assistance,Teacher,,,,,,True
+Q119,Which students could participate in academic competitions?,Teacher Assistance,Teacher,,,,,,True
+Q120,How can I improve the overall performance of my class?,Teacher Assistance,Teacher,,,,,,True
+Q121,Which government education schemes am I eligible for?,Government Schemes and Student Welfare,Citizen / Parent / Student,,,,,,True
+Q122,Which scholarships are available for students in Karnataka?,Government Schemes and Student Welfare,Citizen / Parent / Student,,,,,,True
+Q123,Recommend scholarships based on my academic marks and family income.,Government Schemes and Student Welfare,Citizen / Parent / Student,,,,,,True
+Q124,Am I eligible for an RTE admission?,Government Schemes and Student Welfare,Citizen / Parent / Student,,,,,,True
+Q125,Which schools can I apply to under RTE?,Government Schemes and Student Welfare,Citizen / Parent / Student,,,,,,True
+Q126,What is the eligibility criteria for pre-matric scholarships?,Government Schemes and Student Welfare,Citizen / Parent / Student,,,,,,True
+Q127,What is the eligibility criteria for post-matric scholarships?,Government Schemes and Student Welfare,Citizen / Parent / Student,,,,,,True
+Q128,Which schemes provide financial assistance for girls' education?,Government Schemes and Student Welfare,Citizen / Parent / Student,,,,,,True
+Q129,Which schemes support students from economically weaker families?,Government Schemes and Student Welfare,Citizen / Parent / Student,,,,,,True
+Q130,Which schemes support students with disabilities?,Government Schemes and Student Welfare,Citizen / Parent / Student,,,,,,True
+Q131,Is there financial support for students from rural areas?,Government Schemes and Student Welfare,Citizen / Parent / Student,,,,,,True
+Q132,Which schemes provide free textbooks?,Government Schemes and Student Welfare,Citizen / Parent / Student,,,,,,True
+Q133,Which schemes provide free uniforms?,Government Schemes and Student Welfare,Citizen / Parent / Student,,,,,,True
+Q134,Which schemes provide bicycles or transportation assistance?,Government Schemes and Student Welfare,Citizen / Parent / Student,,,,,,True
+Q135,Which schemes provide hostel facilities?,Government Schemes and Student Welfare,Citizen / Parent / Student,,,,,,True
+Q136,What nutritional schemes are available for school students?,Government Schemes and Student Welfare,Citizen / Parent / Student,,,,,,True
+Q137,Which government schemes support school infrastructure?,Government Schemes and Student Welfare,Citizen / Parent / Student,,,,,,True
+Q138,Which schemes support digital education?,Government Schemes and Student Welfare,Citizen / Parent / Student,,,,,,True
+Q139,Which schemes support students preparing for competitive examinations?,Government Schemes and Student Welfare,Citizen / Parent / Student,,,,,,True
+Q140,What documents are required to apply for a scholarship?,Government Schemes and Student Welfare,Citizen / Parent / Student,,,,,,True
+Q141,What is the deadline for my eligible scholarship?,Government Schemes and Student Welfare,Citizen / Parent / Student,,,,,,True
+Q142,Why might my scholarship application be rejected?,Government Schemes and Student Welfare,Citizen / Parent / Student,,,,,,True
+Q143,What should I do if my scholarship payment is delayed?,Government Schemes and Student Welfare,Citizen / Parent / Student,,,,,,True
+Q144,Which government department handles my education scheme?,Government Schemes and Student Welfare,Citizen / Parent / Student,,,,,,True
+Q145,Recommend all applicable education benefits based on my profile?,Government Schemes and Student Welfare,Citizen / Parent / Student,,,,,,True
+Q146,Which schools in my district have low enrolment?,Government Officials,Government Official,,,,,,True
+Q147,Which schools have high dropout rates?,Government Officials,Government Official,,,,,,True
+Q148,Which schools have poor attendance records?,Government Officials,Government Official,,,,,,True
+Q149,Which schools require additional teachers?,Government Officials,Government Official,,,,,,True
+Q150,Which schools have teacher vacancies?,Government Officials,Government Official,,,,,,True
+Q151,Which schools need infrastructure improvements?,Government Officials,Government Official,,,,,,True
+Q152,Which schools do not have sufficient classrooms?,Government Officials,Government Official,,,,,,True
+Q153,Which schools lack drinking water facilities?,Government Officials,Government Official,,,,,,True
+Q154,Which schools lack functional toilets?,Government Officials,Government Official,,,,,,True
+Q155,Which schools require computer laboratories?,Government Officials,Government Official,,,,,,True
+Q156,Which schools have insufficient teaching resources?,Government Officials,Government Official,,,,,,True
+Q157,Which schools have declining academic performance?,Government Officials,Government Official,,,,,,True
+Q158,Which schools need additional government funding?,Government Officials,Government Official,,,,,,True
+Q159,Which schools have not completed scholarship verification?,Government Officials,Government Official,,,,,,True
+Q160,Which schools have a high number of students awaiting scholarship benefits?,Government Officials,Government Official,,,,,,True
+Q161,Which schools need additional special educators?,Government Officials,Government Official,,,,,,True
+Q162,Which areas have insufficient government school availability?,Government Officials,Government Official,,,,,,True
+Q163,Where should new government schools be established?,Government Officials,Government Official,,,,,,True
+Q164,Which schools should be prioritised for infrastructure development?,Government Officials,Government Official,,,,,,True
+Q165,Recommend resource allocation across schools based on actual needs?,Government Officials,Government Official,,,,,,True
+Q166,Which schools are accepting transfer admissions?,"Admissions, Transfers and Records",Citizen / Parent / School Administrator,,,,,,True
+Q167,Which nearby schools can accept my child after relocation?,"Admissions, Transfers and Records",Citizen / Parent / School Administrator,,,,,,True
+Q168,Which school should I choose if I am moving to another district?,"Admissions, Transfers and Records",Citizen / Parent / School Administrator,,,,,,True
+Q169,What documents are required for a school transfer?,"Admissions, Transfers and Records",Citizen / Parent / School Administrator,,,,,,True
+Q170,How can I obtain a Transfer Certificate?,"Admissions, Transfers and Records",Citizen / Parent / School Administrator,,,,,,True
+Q171,Which schools offer the standard my child is transferring into?,"Admissions, Transfers and Records",Citizen / Parent / School Administrator,,,,,,True
+Q172,How can I update my child's school records?,"Admissions, Transfers and Records",Citizen / Parent / School Administrator,,,,,,True
+Q173,What should I do if my child's name is incorrect in school records?,"Admissions, Transfers and Records",Citizen / Parent / School Administrator,,,,,,True
+Q174,What should I do if my child's date of birth is incorrect in school records?,"Admissions, Transfers and Records",Citizen / Parent / School Administrator,,,,,,True
+Q175,What should I do if my child's previous school has closed?,"Admissions, Transfers and Records",Citizen / Parent / School Administrator,,,,,,True
+Q176,How can I find my child's previous school details?,"Admissions, Transfers and Records",Citizen / Parent / School Administrator,,,,,,True
+Q177,Which school is suitable if my child has an academic gap?,"Admissions, Transfers and Records",Citizen / Parent / School Administrator,,,,,,True
+Q178,How can an out-of-school child re-enter education?,"Admissions, Transfers and Records",Citizen / Parent / School Administrator,,,,,,True
+Q179,Which schools provide bridge courses for students returning to education?,"Admissions, Transfers and Records",Citizen / Parent / School Administrator,,,,,,True
+Q180,Recommend the appropriate admission process based on my child's current educational status?,"Admissions, Transfers and Records",Citizen / Parent / School Administrator,,,,,,True
+Q181,Which schools have not updated their student records?,Platform Administration,Platform Admin,,,,,,True
+Q182,Which schools have incomplete administrative information?,Platform Administration,Platform Admin,,,,,,True
+Q183,Which schools have not submitted their attendance reports?,Platform Administration,Platform Admin,,,,,,True
+Q184,Which schools have not updated examination results?,Platform Administration,Platform Admin,,,,,,True
+Q185,Which schools have pending scholarship verification?,Platform Administration,Platform Admin,,,,,,True
+Q186,Which schools have unusually high student dropout rates?,Platform Administration,Platform Admin,,,,,,True
+Q187,Which schools require urgent administrative intervention?,Platform Administration,Platform Admin,,,,,,True
+Q188,Which schools have not updated their infrastructure information?,Platform Administration,Platform Admin,,,,,,True
+Q189,Which schools have unusual changes in student enrolment?,Platform Administration,Platform Admin,,,,,,True
+Q190,Which districts have the highest shortage of school facilities?,Platform Administration,Platform Admin,,,,,,True
+Q191,Which schools have pending administrative requests?,Platform Administration,Platform Admin,,,,,,True
+Q192,Which schools require additional government monitoring?,Platform Administration,Platform Admin,,,,,,True
+Q193,Which schools have unresolved complaints?,Platform Administration,Platform Admin,,,,,,True
+Q194,Which schools have repeated complaints about the same issue?,Platform Administration,Platform Admin,,,,,,True
+Q195,Recommend priority schools for government inspection.,Platform Administration,Platform Admin,,,,,,True
+Q196,Which schools should receive additional support based on their needs?,Platform Administration,Platform Admin,,,,,,True
+Q197,Which districts require more government education resources?,Platform Administration,Platform Admin,,,,,,True
+Q198,Which schools have shown significant academic improvement?,Platform Administration,Platform Admin,,,,,,True
+Q199,Which government education services are most frequently requested?,Platform Administration,Platform Admin,,,,,,True
+Q200,What should the government prioritise to improve educational access and quality?,Platform Administration,Platform Admin,,,,,,True

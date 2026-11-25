@@ -4,6 +4,7 @@ import { useAuth } from '../../contexts/AuthContext.jsx'
 import { apiGet } from '../../utils/api.js'
 import LoadingSpinner from '../../components/ui/LoadingSpinner.jsx'
 import Alert from '../../components/ui/Alert.jsx'
+import RequesterPortalView from '../../components/requests/RequesterPortalView.jsx'
 
 export default function StudentDashboard() {
   const { user, token, logout } = useAuth()
@@ -12,6 +13,7 @@ export default function StudentDashboard() {
   const [loading, setLoading] = useState(true)
   const [profileData, setProfileData] = useState(null)
   const [error, setError] = useState('')
+  const [studentTab, setStudentTab] = useState('academic')
 
   useEffect(() => {
     if (!user) return
@@ -178,9 +180,63 @@ export default function StudentDashboard() {
           </div>
         </div>
 
+        {/* Tab Navigation */}
+        <div style={{
+          display: 'flex',
+          borderBottom: '2px solid #e2e8f0',
+          marginBottom: '1.5rem',
+          background: '#ffffff',
+          borderRadius: '8px 8px 0 0',
+          padding: '0 0.5rem'
+        }}>
+          <button
+            onClick={() => setStudentTab('academic')}
+            style={{
+              padding: '0.85rem 1.5rem',
+              fontWeight: 700,
+              fontSize: '0.9375rem',
+              border: 'none',
+              background: 'none',
+              cursor: 'pointer',
+              color: studentTab === 'academic' ? '#155EEF' : '#64748B',
+              borderBottom: studentTab === 'academic' ? '3px solid #155EEF' : '3px solid transparent',
+              marginBottom: '-2px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.4rem'
+            }}
+          >
+            <span>📊</span> Academic Profile & Grades
+          </button>
+
+          <button
+            onClick={() => setStudentTab('requests')}
+            style={{
+              padding: '0.85rem 1.5rem',
+              fontWeight: 700,
+              fontSize: '0.9375rem',
+              border: 'none',
+              background: 'none',
+              cursor: 'pointer',
+              color: studentTab === 'requests' ? '#155EEF' : '#64748B',
+              borderBottom: studentTab === 'requests' ? '3px solid #155EEF' : '3px solid transparent',
+              marginBottom: '-2px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.4rem'
+            }}
+          >
+            <span>📋</span> My Requests, Complaints & Corrections
+          </button>
+        </div>
+
         {error && <Alert type="error" title="Notice" className="mb-4">{error}</Alert>}
 
-        {/* 4 Core Academic KPI Cards */}
+        {studentTab === 'requests' ? (
+          <RequesterPortalView token={token} userRole="student" studentSelf={student} />
+        ) : (
+          <div>
+            {/* 4 Core Academic KPI Cards */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
           
           {/* Attendance KPI */}
@@ -638,7 +694,7 @@ export default function StudentDashboard() {
                 {school.school_name || 'Karnataka State Institution'}
               </div>
               <div style={{ fontSize: '0.85rem', color: '#64748b' }}>
-                Institution Code: <strong>{school.school_id}</strong> &bull; Category: <strong>{school.category || 'Government Recognized'}</strong>
+                Institution Code: <strong>{school.school_id}</strong> &bull; Category: <strong>{(school.category || 'Government Recognized').replace(/\s*\([Kk][-–—]?10\)/gi, '').replace(/\s*\(11[-–—]?12\)/gi, '')}</strong>
               </div>
               <div style={{ fontSize: '0.85rem', color: '#475467', marginTop: '0.5rem', lineHeight: 1.4 }}>
                 {school.address || 'Address not listed'}, {school.district || 'Karnataka'}, {school.state || 'Karnataka'}
@@ -717,6 +773,8 @@ export default function StudentDashboard() {
             </p>
           </div>
         </div>
+          </div>
+        )}
 
       </div>
     </div>

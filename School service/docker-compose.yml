@@ -29,6 +29,7 @@ services:
       SMS_ENVIRONMENT: ${SMS_ENVIRONMENT:-development}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
     volumes:
+      - ./backend:/app
       - ./backend/data:/app/data
     restart: unless-stopped
 

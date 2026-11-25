@@ -36,7 +36,24 @@ export async function apiFetch(path, options = {}, token = null) {
     let detail = `Request failed (${response.status})`
     try {
       const body = await response.json()
-      if (body?.detail) detail = body.detail
+      if (body?.detail) {
+        if (typeof body.detail === 'string') {
+          detail = body.detail
+        } else if (Array.isArray(body.detail)) {
+          detail = body.detail
+            .map((item) => {
+              if (typeof item === 'string') return item
+              const loc = Array.isArray(item?.loc) ? item.loc.filter(x => x !== 'body').join('.') : ''
+              const msg = item?.msg || item?.message || JSON.stringify(item)
+              return loc ? `${loc}: ${msg}` : msg
+            })
+            .join('; ')
+        } else if (typeof body.detail === 'object') {
+          detail = body.detail.message || body.detail.msg || JSON.stringify(body.detail)
+        }
+      } else if (body?.message) {
+        detail = body.message
+      }
     } catch {
       // ignore JSON parse error
     }

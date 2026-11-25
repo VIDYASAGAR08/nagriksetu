@@ -63,66 +63,12 @@ export default function GovHeader() {
 
   return (
     <header>
-      {/* National Flag Tricolor Ribbon */}
-      <div style={{ height: '5px', width: '100%', background: 'linear-gradient(to right, #FF9933 0%, #FF9933 33.3%, #FFFFFF 33.3%, #FFFFFF 66.6%, #138808 66.6%, #138808 100%)' }} />
-
-      {/* Official Government Utility Bar */}
-      <div style={{ background: '#081c33', color: '#f8fafc', padding: '0.4rem 1rem', fontSize: '0.78rem', borderBottom: '1px solid #1e293b' }}>
-        <div className="container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-            <span style={{ color: '#FF9933', fontWeight: 800 }}>भारत सरकार</span>
-            <span style={{ color: '#475467' }}>|</span>
-            <span style={{ fontWeight: 600 }}>Government of India</span>
-            <span style={{ color: '#475467' }} className="hide-mobile">|</span>
-            <span style={{ color: '#94a3b8' }} className="hide-mobile">शिक्षा सेवा पोर्टल (Education Portal · Karnataka)</span>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <a
-              href="http://localhost:5173"
-              style={{
-                background: 'rgba(255, 153, 51, 0.15)',
-                color: '#FF9933',
-                border: '1px solid rgba(255, 153, 51, 0.4)',
-                padding: '0.2rem 0.65rem',
-                borderRadius: '6px',
-                textDecoration: 'none',
-                fontWeight: 700,
-                fontSize: '0.75rem',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.35rem',
-              }}
-            >
-              🏛️ Central Portal (Port 5173)
-            </a>
-            <a
-              href="http://localhost:5175"
-              style={{
-                background: 'rgba(56, 189, 248, 0.15)',
-                color: '#38bdf8',
-                border: '1px solid rgba(56, 189, 248, 0.4)',
-                padding: '0.2rem 0.65rem',
-                borderRadius: '6px',
-                textDecoration: 'none',
-                fontWeight: 700,
-                fontSize: '0.75rem',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.35rem',
-              }}
-            >
-              💡 Skill Development (Port 5175)
-            </a>
-          </div>
-        </div>
-      </div>
-
       {/* Administrative Top Bar when browsing public catalog */}
       {isViewingPublicSite && (
         <div style={{ background: '#0B2036', color: '#E0EAFF', padding: '0.45rem 1rem', fontSize: '0.82rem', borderBottom: '1px solid #1E3A8A' }}>
           <div className="container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-              <span style={{ background: '#FF9933', color: '#081c33', fontWeight: 800, fontSize: '0.7rem', padding: '0.15rem 0.5rem', borderRadius: '4px', textTransform: 'uppercase' }}>
+              <span style={{ background: '#F59E0B', color: '#1E293B', fontWeight: 700, fontSize: '0.7rem', padding: '0.15rem 0.5rem', borderRadius: '4px', textTransform: 'uppercase' }}>
                 ADMIN MODE
               </span>
               <span>Browsing public institution portal as <strong>{roleLabel}</strong></span>
@@ -130,12 +76,12 @@ export default function GovHeader() {
             <Link
               to={getDashboardPath()}
               style={{
-                background: '#FF9933',
-                color: '#081c33',
+                background: '#155EEF',
+                color: '#ffffff',
                 padding: '0.2rem 0.75rem',
                 borderRadius: '4px',
                 textDecoration: 'none',
-                fontWeight: 700,
+                fontWeight: 600,
                 fontSize: '0.78rem',
                 display: 'inline-flex',
                 alignItems: 'center',
@@ -148,41 +94,46 @@ export default function GovHeader() {
         </div>
       )}
 
+      {/* Utility bar */}
+      <div className="utility-bar" role="banner">
+        <div className="container utility-bar__inner">
+          <div className="utility-bar__left">
+            <span className="utility-bar__badge">DEMO</span>
+            <span>NagrikSetu · School Service Portal · Karnataka</span>
+          </div>
+          <span>This is a demonstration application. Not an official government service.</span>
+        </div>
+      </div>
+
       {/* Main header */}
-      <div className="gov-header" style={{ borderBottom: '1px solid #e2e8f0', background: '#ffffff' }}>
+      <div className="gov-header" style={{ borderBottom: '1px solid #e8eaed', background: '#ffffff' }}>
         <div className="container gov-header__inner" style={{ padding: '0.85rem 1rem' }}>
           <Link to={getBrandDestination()} className="gov-header__brand" aria-label="NagrikSetu Home" style={{ textDecoration: 'none' }}>
-            <div className="gov-header__logo" aria-hidden="true" style={{ background: 'linear-gradient(135deg, #081c33 0%, #1e3a8a 100%)', color: '#FF9933', fontWeight: 900, border: '2px solid #FF9933' }}>
-              NS
-            </div>
+            <div className="gov-header__logo" aria-hidden="true" style={{ background: 'linear-gradient(135deg, #102B46 0%, #155EEF 100%)', color: '#ffffff', fontWeight: 800 }}>NS</div>
             <div className="gov-header__name">
-              <div className="gov-header__title" style={{ color: '#081c33', fontWeight: 900, fontSize: '1.45rem', letterSpacing: '-0.02em' }}>
-                नागरिक सेतु <span style={{ color: '#FF9933', fontWeight: 800, fontSize: '1.25rem' }}>· NagrikSetu</span>
-              </div>
-              <div className="gov-header__subtitle" style={{ color: '#64748b', fontWeight: 600, fontSize: '0.78rem' }}>
-                शिक्षा सेवा पोर्टल (Department of School & Higher Education · Karnataka)
-              </div>
+              <div className="gov-header__title" style={{ color: '#102B46', fontWeight: 800, fontSize: '1.4rem' }}>NagrikSetu</div>
+              <div className="gov-header__subtitle" style={{ color: '#475467', fontWeight: 600, fontSize: '0.78rem' }}>Education Information Platform</div>
             </div>
           </Link>
 
           <div className="gov-header__actions">
             {isAuthenticated ? (
               <>
-                <div className="gov-header__user" style={{ background: '#f8fafc', padding: '0.35rem 0.75rem', borderRadius: '20px', border: '1px solid #cbd5e1', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <div className="gov-header__avatar" aria-hidden="true" style={{ background: '#081c33', color: '#FF9933' }}>
+                <div className="gov-header__user" style={{ background: '#F1F6FC', padding: '0.35rem 0.75rem', borderRadius: '20px', border: '1px solid #D0D5DD', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <div className="gov-header__avatar" aria-hidden="true" style={{ background: '#102B46', color: '#ffffff' }}>
                     {(user?.email ?? user?.phone ?? 'U').charAt(0).toUpperCase()}
                   </div>
                   <div className="hide-mobile" style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.2 }}>
-                    <span style={{ color: '#081c33', fontWeight: 700, fontSize: '0.875rem' }}>
+                    <span style={{ color: '#102B46', fontWeight: 600, fontSize: '0.875rem' }}>
                       {user?.full_name ?? user?.email ?? user?.phone ?? 'User'}
                     </span>
-                    <span style={{ color: '#64748b', fontSize: '0.72rem', fontWeight: 600 }}>
+                    <span style={{ color: '#667085', fontSize: '0.72rem', fontWeight: 500 }}>
                       {roleLabel}
                     </span>
                   </div>
                 </div>
                 <NotificationBellDropdown />
-                <Link to={getDashboardPath()} className="btn btn--secondary btn--sm" style={{ background: '#081c33', color: '#ffffff', border: 'none' }}>
+                <Link to={getDashboardPath()} className="btn btn--secondary btn--sm" style={{ background: '#102B46', color: '#ffffff', border: 'none' }}>
                   Dashboard
                 </Link>
                 <button className="btn btn--ghost btn--sm" onClick={handleLogout}>
@@ -191,8 +142,8 @@ export default function GovHeader() {
               </>
             ) : (
               <>
-                <Link to="/login" className="btn btn--secondary btn--sm" style={{ borderColor: '#cbd5e1', color: '#081c33', fontWeight: 700 }}>Login</Link>
-                <Link to="/register" className="btn btn--primary btn--sm" style={{ background: '#FF9933', color: '#081c33', border: 'none', fontWeight: 800 }}>Sign Up</Link>
+                <Link to="/login"    className="btn btn--secondary btn--sm" style={{ borderColor: '#D0D5DD', color: '#102B46', fontWeight: 600 }}>Login</Link>
+                <Link to="/register" className="btn btn--primary btn--sm" style={{ background: '#155EEF', border: 'none', fontWeight: 600 }}>Sign Up</Link>
               </>
             )}
           </div>
@@ -200,7 +151,7 @@ export default function GovHeader() {
       </div>
 
       {/* Navigation bar */}
-      <nav className="nav-bar" aria-label="Main navigation" style={{ background: '#081c33' }}>
+      <nav className="nav-bar" aria-label="Main navigation" style={{ background: '#102B46' }}>
         <div className="container nav-bar__inner">
           <button
             className="nav-bar__toggle"
@@ -220,6 +171,11 @@ export default function GovHeader() {
             <li className="nav-bar__item">
               <NavLink to="/schools" className="nav-bar__link" onClick={() => setMenuOpen(false)}>
                 Explore Institutions
+              </NavLink>
+            </li>
+            <li className="nav-bar__item">
+              <NavLink to="/ai-assistance" className="nav-bar__link" onClick={() => setMenuOpen(false)} style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#93C5FD', fontWeight: 600 }}>
+                <span>💬</span> AI Assistance
               </NavLink>
             </li>
             {isAuthenticated && (

@@ -2,13 +2,24 @@ from typing import List, Optional
 from datetime import date
 from pydantic import BaseModel, Field
 
+class CentreInfoBrief(BaseModel):
+    id: int
+    code: str
+    name: str
+    district: str
+    location: Optional[str] = None
+
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
     role: str
     citizen_ref: Optional[str] = None
+    centre_id: Optional[int] = None
     email: str
     full_name: Optional[str] = None
+    assigned_centres: Optional[List[CentreInfoBrief]] = None
+    is_student: Optional[bool] = False
+    student_id: Optional[str] = None
 
 class RegisterRequest(BaseModel):
     email: str = Field(min_length=5)
@@ -19,7 +30,7 @@ class RegisterRequest(BaseModel):
     otp_reference: Optional[str] = None
 
 class LoginRequest(BaseModel):
-    email: str = Field(min_length=5)
+    email: str = Field(min_length=3)
     password: Optional[str] = None
     otp_reference: Optional[str] = None
 
@@ -163,3 +174,95 @@ class OTPVerifyRequest(BaseModel):
     reference: str
     code: str
 
+
+
+class PasswordResetRequest(BaseModel):
+    email: str = Field(min_length=3)
+    otp_reference: str
+    new_password: str = Field(min_length=6)
+    confirm_password: str = Field(min_length=6)
+
+class SetPasswordRequest(BaseModel):
+    email: Optional[str] = None
+    otp_reference: Optional[str] = None
+    new_password: str = Field(min_length=6)
+    confirm_password: str = Field(min_length=6)
+
+class ChangePasswordRequest(BaseModel):
+    current_password: str = Field(min_length=1)
+    new_password: str = Field(min_length=6)
+    confirm_password: str = Field(min_length=6)
+
+class CreateCentreAdminRequest(BaseModel):
+    email: str = Field(min_length=5)
+    password: str = Field(min_length=6)
+    full_name: str = Field(min_length=2)
+    phone: Optional[str] = None
+    centre_id: Optional[int] = None
+
+class CentreStatusUpdateRequest(BaseModel):
+    approval_status: Optional[str] = None
+    status: Optional[str] = None
+    rejection_reason: Optional[str] = None
+    reason: Optional[str] = None
+
+class CentreProfileUpdateRequest(BaseModel):
+    name: Optional[str] = None
+    location: Optional[str] = None
+    district: Optional[str] = None
+    state: Optional[str] = None
+    address: Optional[str] = None
+    contact_phone: Optional[str] = None
+    contact_email: Optional[str] = None
+    delivery_modes: Optional[str] = None
+    facilities: Optional[str] = None
+    website: Optional[str] = None
+    description: Optional[str] = None
+    history: Optional[str] = None
+    mission_objectives: Optional[str] = None
+    achievements: Optional[str] = None
+    certifications: Optional[str] = None
+    establishment_year: Optional[int] = None
+    classroom_count: Optional[int] = None
+    lab_details: Optional[str] = None
+    equipment_details: Optional[str] = None
+
+class CentreAdminApplicationReviewRequest(BaseModel):
+    action: str = Field(..., description="APPROVE, REJECT, UNDER_REVIEW, ACTION_REQUIRED, WAITLIST, or WITHDRAW")
+    remarks: Optional[str] = None
+    rejection_reason: Optional[str] = None
+    internal_notes: Optional[str] = None
+
+class CentreAdminEnrolApplicantRequest(BaseModel):
+    batch_id: int
+    internal_notes: Optional[str] = None
+
+
+
+class CentreRegistrationRequest(BaseModel):
+    centre_name: str = Field(..., min_length=3)
+    location: str = Field(..., min_length=2)
+    address: str = Field(..., min_length=5)
+    district: Optional[str] = 'Karnataka'
+    state: Optional[str] = 'Karnataka'
+    representative_name: str = Field(..., min_length=2)
+    representative_phone: str = Field(..., min_length=8)
+    representative_email: str = Field(..., min_length=5)
+    password: str = Field(..., min_length=8)
+    delivery_modes: Optional[str] = 'Classroom, Lab Practical, Hybrid'
+    facilities: Optional[str] = 'Computer Labs, Advanced Equipment'
+
+class CentreRepresentativeRegisterRequest(BaseModel):
+    centre_id: int
+    representative_name: str = Field(min_length=2)
+    representative_phone: str = Field(min_length=8)
+    representative_email: str = Field(min_length=5)
+    password: str = Field(min_length=6)
+
+class ProjectOwnerLoginRequest(BaseModel):
+    owner_key: str = Field(min_length=6)
+
+class ProjectOwnerResetRequest(BaseModel):
+    centre_id: int
+    secret_key: Optional[str] = None
+    new_password: str = Field(min_length=6)
