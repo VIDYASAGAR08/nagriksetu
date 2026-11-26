@@ -15312,17 +15312,24 @@ def get_student_official_dossier_report(
         total_max = sum(r.get("maximum_marks") or 100 for r in academic_list)
         overall_percentage = round((total_obtained / total_max * 100), 2) if total_max > 0 else 85.0
 
-        # 4. Fetch guardians
+        # 4. Fetch guardians (Strictly deduplicated: at most 1 Father and 1 Mother)
         guardians = conn.execute(
             """
             SELECT g.full_name, g.relationship, g.phone, g.email
             FROM student_guardians sg
             JOIN guardians g ON sg.guardian_id = g.guardian_id
             WHERE sg.permanent_student_id = ?
+            ORDER BY CASE WHEN g.relationship = 'Father' THEN 1 WHEN g.relationship = 'Mother' THEN 2 ELSE 3 END
             """,
             (perm_id,)
         ).fetchall()
-        guardians_list = [dict(g) for g in guardians]
+        seen_relations = set()
+        guardians_list = []
+        for g in guardians:
+            rel = (g["relationship"] or "Guardian").strip().title()
+            if rel not in seen_relations and len(guardians_list) < 2:
+                seen_relations.add(rel)
+                guardians_list.append(dict(g))
 
         # 5. Metadata and Checksum
         now = datetime.utcnow()
