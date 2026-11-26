@@ -419,8 +419,8 @@ export const CitizenHouseholdPage: React.FC = () => {
               <span>Generate Official Dossier Report</span>
             </button>
 
-            <div className="px-4 py-2.5 rounded-2xl bg-navy-900 text-white shadow-md flex items-center gap-3">
-              <Home className="w-5 h-5 text-saffron-400" />
+            <div className="px-4 py-2.5 rounded-2xl bg-slate-900 text-white shadow-md flex items-center gap-3 border border-slate-700">
+              <Home className="w-5 h-5 text-amber-400" />
               <div>
                 <span className="text-[10px] uppercase font-bold tracking-wider text-slate-300 block">Household Code</span>
                 <span className="text-sm font-mono font-bold text-white">{dossier.household_code}</span>

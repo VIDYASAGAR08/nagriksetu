@@ -71,7 +71,7 @@ export const CitizenDashboard: React.FC = () => {
                 title="Generate & print official certified citizen dossier"
               >
                 <FileText className="w-4 h-4 text-blue-700" />
-                <span>View Official Dossier</span>
+                <span>Generate Official Dossier Report</span>
               </button>
             )}
             {citizenProfile?.profile_status && (
