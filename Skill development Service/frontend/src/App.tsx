@@ -6549,6 +6549,17 @@ export default function App() {
             <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
               <button
                 type="button"
+                style={{ padding: '0.45rem 0.9rem', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.4rem', background: '#2563eb', color: '#ffffff', border: 'none', borderRadius: '6px', fontWeight: 700, cursor: 'pointer', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}
+                onClick={() => {
+                  const id = studentId || userEmail || 'CIT-2026102001';
+                  window.open(`/api/reports/candidate/${id}/transcript`, '_blank');
+                }}
+                title="Generate and print official certified vocational skill transcript"
+              >
+                <FileText size={14} /> Official Skill Transcript
+              </button>
+              <button
+                type="button"
                 className="btn-navy-outline"
                 style={{ padding: '0.4rem 0.85rem', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
                 onClick={fetchStudentDashboard}

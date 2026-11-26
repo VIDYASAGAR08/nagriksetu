@@ -9,6 +9,7 @@ import PasswordInput from '../../components/ui/PasswordInput.jsx'
 import Breadcrumbs from '../../components/layout/Breadcrumbs.jsx'
 import Stage2AdmissionModal from '../../components/admissions/Stage2AdmissionModal.jsx'
 import RequesterPortalView from '../../components/requests/RequesterPortalView.jsx'
+import StudentDossierModal from '../../components/academic/StudentDossierModal.jsx'
 
 export default function ParentDashboard() {
   const { user, token, isAuthenticated } = useAuth()
@@ -16,6 +17,8 @@ export default function ParentDashboard() {
 
   const [activeTab, setActiveTab] = useState(() => searchParams.get('tab') || (searchParams.get('school_id') ? 'new-request' : 'children'))
   const [children, setChildren] = useState([])
+  const [dossierModalOpen, setDossierModalOpen] = useState(false)
+  const [reportStudentId, setReportStudentId] = useState(null)
   const [requests, setRequests] = useState([])
   const [schools, setSchools] = useState([])
   const [loading, setLoading] = useState(true)
@@ -2008,13 +2011,38 @@ export default function ParentDashboard() {
                     🏫 <strong>{selectedChild.school_name || selectedChild.school_id}</strong> · Class <strong>{selectedChild.standard}-{selectedChild.section}</strong> · Status: <span style={{ color: '#027a48', fontWeight: 600 }}>{selectedChild.enrollment_status || 'Active'}</span>
                   </p>
                 </div>
-                <button
-                  onClick={() => setSelectedChild(null)}
-                  style={{ background: '#f1f5f9', border: 'none', width: '36px', height: '36px', borderRadius: '18px', fontSize: '1.1rem', cursor: 'pointer', color: '#475467', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                  title="Close Record Viewer"
-                >
-                  ✕
-                </button>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  <button
+                    onClick={() => {
+                      setReportStudentId(selectedChild.student_id || selectedChild.permanent_student_id);
+                      setDossierModalOpen(true);
+                    }}
+                    style={{
+                      background: '#1d4ed8',
+                      color: '#ffffff',
+                      border: 'none',
+                      borderRadius: '8px',
+                      padding: '0.5rem 1rem',
+                      fontSize: '0.82rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.4rem',
+                      boxShadow: '0 2px 4px rgba(29, 78, 216, 0.25)'
+                    }}
+                    title="Generate and print official certified student academic dossier"
+                  >
+                    <span>📜</span> Generate Official Report
+                  </button>
+                  <button
+                    onClick={() => setSelectedChild(null)}
+                    style={{ background: '#f1f5f9', border: 'none', width: '36px', height: '36px', borderRadius: '18px', fontSize: '1.1rem', cursor: 'pointer', color: '#475467', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    title="Close Record Viewer"
+                  >
+                    ✕
+                  </button>
+                </div>
               </div>
 
               {loadingRecords ? (
@@ -2729,6 +2757,13 @@ export default function ParentDashboard() {
             setSelectedStage2AppId(null)
             loadAdmissionApps()
           }}
+        />
+
+        {/* Modal: Student Cumulative Academic Dossier Report */}
+        <StudentDossierModal
+          isOpen={dossierModalOpen}
+          onClose={() => setDossierModalOpen(false)}
+          studentId={reportStudentId}
         />
       </div>
     </div>
