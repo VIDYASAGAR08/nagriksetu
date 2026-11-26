@@ -31,7 +31,9 @@ import {
   ChevronRight,
   ArrowRight,
   Clock,
+  FileText,
 } from 'lucide-react';
+import { CitizenDossierModal } from '../../components/CitizenDossierModal';
 
 export const CitizenHouseholdPage: React.FC = () => {
   const [dossier, setDossier] = useState<HouseholdDossier | null>(null);
@@ -41,6 +43,10 @@ export const CitizenHouseholdPage: React.FC = () => {
 
   // Active Tab
   const [activeTab, setActiveTab] = useState<'members' | 'tree' | 'menu' | 'medical' | 'education' | 'land'>('members');
+
+  // Report Modal State
+  const [dossierModalOpen, setDossierModalOpen] = useState(false);
+  const [selectedReportCitizenId, setSelectedReportCitizenId] = useState<number | null>(null);
 
   // Member Link Requests States
   const [linkRequests, setLinkRequests] = useState<HouseholdLinkRequest[]>([]);
@@ -397,11 +403,28 @@ export const CitizenHouseholdPage: React.FC = () => {
         </div>
 
         {dossier && (
-          <div className="px-4 py-2.5 rounded-2xl bg-navy-900 text-white shadow-md flex items-center gap-3">
-            <Home className="w-5 h-5 text-saffron-400" />
-            <div>
-              <span className="text-[10px] uppercase font-bold tracking-wider text-slate-300 block">Household Code</span>
-              <span className="text-sm font-mono font-bold text-white">{dossier.household_code}</span>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => {
+                const selfMember = dossier.family_members.find((m) => m.is_self) || dossier.family_members[0];
+                if (selfMember) {
+                  setSelectedReportCitizenId(selfMember.id);
+                  setDossierModalOpen(true);
+                }
+              }}
+              className="inline-flex items-center space-x-2 px-4 py-2.5 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md transition"
+              title="Generate and print official certified Citizen Dossier"
+            >
+              <FileText className="w-4 h-4 text-white" />
+              <span>Generate Official Dossier Report</span>
+            </button>
+
+            <div className="px-4 py-2.5 rounded-2xl bg-navy-900 text-white shadow-md flex items-center gap-3">
+              <Home className="w-5 h-5 text-saffron-400" />
+              <div>
+                <span className="text-[10px] uppercase font-bold tracking-wider text-slate-300 block">Household Code</span>
+                <span className="text-sm font-mono font-bold text-white">{dossier.household_code}</span>
+              </div>
             </div>
           </div>
         )}
@@ -731,14 +754,28 @@ export const CitizenHouseholdPage: React.FC = () => {
                       <span className="text-[11px] text-slate-500 font-medium">
                         {member.is_self ? 'Your primary profile' : 'Family member record'}
                       </span>
-                      <button
-                        type="button"
-                        onClick={() => openEditMember(member)}
-                        className="py-1.5 px-3 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-navy-950 transition flex items-center gap-1.5"
-                      >
-                        <Edit3 className="w-3.5 h-3.5 text-navy-700" />
-                        <span>Edit Info (OTP Guarded)</span>
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedReportCitizenId(member.id);
+                            setDossierModalOpen(true);
+                          }}
+                          className="inline-flex items-center gap-1 text-xs font-bold text-blue-700 hover:text-blue-900 bg-blue-50 hover:bg-blue-100 px-2.5 py-1 rounded-lg border border-blue-200 transition"
+                          title="Generate Official Dossier Report"
+                        >
+                          <FileText className="w-3.5 h-3.5" />
+                          <span>Report</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => openEditMember(member)}
+                          className="py-1.5 px-3 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-navy-950 transition flex items-center gap-1.5"
+                        >
+                          <Edit3 className="w-3.5 h-3.5 text-navy-700" />
+                          <span>Edit Info (OTP Guarded)</span>
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -2131,6 +2168,15 @@ export const CitizenHouseholdPage: React.FC = () => {
         actionTitle="Civic Security — 2-Step OTP Verification"
         onVerified={handleOtpVerified}
       />
+
+      {/* ================= OFFICIAL CITIZEN DOSSIER REPORT MODAL ================= */}
+      {selectedReportCitizenId && (
+        <CitizenDossierModal
+          isOpen={dossierModalOpen}
+          onClose={() => setDossierModalOpen(false)}
+          citizenId={selectedReportCitizenId}
+        />
+      )}
     </div>
   );
 };

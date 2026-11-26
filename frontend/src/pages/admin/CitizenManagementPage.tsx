@@ -13,7 +13,9 @@ import {
   Trash2,
   X,
   Layers,
+  FileText,
 } from 'lucide-react';
+import { CitizenDossierModal } from '../../components/CitizenDossierModal';
 
 export const CitizenManagementPage: React.FC = () => {
   const [citizens, setCitizens] = useState<CitizenProfile[]>([]);
@@ -28,6 +30,8 @@ export const CitizenManagementPage: React.FC = () => {
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [dossierModalOpen, setDossierModalOpen] = useState(false);
+  const [selectedReportCitizenId, setSelectedReportCitizenId] = useState<number | null>(null);
   const [selectedCitizen, setSelectedCitizen] = useState<CitizenProfile | null>(null);
 
   // Form states
@@ -314,7 +318,19 @@ export const CitizenManagementPage: React.FC = () => {
                     <td className="p-3.5 text-slate-600 font-mono text-xs">
                       {citizen.phone_number || '—'}
                     </td>
-                    <td className="p-3.5 text-right space-x-2">
+                    <td className="p-3.5 text-right space-x-2 whitespace-nowrap">
+                      <button
+                        onClick={() => {
+                          setSelectedReportCitizenId(citizen.id);
+                          setDossierModalOpen(true);
+                        }}
+                        type="button"
+                        aria-label={`Official Report for ${citizen.full_name}`}
+                        title="Generate Official Dossier Report"
+                        className="p-1.5 rounded-lg border border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+                      >
+                        <FileText className="w-4 h-4" />
+                      </button>
                       <button
                         onClick={() => openEditModal(citizen)}
                         type="button"
@@ -661,6 +677,15 @@ export const CitizenManagementPage: React.FC = () => {
           setSelectedCitizen(null);
         }}
       />
+
+      {/* Official Certified Citizen Dossier Modal */}
+      {selectedReportCitizenId && (
+        <CitizenDossierModal
+          isOpen={dossierModalOpen}
+          onClose={() => setDossierModalOpen(false)}
+          citizenId={selectedReportCitizenId}
+        />
+      )}
     </div>
   );
 };

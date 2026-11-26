@@ -15,6 +15,9 @@ import {
   LandRecord,
   HouseholdDossier,
   HouseholdLinkRequest,
+  CitizenDossierReport,
+  HouseholdCensusReport,
+  AdminCensusSummaryReport,
 } from '../types';
 
 export const API_BASE_URL = import.meta.env.VITE_API_URL || '/api/v1';
@@ -438,5 +441,15 @@ export const api = {
     },
     getSchoolDetail: (schoolId: string) =>
       request<any>(`/education/schools/${schoolId}`),
+  },
+
+  // Official Reports & Certified Dossiers
+  reports: {
+    getCitizenDossier: (citizenId: number) =>
+      request<CitizenDossierReport>(`/reports/citizen/${citizenId}/dossier`),
+    getHouseholdCensus: (householdId: number) =>
+      request<HouseholdCensusReport>(`/reports/household/${householdId}/census`),
+    getAdminCensusSummary: () =>
+      request<AdminCensusSummaryReport>('/reports/admin/census-summary'),
   },
 };

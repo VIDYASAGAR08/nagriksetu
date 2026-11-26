@@ -16,12 +16,15 @@ import {
   Info,
   CheckCircle2,
   Layers,
+  FileText,
 } from 'lucide-react';
+import { CitizenDossierModal } from '../../components/CitizenDossierModal';
 
 export const CitizenDashboard: React.FC = () => {
   const { citizenProfile, user } = useAuth();
   const [household, setHousehold] = useState<Household | null>(null);
   const [loadingHousehold, setLoadingHousehold] = useState<boolean>(true);
+  const [dossierModalOpen, setDossierModalOpen] = useState<boolean>(false);
 
   useEffect(() => {
     const fetchHousehold = async () => {
@@ -59,7 +62,18 @@ export const CitizenDashboard: React.FC = () => {
               Manage your personal administrative profile and registered household records.
             </p>
           </div>
-          <div className="flex-shrink-0">
+          <div className="flex-shrink-0 flex items-center gap-3">
+            {citizenProfile && (
+              <button
+                type="button"
+                onClick={() => setDossierModalOpen(true)}
+                className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-white text-primary-900 hover:bg-primary-50 font-bold text-xs shadow transition"
+                title="Generate & print official certified citizen dossier"
+              >
+                <FileText className="w-4 h-4 text-blue-700" />
+                <span>View Official Dossier</span>
+              </button>
+            )}
             {citizenProfile?.profile_status && (
               <Badge
                 status={citizenProfile.profile_status}
@@ -274,6 +288,14 @@ export const CitizenDashboard: React.FC = () => {
           </div>
         )}
       </div>
+
+      {citizenProfile && (
+        <CitizenDossierModal
+          isOpen={dossierModalOpen}
+          onClose={() => setDossierModalOpen(false)}
+          citizenId={citizenProfile.id}
+        />
+      )}
     </div>
   );
 };

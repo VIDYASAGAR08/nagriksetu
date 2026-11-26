@@ -250,3 +250,141 @@ export interface ChatMessage {
   suggested_prompts?: string[];
   context_data?: Record<string, any>;
 }
+
+export interface CitizenDossierReport {
+  metadata: {
+    report_title: string;
+    issuing_authority: string;
+    jurisdiction: string;
+    report_serial: string;
+    issued_at: string;
+    issued_by: string;
+    digital_checksum_sha256: string;
+    verification_status: string;
+    qr_verification_payload: string;
+  };
+  citizen: {
+    id: number;
+    citizen_code: string;
+    full_name: string;
+    date_of_birth: string;
+    phone_number: string;
+    preferred_language: string;
+    profile_status: string;
+    relationship: string;
+    relationship_details: string;
+    household_role: string;
+    administrative_unit_name: string;
+    administrative_unit_code: string;
+  };
+  household?: {
+    household_id: number;
+    household_code: string;
+    address_line: string;
+    locality: string;
+    city: string;
+    state: string;
+    postal_code: string;
+  } | null;
+  family_members: Array<{
+    id: number;
+    citizen_code: string;
+    full_name: string;
+    relationship: string;
+    relationship_details: string;
+    household_role: string;
+    date_of_birth: string;
+    profile_status: string;
+    is_current: boolean;
+  }>;
+  medical_health_passport: {
+    blood_group: string;
+    vaccination_status: string;
+    chronic_conditions: string;
+    allergies: string;
+    disability_status: string;
+    abha_id: string;
+    emergency_hospital: string;
+    emergency_contact_name: string;
+    emergency_contact_phone: string;
+  };
+  education_credentials: {
+    highest_qualification: string;
+    institution_name: string;
+    specialization: string;
+    year_of_completion?: number | null;
+    literacy_status: string;
+    certificate_number: string;
+  };
+  land_property_assets: Array<{
+    id: number;
+    survey_number: string;
+    land_type: string;
+    area_measurement: string;
+    patta_passbook_number: string;
+    district_sub_registrar: string;
+    property_tax_status: string;
+    market_valuation_inr: number;
+  }>;
+  legal_attestation: {
+    declaration: string;
+    validity: string;
+    confidentiality_notice: string;
+  };
+}
+
+export interface HouseholdCensusReport {
+  metadata: {
+    report_title: string;
+    issuing_authority: string;
+    report_serial: string;
+    issued_at: string;
+    issued_by: string;
+    digital_checksum_sha256: string;
+    qr_verification_payload: string;
+  };
+  household: {
+    id: number;
+    household_code: string;
+    address_line: string;
+    locality: string;
+    city: string;
+    state: string;
+    postal_code: string;
+    total_members: number;
+  };
+  family_roster: Array<{
+    id: number;
+    citizen_code: string;
+    full_name: string;
+    relationship: string;
+    relationship_details: string;
+    household_role: string;
+    date_of_birth: string;
+    phone_number: string;
+    profile_status: string;
+  }>;
+  registered_lands: Array<{
+    survey_number: string;
+    land_type: string;
+    area_measurement: string;
+    patta_passbook_number: string;
+    district_sub_registrar: string;
+    property_tax_status: string;
+    market_valuation_inr: number;
+  }>;
+}
+
+export interface AdminCensusSummaryReport {
+  generated_at: string;
+  generated_by: string;
+  statistics: {
+    total_registered_citizens: number;
+    active_citizens: number;
+    total_households: number;
+    total_registered_land_parcels: number;
+    medical_records_maintained: number;
+    education_records_maintained: number;
+  };
+  relationship_distribution: Record<string, number>;
+}
