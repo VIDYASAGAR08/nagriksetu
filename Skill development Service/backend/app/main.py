@@ -5676,9 +5676,11 @@ def get_candidate_vocational_transcript(
             "full_name": cand_name,
             "email": cand_email,
             "phone": cand_phone,
-            "residence_state": profile.state if profile and profile.state else "Karnataka",
-            "residence_district": profile.district if profile and profile.district else "Bengaluru Urban",
-            "nsqf_readiness": "Level 4 / Job Ready"
+            "education": profile.education_qualification if profile and hasattr(profile, "education_qualification") else "Graduate",
+            "employment_status": profile.current_employment_status if profile and hasattr(profile, "current_employment_status") else "Enrolled Learner",
+            "preferred_location": profile.preferred_training_location if profile and hasattr(profile, "preferred_training_location") else "Bengaluru",
+            "address": profile.residential_address if profile and hasattr(profile, "residential_address") else "Karnataka, India",
+            "nsqf_readiness": "Level 4 / Industry Ready"
         },
         "training_programs": enr_list,
         "certified_credentials": cert_list,
