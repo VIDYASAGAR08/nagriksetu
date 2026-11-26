@@ -6,12 +6,14 @@ import React, { useEffect } from 'react';
  * any intermediate or extra page.
  */
 export const EducationPortalPage: React.FC = () => {
+  const targetUrl = typeof window !== 'undefined' ? `http://${window.location.hostname}:5174/` : 'http://localhost:5174/';
+
   useEffect(() => {
-    window.location.replace('http://localhost:5174/');
-  }, []);
+    window.location.replace(targetUrl);
+  }, [targetUrl]);
 
   if (typeof window !== 'undefined') {
-    window.location.replace('http://localhost:5174/');
+    window.location.replace(targetUrl);
   }
 
   return (

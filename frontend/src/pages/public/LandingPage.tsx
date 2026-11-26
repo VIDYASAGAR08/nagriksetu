@@ -19,6 +19,11 @@ import {
   ChevronRight,
 } from 'lucide-react';
 
+const getServiceUrl = (port: number) => {
+  const host = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
+  return `http://${host}:${port}/`;
+};
+
 interface CivicServiceItem {
   id: string;
   title: string;
@@ -171,7 +176,7 @@ export const LandingPage: React.FC = () => {
               return (
                 <a
                   key={service.id}
-                  href="http://localhost:5174/"
+                  href={getServiceUrl(5174)}
                   className={`bg-white rounded-3xl border ${service.borderColor} p-6 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between group cursor-pointer hover:-translate-y-1 relative overflow-hidden block text-inherit no-underline`}
                 >
                   {/* Accent Top Strip */}
@@ -229,7 +234,7 @@ export const LandingPage: React.FC = () => {
               return (
                 <a
                   key={service.id}
-                  href="http://localhost:5175/"
+                  href={getServiceUrl(5175)}
                   className={`bg-white rounded-3xl border ${service.borderColor} p-6 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between group cursor-pointer hover:-translate-y-1 relative overflow-hidden block text-inherit no-underline`}
                 >
                   {/* Accent Top Strip */}
@@ -522,7 +527,7 @@ export const LandingPage: React.FC = () => {
                 </button>
                 {selectedService.id === 'education' && (
                   <a
-                    href="http://localhost:5174/"
+                    href={getServiceUrl(5174)}
                     className="py-2 px-4 rounded-xl text-xs font-bold bg-navy-900 hover:bg-navy-800 text-white shadow-md transition inline-flex items-center gap-1.5"
                   >
                     <GraduationCap className="w-3.5 h-3.5 text-saffron-400" />
@@ -531,7 +536,7 @@ export const LandingPage: React.FC = () => {
                 )}
                 {selectedService.id === 'skills' && (
                   <a
-                    href="http://localhost:5175/"
+                    href={getServiceUrl(5175)}
                     className="py-2 px-4 rounded-xl text-xs font-bold bg-navy-900 hover:bg-navy-800 text-white shadow-md transition inline-flex items-center gap-1.5"
                   >
                     <Sparkles className="w-3.5 h-3.5 text-saffron-400" />

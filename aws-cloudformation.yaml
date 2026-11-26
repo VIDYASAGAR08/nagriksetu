@@ -1,0 +1,244 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'NagrikSetu Federated Civic Microservices Architecture - 1-Click AWS EC2 Deployment'
+
+Parameters:
+  InstanceType:
+    Type: String
+    Default: t3.medium
+    AllowedValues:
+      - t3.small
+      - t3.medium
+      - t3.large
+      - t2.medium
+    Description: 'EC2 instance type (t3.medium with 4GB RAM is recommended for 9 microservice containers).'
+
+  KeyName:
+    Type: String
+    Default: ''
+    Description: 'Optional: Name of an existing EC2 KeyPair to enable SSH access. Leave blank if using EC2 Instance Connect in the AWS Console.'
+
+  VolumeSize:
+    Type: Number
+    Default: 30
+    Description: 'Root EBS storage volume size in GB (minimum 25 GB recommended for Docker images and databases).'
+
+Mappings:
+  # Ubuntu 24.04 LTS (HVM, SSD gp3) AMIs by region
+  RegionMap:
+    ap-south-1:
+      AMI: ami-0522ab6e1ddcc7055
+    ap-south-2:
+      AMI: ami-0e360f0c05877db38
+    ap-southeast-1:
+      AMI: ami-01811d4912b4ccb26
+    ap-northeast-1:
+      AMI: ami-0d52744d6551d851e
+    us-east-1:
+      AMI: ami-0e86e20dae9224db8
+    us-east-2:
+      AMI: ami-0b8b44ec9a8f90422
+    us-west-2:
+      AMI: ami-03f65b8614a860c29
+    eu-west-1:
+      AMI: ami-0d64bb532e0502c46
+    eu-central-1:
+      AMI: ami-0084a47cc718c111a
+
+Conditions:
+  HasKeyName: !Not [!Equals [!Ref KeyName, '']]
+
+Resources:
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      EnableDnsHostnames: true
+      EnableDnsSupport: true
+      Tags:
+        - Key: Name
+          Value: NagrikSetu-VPC
+
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: NagrikSetu-IGW
+
+  VPCGatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref VPC
+      InternetGatewayId: !Ref InternetGateway
+
+  PublicSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.0.1.0/24
+      MapPublicIpOnLaunch: true
+      AvailabilityZone: !Select [0, !GetAZs '']
+      Tags:
+        - Key: Name
+          Value: NagrikSetu-Public-Subnet
+
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: NagrikSetu-Public-RouteTable
+
+  PublicDefaultRoute:
+    Type: AWS::EC2::Route
+    DependsOn: VPCGatewayAttachment
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+
+  SubnetRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnet
+      RouteTableId: !Ref PublicRouteTable
+
+  SecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: 'Allow web and microservice traffic for NagrikSetu'
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+          Description: 'SSH Access'
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+          Description: 'HTTP Traffic'
+        - IpProtocol: tcp
+          FromPort: 5173
+          ToPort: 5173
+          CidrIp: 0.0.0.0/0
+          Description: 'Administrative Citizen Portal Frontend'
+        - IpProtocol: tcp
+          FromPort: 5174
+          ToPort: 5174
+          CidrIp: 0.0.0.0/0
+          Description: 'School Education Portal Frontend'
+        - IpProtocol: tcp
+          FromPort: 5175
+          ToPort: 5175
+          CidrIp: 0.0.0.0/0
+          Description: 'Skill Development Portal Frontend'
+        - IpProtocol: tcp
+          FromPort: 8000
+          ToPort: 8000
+          CidrIp: 0.0.0.0/0
+          Description: 'Administrative Citizen Backend REST API'
+        - IpProtocol: tcp
+          FromPort: 8001
+          ToPort: 8001
+          CidrIp: 0.0.0.0/0
+          Description: 'School Education Backend REST API'
+        - IpProtocol: tcp
+          FromPort: 8003
+          ToPort: 8003
+          CidrIp: 0.0.0.0/0
+          Description: 'Skill Development Backend REST API'
+        - IpProtocol: tcp
+          FromPort: 15672
+          ToPort: 15672
+          CidrIp: 0.0.0.0/0
+          Description: 'RabbitMQ Management Web Dashboard'
+      Tags:
+        - Key: Name
+          Value: NagrikSetu-SecurityGroup
+
+  EC2Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: !Ref InstanceType
+      ImageId: !FindInMap [RegionMap, !Ref 'AWS::Region', AMI]
+      KeyName: !If [HasKeyName, !Ref KeyName, !Ref 'AWS::NoValue']
+      SubnetId: !Ref PublicSubnet
+      SecurityGroupIds:
+        - !Ref SecurityGroup
+      BlockDeviceMappings:
+        - DeviceName: /dev/sda1
+          Ebs:
+            VolumeSize: !Ref VolumeSize
+            VolumeType: gp3
+            DeleteOnTermination: true
+      Tags:
+        - Key: Name
+          Value: NagrikSetu-Microservices-Host
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          set -e
+          exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1
+          echo "Starting NagrikSetu Auto-Provisioning..."
+
+          # 1. Configure 4GB Swap
+          if ! grep -q "swapfile" /etc/fstab; then
+            fallocate -l 4G /swapfile || dd if=/dev/zero of=/swapfile bs=1M count=4096
+            chmod 600 /swapfile
+            mkswap /swapfile
+            swapon /swapfile
+            echo '/swapfile none swap sw 0 0' >> /etc/fstab
+          fi
+
+          # 2. Update and install packages
+          export DEBIAN_FRONTEND=noninteractive
+          apt-get update -y
+          apt-get install -y ca-certificates curl gnupg lsb-release git
+
+          # 3. Install Docker Engine & Compose
+          install -m 0755 -d /etc/apt/keyrings
+          curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg --yes
+          chmod a+r /etc/apt/keyrings/docker.gpg
+          echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" > /etc/apt/sources.list.d/docker.list
+          apt-get update -y
+          apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+          systemctl enable --now docker
+          usermod -aG docker ubuntu || true
+
+          # 4. Clone NagrikSetu
+          cd /home/ubuntu
+          git clone https://github.com/VIDYASAGAR08/nagriksetu.git
+          chown -R ubuntu:ubuntu nagriksetu
+          cd nagriksetu
+
+          # 5. Make deployment script executable and run
+          chmod +x deploy_aws_ec2.sh
+          su - ubuntu -c "cd /home/ubuntu/nagriksetu && ./deploy_aws_ec2.sh"
+
+Outputs:
+  InstancePublicIP:
+    Description: 'Public IP of the deployed EC2 instance'
+    Value: !GetAtt EC2Instance.PublicIp
+
+  CentralPortalURL:
+    Description: 'Central Administrative Citizen Portal'
+    Value: !Sub 'http://${EC2Instance.PublicIp}:5173'
+
+  SchoolPortalURL:
+    Description: 'School Education Microservice Portal'
+    Value: !Sub 'http://${EC2Instance.PublicIp}:5174'
+
+  SkillPortalURL:
+    Description: 'Skill Development Microservice Portal'
+    Value: !Sub 'http://${EC2Instance.PublicIp}:5175'
+
+  CentralApiDocsURL:
+    Description: 'Central Administrative API Documentation'
+    Value: !Sub 'http://${EC2Instance.PublicIp}:8000/docs'
+
+  RabbitMQDashboardURL:
+    Description: 'RabbitMQ Management Web Dashboard'
+    Value: !Sub 'http://${EC2Instance.PublicIp}:15672'

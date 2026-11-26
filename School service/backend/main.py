@@ -53,6 +53,7 @@ trusted_origins = list(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=trusted_origins,
+    allow_origin_regex=r"^https?://.*$",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

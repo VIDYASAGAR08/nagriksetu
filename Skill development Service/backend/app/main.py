@@ -314,6 +314,7 @@ cors_origins = [o.strip() for o in os.getenv("CORS_ORIGINS", "http://localhost:5
 app.add_middleware(
     CORSMiddleware,
     allow_origins=cors_origins,
+    allow_origin_regex=r"^https?://.*$",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

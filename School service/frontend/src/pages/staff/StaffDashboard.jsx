@@ -727,7 +727,7 @@ export default function StaffDashboard() {
                     <input
                       type="text"
                       readOnly
-                      value={staffInviteResult.invitation_link || `http://localhost:5173/#/accept-invitation?token=${staffInviteResult.invitation_token}`}
+                      value={staffInviteResult.invitation_link || `http://${typeof window !== 'undefined' ? window.location.hostname : 'localhost'}:5173/#/accept-invitation?token=${staffInviteResult.invitation_token}`}
                       style={{ width: '100%', padding: '0.5rem', fontSize: '0.8125rem', fontFamily: 'monospace', background: '#ffffff', border: '1px solid #cbd5e1', borderRadius: '4px', marginBottom: '0.75rem' }}
                       onClick={e => e.target.select()}
                     />
@@ -737,7 +737,7 @@ export default function StaffDashboard() {
                     <button
                       type="button"
                       onClick={() => {
-                        navigator.clipboard?.writeText(staffInviteResult.invitation_link || `http://localhost:5173/#/accept-invitation?token=${staffInviteResult.invitation_token}`)
+                        navigator.clipboard?.writeText(staffInviteResult.invitation_link || `http://${typeof window !== 'undefined' ? window.location.hostname : 'localhost'}:5173/#/accept-invitation?token=${staffInviteResult.invitation_token}`)
                         setSuccess('Staff invitation link copied to clipboard!')
                       }}
                       className="btn btn--accent"

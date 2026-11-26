@@ -18,6 +18,11 @@ import {
   Sparkles,
 } from 'lucide-react';
 
+const getServiceUrl = (port: number) => {
+  const host = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
+  return `http://${host}:${port}/`;
+};
+
 export const Navbar: React.FC = () => {
   const { user, citizenProfile, logout, isAuthenticated, isAdmin, isCitizen, highContrast, largeText, toggleHighContrast, toggleLargeText } = useAuth();
   const navigate = useNavigate();
@@ -127,14 +132,14 @@ export const Navbar: React.FC = () => {
                     My Household
                   </Link>
                   <a
-                    href="http://localhost:5174/"
+                    href={getServiceUrl(5174)}
                     className="px-3 py-2 rounded-md text-sm font-semibold transition-colors flex items-center gap-1.5 text-blue-700 hover:bg-blue-50"
                   >
                     <GraduationCap className="w-4 h-4 text-blue-600" aria-hidden="true" />
                     <span>Education Service</span>
                   </a>
                   <a
-                    href="http://localhost:5175/"
+                    href={getServiceUrl(5175)}
                     className="px-3 py-2 rounded-md text-sm font-semibold transition-colors flex items-center gap-1.5 text-amber-700 hover:bg-amber-50"
                   >
                     <Sparkles className="w-4 h-4 text-amber-600" aria-hidden="true" />
@@ -224,14 +229,14 @@ export const Navbar: React.FC = () => {
                 Home
               </Link>
               <a
-                href="http://localhost:5174/"
+                href={getServiceUrl(5174)}
                 className="px-3 py-2 rounded-md text-sm font-semibold transition-colors flex items-center gap-1.5 text-blue-700 hover:bg-blue-50"
               >
                 <GraduationCap className="w-4 h-4 text-blue-600" />
                 <span>Education Service</span>
               </a>
               <a
-                href="http://localhost:5175/"
+                href={getServiceUrl(5175)}
                 className="px-3 py-2 rounded-md text-sm font-semibold transition-colors flex items-center gap-1.5 text-amber-700 hover:bg-amber-50"
               >
                 <Sparkles className="w-4 h-4 text-amber-600" />
@@ -411,14 +416,14 @@ export const Navbar: React.FC = () => {
                 Home
               </Link>
               <a
-                href="http://localhost:5174/"
+                href={getServiceUrl(5174)}
                 onClick={() => setMobileMenuOpen(false)}
                 className="block px-3 py-2 rounded-md text-base font-medium text-blue-700 hover:bg-blue-50 font-semibold"
               >
                 Education Service
               </a>
               <a
-                href="http://localhost:5175/"
+                href={getServiceUrl(5175)}
                 onClick={() => setMobileMenuOpen(false)}
                 className="block px-3 py-2 rounded-md text-base font-medium text-amber-700 hover:bg-amber-50 font-semibold"
               >
