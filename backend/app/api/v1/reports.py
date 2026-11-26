@@ -69,7 +69,7 @@ def generate_citizen_comprehensive_dossier(
 
     # 1. Demographic & Administrative Details
     admin_unit_name = citizen.administrative_unit.name if citizen.administrative_unit else "National Central Administrative Jurisdiction"
-    admin_unit_code = citizen.administrative_unit.code if citizen.administrative_unit else "IND-CENTRAL"
+    admin_unit_code = citizen.administrative_unit.identifier if citizen.administrative_unit else "IND-CENTRAL"
 
     # 2. Medical Record
     med = db.query(MedicalRecord).filter(MedicalRecord.citizen_id == citizen.id).first()
