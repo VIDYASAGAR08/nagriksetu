@@ -3,6 +3,7 @@ import { apiGet, apiPut, apiPost } from '../../utils/api.js'
 import LoadingSpinner from '../ui/LoadingSpinner.jsx'
 import Alert from '../ui/Alert.jsx'
 import StatusBadge from '../ui/StatusBadge.jsx'
+import StudentDossierModal from '../academic/StudentDossierModal.jsx'
 
 export default function InstitutionStudentManagementDesk({
   token,
@@ -58,6 +59,8 @@ export default function InstitutionStudentManagementDesk({
   // 5. STUDENT PROFILE MODAL STATE
   // ---------------------------------------------------------------------------
   const [selectedStudentId, setSelectedStudentId] = useState(null)
+  const [dossierModalOpen, setDossierModalOpen] = useState(false)
+  const [reportStudentId, setReportStudentId] = useState(null)
   const [studentProfile, setStudentProfile] = useState(null)
   const [loadingProfile, setLoadingProfile] = useState(false)
   const [profileError, setProfileError] = useState('')
@@ -1088,6 +1091,30 @@ export default function InstitutionStudentManagementDesk({
                         </button>
 
                         <button
+                          onClick={() => {
+                            setReportStudentId(s.student_id)
+                            setDossierModalOpen(true)
+                          }}
+                          title="Generate Official Certified Academic Dossier"
+                          style={{
+                            background: '#1E40AF',
+                            color: '#FFFFFF',
+                            border: 'none',
+                            borderRadius: '6px',
+                            padding: '0.35rem 0.65rem',
+                            fontSize: '0.78rem',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '0.2rem'
+                          }}
+                          id={`btn-desk-report-${s.student_id}`}
+                        >
+                          📜 Report
+                        </button>
+
+                        <button
                           onClick={() => openRecordEditor(s)}
                           title="Edit Student Record"
                           style={{
@@ -1250,6 +1277,28 @@ export default function InstitutionStudentManagementDesk({
               </div>
 
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <button
+                  onClick={() => {
+                    setReportStudentId(selectedStudentId)
+                    setDossierModalOpen(true)
+                  }}
+                  title="Generate Official Certified Academic Dossier"
+                  style={{
+                    background: '#1D4ED8',
+                    color: '#FFFFFF',
+                    border: 'none',
+                    padding: '0.45rem 0.9rem',
+                    borderRadius: '6px',
+                    fontSize: '0.82rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.35rem'
+                  }}
+                >
+                  📜 Official Report
+                </button>
                 {studentProfile && (
                   <button
                     onClick={() => {
@@ -2756,6 +2805,13 @@ export default function InstitutionStudentManagementDesk({
           </div>
         </div>
       )}
+      {/* Certified Academic Dossier Modal */}
+      <StudentDossierModal
+        isOpen={dossierModalOpen}
+        onClose={() => setDossierModalOpen(false)}
+        studentId={reportStudentId}
+        studentName={students.find(s => s.student_id === reportStudentId)?.student_name}
+      />
     </div>
   )
 }

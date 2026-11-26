@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import './style.css';
 import { CentreLocationMap } from './CentreLocationMap';
+import SkillTranscriptModal from './SkillTranscriptModal';
 
 const API_BASE = import.meta.env.VITE_SKILL_API_URL || '';
 
@@ -35,6 +36,8 @@ export default function App() {
   const [studentDashboardData, setStudentDashboardData] = useState<any | null>(null);
   const [studentDashboardLoading, setStudentDashboardLoading] = useState<boolean>(false);
   const [studentDashboardError, setStudentDashboardError] = useState<string>('');
+  const [transcriptModalOpen, setTranscriptModalOpen] = useState<boolean>(false);
+  const [selectedTranscriptCandidate, setSelectedTranscriptCandidate] = useState<string>('');
 
   // Multi-Centre Admin State
   const [assignedCentres, setAssignedCentres] = useState<any[]>(() => {
@@ -4226,6 +4229,30 @@ export default function App() {
                         >
                           Details
                         </button>
+                        <button
+                          type="button"
+                          style={{
+                            padding: '0.3rem 0.65rem',
+                            fontSize: '0.75rem',
+                            background: '#1d4ed8',
+                            color: '#ffffff',
+                            border: 'none',
+                            borderRadius: '4px',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '0.25rem'
+                          }}
+                          onClick={() => {
+                            setSelectedTranscriptCandidate(a.citizen_ref || a.citizen_email || a.id);
+                            setTranscriptModalOpen(true);
+                          }}
+                          title="Generate Official Candidate Transcript"
+                          id={`btn-admin-report-${a.id}`}
+                        >
+                          <FileText size={12} /> Report
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -4565,6 +4592,30 @@ export default function App() {
                     Student Portal
                   </button>
                 )}
+                <button
+                  type="button"
+                  className="nav-item-btn"
+                  style={{
+                    background: '#1d4ed8',
+                    color: '#ffffff',
+                    borderRadius: '6px',
+                    padding: '0.4rem 0.85rem',
+                    fontWeight: 700,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.35rem',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+                  }}
+                  onClick={() => {
+                    const id = studentId || citizenRef || userEmail || 'CIT-2026102002';
+                    setSelectedTranscriptCandidate(id);
+                    setTranscriptModalOpen(true);
+                    setMobileMenuOpen(false);
+                  }}
+                  id="btn-nav-skill-transcript"
+                >
+                  <FileText size={14} /> Official Skill Transcript
+                </button>
               </>
             )}
             <button className={`nav-item-btn ${activeTab === 'gap' ? 'active' : ''}`} onClick={() => { setActiveTab('gap'); setMobileMenuOpen(false); }}>
@@ -6551,10 +6602,12 @@ export default function App() {
                 type="button"
                 style={{ padding: '0.45rem 0.9rem', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.4rem', background: '#2563eb', color: '#ffffff', border: 'none', borderRadius: '6px', fontWeight: 700, cursor: 'pointer', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}
                 onClick={() => {
-                  const id = studentId || userEmail || 'CIT-2026102001';
-                  window.open(`/api/reports/candidate/${id}/transcript`, '_blank');
+                  const id = studentId || citizenRef || userEmail || 'CIT-2026102002';
+                  setSelectedTranscriptCandidate(id);
+                  setTranscriptModalOpen(true);
                 }}
                 title="Generate and print official certified vocational skill transcript"
+                id="btn-student-portal-transcript"
               >
                 <FileText size={14} /> Official Skill Transcript
               </button>
@@ -7000,15 +7053,42 @@ export default function App() {
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.5rem' }}>
             <div style={{ backgroundColor: '#ffffff', borderRadius: '10px', border: '1px solid #e2e8f0', padding: '1.75rem' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
                 <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#0f172a', margin: 0 }}>Personal & Educational Information</h3>
-                <button
-                  className="btn-primary-orange"
-                  style={{ padding: '0.35rem 0.75rem', fontSize: '0.78rem' }}
-                  onClick={handleOpenEditProfile}
-                >
-                  Edit Profile
-                </button>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <button
+                    type="button"
+                    style={{
+                      padding: '0.35rem 0.85rem',
+                      fontSize: '0.78rem',
+                      background: '#1d4ed8',
+                      color: '#ffffff',
+                      border: 'none',
+                      borderRadius: '6px',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.4rem',
+                      boxShadow: '0 1px 2px rgba(0,0,0,0.1)'
+                    }}
+                    onClick={() => {
+                      const id = studentId || citizenRef || userEmail || 'CIT-2026102002';
+                      setSelectedTranscriptCandidate(id);
+                      setTranscriptModalOpen(true);
+                    }}
+                    id="btn-profile-skill-transcript"
+                  >
+                    <FileText size={14} /> Generate Official Skill Transcript
+                  </button>
+                  <button
+                    className="btn-primary-orange"
+                    style={{ padding: '0.35rem 0.75rem', fontSize: '0.78rem' }}
+                    onClick={handleOpenEditProfile}
+                  >
+                    Edit Profile
+                  </button>
+                </div>
               </div>
               <div style={{ display: 'grid', gap: '0.75rem', fontSize: '0.88rem' }}>
                 <div><strong>Citizen ID:</strong> {citizenRef}</div>
@@ -7440,7 +7520,30 @@ export default function App() {
                 </div>
               )}
 
-              <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', marginTop: '0.5rem' }}>
+                <button
+                  type="button"
+                  style={{
+                    background: '#1d4ed8',
+                    color: '#ffffff',
+                    border: 'none',
+                    borderRadius: '6px',
+                    padding: '0.45rem 1rem',
+                    fontWeight: 700,
+                    fontSize: '0.85rem',
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.4rem'
+                  }}
+                  onClick={() => {
+                    const candidateId = selectedCitizenApp.citizen_ref || selectedCitizenApp.citizen_id || selectedCitizenApp.student_id;
+                    setSelectedTranscriptCandidate(candidateId);
+                    setTranscriptModalOpen(true);
+                  }}
+                >
+                  <FileText size={15} /> Generate Official Skill Transcript
+                </button>
                 <button type="button" className="btn-navy-outline" onClick={() => setSelectedCitizenApp(null)}>
                   Close Dossier
                 </button>
@@ -10536,6 +10639,13 @@ export default function App() {
           </div>
         </div>
       </footer>
+      {/* Official Skill Transcript Modal */}
+      <SkillTranscriptModal
+        isOpen={transcriptModalOpen}
+        onClose={() => setTranscriptModalOpen(false)}
+        candidateIdentifier={selectedTranscriptCandidate || studentId || citizenRef || userEmail || 'CIT-2026102002'}
+        token={token}
+      />
     </div>
   );
 }

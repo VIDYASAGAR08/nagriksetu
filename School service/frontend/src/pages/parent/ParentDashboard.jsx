@@ -651,10 +651,36 @@ export default function ParentDashboard() {
                   Verified children linked to your parent account across all educational institutions.
                 </p>
               </div>
-              <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+              <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
                 <span className="badge badge--primary" style={{ padding: '0.35rem 0.75rem', fontSize: '0.85rem', fontWeight: 600 }}>
                   {children.length} {children.length === 1 ? 'Child' : 'Children'} Linked
                 </span>
+                {children.length > 0 && (
+                  <button
+                    onClick={() => {
+                      const firstChild = children[0];
+                      setReportStudentId(firstChild.student_id || firstChild.permanent_student_id);
+                      setDossierModalOpen(true);
+                    }}
+                    className="btn btn--sm"
+                    style={{
+                      background: '#1d4ed8',
+                      color: '#ffffff',
+                      fontWeight: 700,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.4rem',
+                      padding: '0.45rem 0.9rem',
+                      borderRadius: '6px',
+                      border: 'none',
+                      cursor: 'pointer',
+                      boxShadow: '0 2px 4px rgba(29, 78, 216, 0.25)'
+                    }}
+                    id="btn-generate-report-header"
+                  >
+                    <span>📜</span> Generate Official Dossier Report
+                  </button>
+                )}
                 <button
                   onClick={() => switchTab('link-child')}
                   className="btn btn--primary btn--sm"
@@ -734,13 +760,39 @@ export default function ParentDashboard() {
                           </div>
                         </div>
 
-                        <button
-                          onClick={() => viewRecords(child)}
-                          className="btn btn--primary btn--full btn--sm"
-                          style={{ fontWeight: 600 }}
-                        >
-                          View Details →
-                        </button>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '0.75rem' }}>
+                          <button
+                            onClick={() => {
+                              setReportStudentId(child.student_id || child.permanent_student_id);
+                              setDossierModalOpen(true);
+                            }}
+                            className="btn btn--sm"
+                            style={{
+                              background: '#1d4ed8',
+                              color: '#ffffff',
+                              fontWeight: 700,
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              gap: '0.5rem',
+                              padding: '0.6rem 1rem',
+                              borderRadius: '6px',
+                              border: 'none',
+                              cursor: 'pointer',
+                              boxShadow: '0 2px 4px rgba(29, 78, 216, 0.25)'
+                            }}
+                            id={`btn-child-report-${child.student_id}`}
+                          >
+                            <span>📜</span> Generate Official Dossier Report
+                          </button>
+                          <button
+                            onClick={() => viewRecords(child)}
+                            className="btn btn--secondary btn--full btn--sm"
+                            style={{ fontWeight: 600 }}
+                          >
+                            View Details →
+                          </button>
+                        </div>
                       </div>
                     )
                   })}
