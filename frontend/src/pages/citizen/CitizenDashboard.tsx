@@ -182,8 +182,13 @@ export const CitizenDashboard: React.FC = () => {
                 <span>Household Role</span>
               </span>
               <span className="text-base font-semibold text-slate-900">
-                {citizenProfile?.household_relationship || 'Unassigned'}
+                {citizenProfile?.relationship || citizenProfile?.household_relationship || 'Unassigned'}
               </span>
+              {citizenProfile?.relationship_details && (
+                <span className="text-xs text-slate-500 font-normal block mt-0.5">
+                  {citizenProfile.relationship_details}
+                </span>
+              )}
             </div>
           </div>
         </div>

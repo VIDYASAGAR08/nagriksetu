@@ -180,10 +180,15 @@ export const CitizenProfilePage: React.FC = () => {
             </div>
 
             <div className="p-2.5 bg-white rounded-lg border border-slate-200">
-              <span className="text-slate-400 block font-medium">Household Assignment</span>
+              <span className="text-slate-400 block font-medium">Family Relationship</span>
               <span className="font-bold text-slate-800">
-                {citizenProfile?.household_relationship || 'None Assigned'}
+                {citizenProfile?.relationship || citizenProfile?.household_relationship || 'None Assigned'}
               </span>
+              {citizenProfile?.relationship_details && (
+                <span className="text-xs text-slate-500 block font-normal mt-0.5">
+                  {citizenProfile.relationship_details}
+                </span>
+              )}
             </div>
 
             <div className="p-2.5 bg-white rounded-lg border border-slate-200">

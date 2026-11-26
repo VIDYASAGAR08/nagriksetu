@@ -671,9 +671,14 @@ export const CitizenHouseholdPage: React.FC = () => {
                         </div>
 
                         <div className="flex flex-col items-end gap-1">
-                          <span className="px-3 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-800 border border-slate-200">
-                            {member.household_relationship || 'Member'}
+                          <span className="px-3 py-1 rounded-full text-xs font-bold bg-blue-50 text-blue-900 border border-blue-200">
+                            🤝 {member.relationship || member.household_relationship || 'Member'}
                           </span>
+                          {member.relationship_details && (
+                            <span className="text-[11px] font-medium text-slate-500 italic max-w-xs text-right">
+                              {member.relationship_details}
+                            </span>
+                          )}
                           <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
                             (member.household_role === 'HEAD' || member.household_relationship === 'Head of Household')
                               ? 'bg-amber-100 text-amber-900 border border-amber-300'

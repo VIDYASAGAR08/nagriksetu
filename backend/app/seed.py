@@ -207,6 +207,8 @@ def seed_data(reset: bool = False):
                 "profile_status": ProfileStatus.ACTIVE.value,
                 "household_code": "HHD-1001-BLR",
                 "household_relationship": "Head of Household",
+                "relationship": "Husband / Father",
+                "relationship_details": "Husband of Priya Sharma, Father of Asha Sharma (Head of Household)",
                 "administrative_unit_code": "IN-KA-BLR-W150",
             },
             {
@@ -220,6 +222,8 @@ def seed_data(reset: bool = False):
                 "profile_status": ProfileStatus.ACTIVE.value,
                 "household_code": "HHD-1001-BLR",
                 "household_relationship": "Spouse",
+                "relationship": "Wife / Mother",
+                "relationship_details": "Wife of Aarav Sharma, Mother of Asha Sharma",
                 "administrative_unit_code": "IN-KA-BLR-W150",
             },
             {
@@ -233,6 +237,8 @@ def seed_data(reset: bool = False):
                 "profile_status": ProfileStatus.PENDING_REVIEW.value,
                 "household_code": "HHD-1002-BLR",
                 "household_relationship": "Head of Household",
+                "relationship": "Head of Family",
+                "relationship_details": "Single occupant / Head of Household",
                 "administrative_unit_code": "IN-KA-BLR",
             },
             {
@@ -246,6 +252,8 @@ def seed_data(reset: bool = False):
                 "profile_status": ProfileStatus.PENDING_REVIEW.value,
                 "household_code": "HHD-2001-MUM",
                 "household_relationship": "Member",
+                "relationship": "Mother",
+                "relationship_details": "Mother of VIDYASAGAR L (Head of Household)",
                 "administrative_unit_code": "IN-MH-MUM",
             },
             {
@@ -259,6 +267,8 @@ def seed_data(reset: bool = False):
                 "profile_status": ProfileStatus.ACTIVE.value,
                 "household_code": None,
                 "household_relationship": None,
+                "relationship": "Individual",
+                "relationship_details": "Individual citizen (not linked to multi-member household)",
                 "administrative_unit_code": "IN-MH-MUM",
             }
         ]
@@ -293,6 +303,8 @@ def seed_data(reset: bool = False):
                     profile_status=c_data["profile_status"],
                     household_id=hh_id,
                     household_relationship=c_data["household_relationship"],
+                    relationship=c_data.get("relationship", "Individual"),
+                    relationship_details=c_data.get("relationship_details", ""),
                     administrative_unit_id=area_id,
                 )
                 db.add(profile)
@@ -304,6 +316,7 @@ def seed_data(reset: bool = False):
                         household_id=hh_id,
                         citizen_id=profile.id,
                         relationship_type=c_data["household_relationship"] or "Member",
+                        relationship=c_data.get("relationship", "Member"),
                         start_date=date(2025, 1, 1),
                         status=MembershipStatus.ACTIVE.value,
                         notes="Initial census verification registration"

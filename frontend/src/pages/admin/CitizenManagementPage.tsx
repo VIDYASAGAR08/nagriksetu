@@ -247,6 +247,7 @@ export const CitizenManagementPage: React.FC = () => {
                 <tr className="border-b border-slate-200 text-xs font-semibold text-slate-500 bg-slate-50">
                   <th scope="col" className="p-3.5">Citizen Code</th>
                   <th scope="col" className="p-3.5">Full Legal Name</th>
+                  <th scope="col" className="p-3.5">Family Relationship</th>
                   <th scope="col" className="p-3.5">Status</th>
                   <th scope="col" className="p-3.5">Completeness (FR-ADM-013)</th>
                   <th scope="col" className="p-3.5">Jurisdiction Area</th>
@@ -262,6 +263,16 @@ export const CitizenManagementPage: React.FC = () => {
                     </td>
                     <td className="p-3.5 font-semibold text-slate-900">
                       {citizen.full_name}
+                    </td>
+                    <td className="p-3.5">
+                      <span className="inline-flex items-center gap-1 text-xs font-bold text-navy-900 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
+                        {citizen.relationship || citizen.household_relationship || 'Individual'}
+                      </span>
+                      {citizen.relationship_details && (
+                        <span className="text-[10px] text-slate-500 block truncate max-w-xs mt-0.5" title={citizen.relationship_details}>
+                          {citizen.relationship_details}
+                        </span>
+                      )}
                     </td>
                     <td className="p-3.5">
                       <Badge status={citizen.profile_status} />

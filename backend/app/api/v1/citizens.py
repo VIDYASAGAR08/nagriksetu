@@ -62,6 +62,8 @@ def _to_citizen_response(p: CitizenProfile) -> CitizenProfileResponse:
         face_photo=p.face_photo,
         household_id=p.household_id,
         household_relationship=p.household_relationship,
+        relationship=p.relationship,
+        relationship_details=p.relationship_details,
         administrative_unit_id=p.administrative_unit_id,
         administrative_unit_name=unit_name,
         completeness_score=score,
@@ -614,6 +616,8 @@ def admin_create_citizen(
         profile_status=payload.profile_status,
         household_id=payload.household_id,
         household_relationship=payload.household_relationship,
+        relationship=payload.relationship,
+        relationship_details=payload.relationship_details,
         administrative_unit_id=payload.administrative_unit_id,
     )
     db.add(new_profile)

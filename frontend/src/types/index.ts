@@ -58,6 +58,8 @@ export interface FamilyMemberDossier {
   preferred_language: string;
   profile_status: string;
   household_relationship: string;
+  relationship?: string | null;
+  relationship_details?: string | null;
   household_role?: string;
   assigned_tasks?: string[];
   is_self: boolean;
@@ -128,6 +130,8 @@ export interface CitizenProfile {
   face_photo?: string | null;
   household_id?: number | null;
   household_relationship?: string | null;
+  relationship?: string | null;
+  relationship_details?: string | null;
   administrative_unit_id?: number | null;
   administrative_unit_name?: string | null;
   completeness_score?: number;
@@ -141,6 +145,8 @@ export interface HouseholdMember {
   citizen_code: string;
   full_name: string;
   household_relationship?: string | null;
+  relationship?: string | null;
+  relationship_details?: string | null;
   household_role?: string;
   assigned_tasks?: string[];
 }

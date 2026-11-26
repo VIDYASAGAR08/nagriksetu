@@ -54,6 +54,7 @@ class HouseholdMembership(Base):
     household_id = Column(Integer, ForeignKey("households.id", ondelete="CASCADE"), nullable=False, index=True)
     citizen_id = Column(Integer, ForeignKey("citizen_profiles.id", ondelete="CASCADE"), nullable=False, index=True)
     relationship_type = Column(String(100), nullable=False)
+    relationship = Column(String(100), nullable=True)  # Familial relation (Father, Mother, Son, Daughter, Spouse)
     start_date = Column(Date, default=date.today, nullable=False)
     end_date = Column(Date, nullable=True)
     status = Column(String(50), default=MembershipStatus.ACTIVE.value, nullable=False)

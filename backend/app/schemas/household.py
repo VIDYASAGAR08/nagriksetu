@@ -12,6 +12,8 @@ class HouseholdMemberSummary(BaseModel):
     citizen_code: str
     full_name: str
     household_relationship: Optional[str] = None
+    relationship: Optional[str] = None
+    relationship_details: Optional[str] = None
     household_role: Optional[str] = "MEMBER"
     assigned_tasks: List[str] = []
 
@@ -72,6 +74,7 @@ class HouseholdMembershipResponse(BaseModel):
     citizen_code: str
     citizen_name: str
     relationship_type: str
+    relationship: Optional[str] = None
     start_date: date
     end_date: Optional[date] = None
     status: str

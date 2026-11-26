@@ -24,6 +24,8 @@ class CitizenProfileResponse(CitizenProfileBase):
     face_photo: Optional[str] = None
     household_id: Optional[int] = None
     household_relationship: Optional[str] = None
+    relationship: Optional[str] = None
+    relationship_details: Optional[str] = None
     administrative_unit_id: Optional[int] = None
     administrative_unit_name: Optional[str] = None
     completeness_score: int = 100
@@ -88,6 +90,8 @@ class AdminCitizenCreateRequest(CitizenProfileBase):
     profile_status: str = Field(default="pending_review")
     household_id: Optional[int] = None
     household_relationship: Optional[str] = None
+    relationship: Optional[str] = None
+    relationship_details: Optional[str] = None
     administrative_unit_id: Optional[int] = None
 
     @field_validator("email", mode="before")
@@ -113,6 +117,8 @@ class AdminCitizenUpdateRequest(BaseModel):
     profile_status: Optional[str] = None
     household_id: Optional[int] = None
     household_relationship: Optional[str] = None
+    relationship: Optional[str] = None
+    relationship_details: Optional[str] = None
     administrative_unit_id: Optional[int] = None
 
     @field_validator("date_of_birth", mode="before")

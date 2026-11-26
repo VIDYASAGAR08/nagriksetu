@@ -88,6 +88,8 @@ def _build_admin_household_response(hh: Household, db: Session) -> AdminHousehol
                 citizen_code=m.citizen_code,
                 full_name=m.full_name,
                 household_relationship=m.household_relationship,
+                relationship=getattr(m, "relationship", None) or m.household_relationship,
+                relationship_details=getattr(m, "relationship_details", None) or f"{m.household_relationship or 'Member'} in Household",
                 household_role=role_val,
                 assigned_tasks=tasks_val,
             )
@@ -161,6 +163,8 @@ def get_my_household(
                 citizen_code=m.citizen_code,
                 full_name=m.full_name,
                 household_relationship=m.household_relationship,
+                relationship=getattr(m, "relationship", None) or m.household_relationship,
+                relationship_details=getattr(m, "relationship_details", None) or f"{m.household_relationship or 'Member'} in Household",
                 household_role=role_val,
                 assigned_tasks=tasks_val,
             )
@@ -259,6 +263,8 @@ def get_my_household_dossier(
             "preferred_language": m.preferred_language,
             "profile_status": m.profile_status,
             "household_relationship": m.household_relationship or "Member",
+            "relationship": getattr(m, "relationship", None) or m.household_relationship or "Member",
+            "relationship_details": getattr(m, "relationship_details", None) or f"{m.household_relationship or 'Member'} of Household",
             "household_role": role_val,
             "assigned_tasks": tasks_val,
             "is_self": m.id == profile.id,

@@ -1,7 +1,7 @@
 import enum
 from datetime import datetime, timezone, date
 from sqlalchemy import Column, Integer, String, Text, Date, DateTime, ForeignKey, CheckConstraint
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship as orm_relationship
 from app.database import Base
 
 
@@ -31,6 +31,8 @@ class CitizenProfile(Base):
     # Household association
     household_id = Column(Integer, ForeignKey("households.id", ondelete="SET NULL"), nullable=True, index=True)
     household_relationship = Column(String(100), nullable=True)
+    relationship = Column(String(100), nullable=True)  # Specific family relationship (e.g., Husband / Father, Wife / Mother, Son, Daughter)
+    relationship_details = Column(String(255), nullable=True)  # Detailed linkage (e.g. "Husband of Priya Sharma, Father of Asha Sharma")
     household_role = Column(String(50), default="MEMBER", nullable=False)
     assigned_tasks = Column(Text, default="[]", nullable=False)
 
@@ -41,11 +43,11 @@ class CitizenProfile(Base):
     updated_at = Column(DateTime(timezone=True), default=utc_now, onupdate=utc_now, nullable=False)
 
     # Relationships
-    user = relationship("User", back_populates="citizen_profile")
-    household = relationship("Household", back_populates="members")
-    administrative_unit = relationship("AdministrativeUnit", back_populates="citizens")
-    medical_record = relationship("MedicalRecord", back_populates="citizen", uselist=False, cascade="all, delete-orphan")
-    education_record = relationship("EducationRecord", back_populates="citizen", uselist=False, cascade="all, delete-orphan")
+    user = orm_relationship("User", back_populates="citizen_profile")
+    household = orm_relationship("Household", back_populates="members")
+    administrative_unit = orm_relationship("AdministrativeUnit", back_populates="citizens")
+    medical_record = orm_relationship("MedicalRecord", back_populates="citizen", uselist=False, cascade="all, delete-orphan")
+    education_record = orm_relationship("EducationRecord", back_populates="citizen", uselist=False, cascade="all, delete-orphan")
 
     __table_args__ = (
         CheckConstraint("profile_status IN ('pending_review', 'active', 'archived')", name="check_valid_profile_status"),
