@@ -5637,13 +5637,13 @@ def get_candidate_vocational_transcript(
         })
 
     # 3. Verified Skills
-    c_skills = db.query(CitizenSkill).options(joinedload(CitizenSkill.skill)).filter(CitizenSkill.citizen_ref == cit_ref).all()
+    c_skills = db.query(CitizenSkill).filter(CitizenSkill.citizen_ref == cit_ref).all()
     skill_list = []
     for cs in c_skills:
         skill_list.append({
-            "skill_name": cs.skill.name if cs.skill else "General Skill",
-            "sector": cs.skill.category.name if (cs.skill and cs.skill.category) else "Information Technology & Services",
-            "competency_level": cs.proficiency_level or "Advanced",
+            "skill_name": cs.skill_name,
+            "sector": "Vocational Technical Skills",
+            "competency_level": cs.proficiency or "Advanced",
             "verified": True
         })
 
